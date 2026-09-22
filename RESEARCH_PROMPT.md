@@ -1,15 +1,14 @@
 # RESEARCH_PROMPT.md — External AI Hackathon Intelligence Compiler
 
-> **Instructions for the User:**
-> 1. Open this file, copy the entire content (`Ctrl+A`, `Ctrl+C`).
-> 2. Open **ChatGPT (with Web Browsing)** or **Gemini (Advanced/Web)**.
-> 3. Paste this prompt into the chat.
-> 4. At the very bottom under `=== PASTE YOUR PROBLEM STATEMENT HERE ===`, paste your hackathon Problem Statement, theme, or idea.
-> 5. The external AI will perform live web research and compile the exact copy-pasteable blocks for Antigravity's `/ps` workflow.
+> **How to use this file:**
+> 1. Copy the entire prompt below (`Ctrl+A`, `Ctrl+C`).
+> 2. Open **ChatGPT (with Web Search)** or **Gemini (Advanced/Web)**.
+> 3. Paste the prompt.
+> 4. Paste your raw hackathon Problem Statement at the bottom under the marker.
+> 5. The external AI will run web research and output all 5 structured code blocks ready to paste into Antigravity.
 
 ---
 
-```markdown
 # ROLE & MISSION
 You are an elite Hackathon Strategist, Market Researcher, and Antigravity OS Compiler.
 Your mission is to take an incoming Problem Statement (PS), execute live web research across industry data, market disparities, incumbent competitors, and datasets, and compile the findings into DIRECT, copy-pasteable blocks for the "Hack Engine OS" running in Google Antigravity.
@@ -39,12 +38,11 @@ Before writing the output blocks, perform targeted web searches to gather:
 
 ---
 
-## COMPILATION OUTPUT (Generate in Exact 5 Blocks)
+## COMPILATION OUTPUT FORMAT (Generate All 5 Blocks as Code Blocks)
 
-Generate your response in the following 5 structured markdown blocks so the developer can copy-paste them directly into Antigravity:
+You must output the compiled intelligence in exactly five formatted code blocks so the developer can copy-paste them directly into their project:
 
-### BLOCK 1: Antigravity Kickoff Prompt (`/ps`)
-Format as a raw copy-pasteable code block:
+### BLOCK 1: Antigravity Kickoff Command (`/ps`)
 ```text
 Load AGENTS.md. Run workflow: .agents/workflows/ps.md with the following:
 
@@ -59,28 +57,102 @@ Constraints:
 ```
 
 ### BLOCK 2: Pre-Compiled Problem Dossier (`docs/01-problem.md`)
-- **1. Target Ecosystem & Market Disparity:** (With exact citation found via search).
-- **2. Target Personas:** (Primary and Secondary only).
-- **3. Incumbent Limitations & Competitor Gap:** (Naming real competitors).
-- **4. Verified Datasets / Standard APIs:** (With verified URLs or names).
+```markdown
+# Problem Dossier: <PS Title>
+
+## 1. Target Ecosystem & Market Disparity
+- **Target Market:** <Exact vertical or sector>
+- **The Core Disparity:** <The concrete friction or bottleneck>
+- **Sourced Citation:** <Real institutional report name, publication year, and exact metric>
+
+## 2. Target Personas (Strict 2-Persona Cap)
+- **Primary Persona:** <Role, core friction, and job-to-be-done>
+- **Secondary Persona:** <Role, core friction, and job-to-be-done>
+
+## 3. Incumbent Limitations & Competitor Gap
+- **Incumbent 1 (<Name>):** <Why their architecture or business model fails here>
+- **Incumbent 2 (<Name>):** <Why their architecture or business model fails here>
+- **Our Unserved Wedge:** <The exact whitespace our build exploits>
+
+## 4. Verified Datasets & Protocols
+- **Dataset / Protocol 1:** <Name, source URL, and schema summary>
+- **Dataset / Protocol 2:** <Name, source URL, and schema summary>
+```
 
 ### BLOCK 3: Pre-Compiled Mathematical Value Model (`docs/IMPACT.md`)
-- **1. Sourced Baseline Metric:** (Exact number + source).
-- **2. The Arithmetic Formula:** `Value Saved = Formula with named variables`.
-- **3. Sensitivity Analysis Table:** Conservative (-20%), Base Case, Aggressive (+20%).
-- **4. Honest Limits:** The single weakest assumption and how the hackathon build isolates it.
+```markdown
+# IMPACT — Quantified Value Model & Honest Limits
+
+## 1. Problem Disparity & Sourced Baseline
+- **Baseline Inefficiency:** <Exact metric with source citation>
+- **Target Optimized Value:** <Concrete benchmark achieved by our engine>
+
+## 2. Quantified Value Formula (The Arithmetic)
+```
+Disparity Reduction = Baseline Metric - Optimized Engine Metric
+Total Economic Value Saved = (Volume of Transactions) × (Disparity Reduction) × (Unit Cost)
+```
+- **Variables & Default Values:**
+  - `Volume`: <Estimated volume with justification>
+  - `Unit Cost`: <Cost per incident or transaction in INR or USD>
+
+## 3. Sensitivity Analysis Table
+| Scenario | Disparity Resolved | Total Annual Economic Saved |
+|---|---|---|
+| Conservative (-20%) | <Value> | <Value> |
+| Base Case (Expected)| <Value> | <Value> |
+| Aggressive (+20%)   | <Value> | <Value> |
+
+## 4. Honest Limits (Our Weakest Assumptions)
+1. **Weakest Assumption:** <The single most fragile assumption in this model>
+2. **Hackathon Mitigation:** <How our demo build handles or isolates it>
+3. **Production Path:** <What institutional contract or integration resolves it long term>
+```
 
 ### BLOCK 4: Proposed Technical Moat (`docs/02-solution.md`)
-- **1. The Unfair Advantage (Moat):** (Explain why this beats simple wrappers—e.g. sub-10ms deterministic solver, counterfactual SHAP attribution, verifiable cryptographic proof).
-- **2. 3-Architecture Comparison Table:** (Naive Wrapper vs. Over-Engineered vs. Hack Engine Sweet Spot).
-- **3. The 90-Second Demo Hook:** (Step-by-step 0:00 to 1:30 judge path).
+```markdown
+# Solution Design & Moat: <Project Name>
+
+## 1. The Unfair Technical Advantage (The Moat)
+<Detailed explanation of the technical core: e.g. sub-10ms deterministic optimization solver, counterfactual SHAP attribution cascade, eBPF telemetry filter, or cryptographic proof layer. Explain why a naive wrapper cannot replicate this.>
+
+## 2. Three Architecture Comparison Table
+| Approach | Architecture Description | Why Rejected or Chosen |
+|---|---|---|
+| **Approach 1 (Naive)** | <Simple CRUD + LLM wrapper> | Rejected: Low rubric score, trivial to replicate |
+| **Approach 2 (Over-Engineered)** | <Full distributed microservices / custom foundation model> | Rejected: Exceeds hackathon time budget |
+| **Approach 3 (Hack Engine Sweet Spot)** | <Targeted high-signal engine + Postgres + live telemetry> | **CHOSEN: Production quality, defensible moat, verified in 24h** |
+
+## 3. The 90-Second Demo Hook
+- **0:00–0:20 (Hook):** Land on live URL, highlight immediate anomaly or disparity on screen.
+- **0:20–0:50 (Moat Action):** Single click triggers the core differentiator (sub-second calculation).
+- **0:50–1:15 (Impact Proof):** Click /impact route displaying live calculated savings from DB seeds.
+- **1:15–1:30 (Defense):** Show audit logs and name Honest Limits to disarm skeptical judges.
+```
 
 ### BLOCK 5: Design System Direction (`design/DIRECTION.md`)
-- **1. 3 Named Reference Sites:** (Real URLs from Awwwards/Godly).
-- **2. The 5 Color Tokens:** (Base, Raised, Muted, Border, Accent hex values).
-- **3. Typography Pairing:** (Display face + Body face with rationale).
+```markdown
+# DIRECTION — Visual Craft & Design Tokens
+
+## 1. Three Named Reference Sites (Declared Before Building UI)
+1. **Reference 1 (<Name & URL>):** <Specific aesthetic lesson to mirror>
+2. **Reference 2 (<Name & URL>):** <Specific aesthetic lesson to mirror>
+3. **Reference 3 (<Name & URL>):** <Specific aesthetic lesson to mirror>
+
+## 2. The Five Color Tokens
+- `--color-surface-base`: `<Hex>` (Base dark background — never pure #000)
+- `--color-surface-raised`: `<Hex>` (Elevated card surface)
+- `--color-neutral-muted`: `<Hex>` (Secondary metadata text)
+- `--color-neutral-border`: `<Hex>` (Subtle 1px structure border)
+- `--color-accent`: `<Hex>` (Single purposeful accent, used on <= 3 elements per view)
+
+## 3. Typography Hierarchy
+- **Display Face:** `<Font Name>` (Chosen for character and architectural presence)
+- **Body Face:** `<Font Name>` (Chosen for clean legibility at small sizes)
+- **Display Step:** `clamp(3.2rem, 7vw, 6.2rem)` with tracking `-0.03em`
+- **Heading Step:** `clamp(1.8rem, 3.5vw, 3rem)` with tracking `-0.02em`
+```
 
 ---
 
 === PASTE YOUR PROBLEM STATEMENT / THEME / IDEA BELOW THIS LINE ===
-```
