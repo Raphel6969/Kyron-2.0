@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: polyglot-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: polyglot_db
+    ports:
+      - "5432:5432"
+
+  api:
+    build: ./services/api
+    container_name: polyglot-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword@db:5432/polyglot_db
+      - GATEWAY_URL=http://gateway:8080
+      - SOLVER_URL=http://engine:8090
+    depends_on:
+      - db
+
+  gateway:
+    build: ./services/gateway
+    container_name: polyglot-gateway
+    ports:
+      - "8080:8080"
+
+  engine:
+    build: ./services/engine
+    container_name: polyglot-engine
+    ports:
+      - "8090:8090"

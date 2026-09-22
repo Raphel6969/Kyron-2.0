@@ -1,0 +1,33 @@
+/* Hack Engine Master Design Tokens — Wired to Tailwind */
+
+:root {
+  /* The 5 Color Tokens (Strict Constraint) */
+  --color-surface-base: #0A0D12;
+  --color-surface-raised: #121722;
+  --color-neutral-muted: #7E8C9F;
+  --color-neutral-border: #1C2433;
+  --color-accent: #2563EB;
+
+  /* Fluid Clamp Scales */
+  --font-display: clamp(3.2rem, 7vw, 6.2rem);
+  --font-heading: clamp(1.8rem, 3.5vw, 3rem);
+  --font-body: clamp(0.95rem, 1.1vw, 1.05rem);
+}
+
+/* Typography Utility Classes */
+.text-fluid-display {
+  font-size: var(--font-display);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.text-fluid-heading {
+  font-size: var(--font-heading);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.text-fluid-body {
+  font-size: var(--font-body);
+  line-height: 1.6;
+}

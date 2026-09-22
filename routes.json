@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hack Engine Route Manifest",
+  "description": "Consumed by tests/visual/capture.spec.ts, ux-gate.sh, and ui-audit.sh",
+  "baseUrl": "http://localhost:3000",
+  "viewports": [
+    {
+      "name": "mobile",
+      "width": 375,
+      "height": 812
+    },
+    {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900
+    }
+  ],
+  "routes": [
+    {
+      "path": "/",
+      "name": "landing",
+      "description": "Product landing page with hero hook and immediate differentiator access"
+    },
+    {
+      "path": "/impact",
+      "name": "impact",
+      "description": "Live quantified impact dashboard computed from seeded database events"
+    },
+    {
+      "path": "/console",
+      "name": "console",
+      "description": "Core operator control console used in the 90-second judge demo path"
+    }
+  ]
+}
