@@ -14,11 +14,13 @@ Takes a raw hackathon Problem Statement and autonomous constraints, decodes the 
 
 ## Step 3: Mandatory Human Checkpoint (PAUSE ONCE)
 - **PAUSE EXECUTION.** Present `docs/02-solution.md` to the user:
-  > *"Here is our proposed technical moat and 90-second demo hook in `docs/02-solution.md`. Please review and approve before we lock architecture and phase planning."*
+  > *"Here is our proposed technical moat and 90-second demo hook in `docs/02-solution.md`. Please review and approve — and confirm or override the infrastructure defaults below — before we lock architecture and phase planning."*
+- **Invoke skill: `stack-interview`** — present the 8-question Stack Confirmation Card as part of this same message. A single "proceed" reply accepts all PS-inferred defaults.
+- After user responds: finalize `docs/02-solution.md → ## Infrastructure Stack` with resolved values and `[source:]` tags.
 - Await affirmative user confirmation. **Do NOT proceed until user approves.**
 
 ## Step 4: Generate Environment Variable Manifest (.env.example)
-- Read `docs/02-solution.md` (approved moat + all third-party integrations mentioned).
+- Read `docs/02-solution.md` (approved moat + `## Infrastructure Stack` — all services and their sources).
 - Read `.agents/templates/ARCHITECTURE.md` (service boundaries, data stores).
 - Read `.agents/templates/API.md` (external API surface, authentication schemes).
 - Infer every env var required by the approved architecture. At minimum include:
@@ -33,7 +35,7 @@ Takes a raw hackathon Problem Statement and autonomous constraints, decodes the 
   JWT_SECRET=replace-with-a-random-32-character-secret-key-here
   JWT_ALGORITHM=HS256
 
-  # LLM Inference
+  # LLM Inference (include only if solution uses LLM inference)
   GROQ_API_KEY=gsk_your_groq_api_key_here
   GROQ_MODEL=llama-3.1-8b-instant
 
@@ -41,23 +43,42 @@ Takes a raw hackathon Problem Statement and autonomous constraints, decodes the 
   ENABLE_LLM_INFERENCE=true
   ENABLE_EXTERNAL_API=true
   ```
-- Extend with any domain-specific keys implied by the PS and solution (examples — include only those relevant):
+- Extend with vars implied by `## Infrastructure Stack` (include only those that were confirmed):
   ```
-  # Add only keys the approved architecture actually requires:
-  OPENAI_API_KEY=sk-your-openai-key-here
-  REDIS_URL=redis://localhost:6379/0
-  SUPABASE_URL=https://your-project.supabase.co
-  SUPABASE_ANON_KEY=your-supabase-anon-key
-  STRIPE_SECRET_KEY=sk_test_your-stripe-key
-  RESEND_API_KEY=re_your-resend-key
-  SENTRY_DSN=https://your-sentry-dsn@o123456.ingest.sentry.io/000000
-  POSTHOG_API_KEY=phc_your-posthog-key
+  # Auth (if OAuth2 selected)
   GOOGLE_CLIENT_ID=your-google-oauth-client-id
   GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+
+  # Cache / Queue (if Redis selected)
+  REDIS_URL=redis://localhost:6379/0
+
+  # Storage (if object storage selected)
+  SUPABASE_URL=https://your-project.supabase.co
+  SUPABASE_ANON_KEY=your-supabase-anon-key
+
+  # Notifications (if email selected)
+  RESEND_API_KEY=re_your-resend-key
+
+  # Observability
+  SENTRY_DSN=https://your-sentry-dsn@o123456.ingest.sentry.io/000000
+  POSTHOG_API_KEY=phc_your-posthog-key
+  ```
+- **ML Training Signal Detection:** If the approved solution trains or fine-tunes a model (keywords: dataset, XGBoost, scikit-learn, PyTorch, HuggingFace, MLflow, experiment tracking, model artifacts), also emit:
+  ```
+  # ML Training & Experiment Tracking (only if project trains models)
+  DATASET_PATH=./data/raw
+  MODEL_ARTIFACTS_PATH=./models
+  MLFLOW_TRACKING_URI=http://localhost:5000
+  WANDB_API_KEY=your-wandb-api-key-here
+  WANDB_PROJECT=your-project-name
+  HF_TOKEN=hf_your-huggingface-token-here
+
+  # Feature Store / Data Pipeline (if applicable)
+  FEATURE_STORE_PATH=./data/features
   ```
 - Write the final file to `.env.example` in the project root. No actual secrets — placeholder values only.
 - Verify `.env` is listed in `.gitignore`. If not, append it.
-- For every key that requires a human to provision (paid API keys, OAuth credentials, cloud DSNs), append a non-blocking entry to `NEEDS_YOU.md` with: what the key is, where to get it, and what the agent will do once it has it.
+- For every key that requires a human to provision (paid API keys, OAuth credentials, cloud DSNs, W&B/HuggingFace tokens), append a non-blocking entry to `NEEDS_YOU.md` with: what the key is, where to get it, and what the agent will do once it has it.
 - Run `make verify` — confirm `hardening-gate.sh` passes (`.env.example` must not contain `sqlite:///`).
 - Generates: `.env.example` (project root)
 

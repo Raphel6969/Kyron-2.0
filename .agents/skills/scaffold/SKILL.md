@@ -20,10 +20,23 @@ Load during Phase 0 execution, or when bootstrapping a new hackathon project rep
 # EXECUTION PROTOCOL
 
 1. **Select and Copy the Stack Skeleton:**
-   Copy the pre-debugged template matching ADR-000 into the active project workspace:
-   - `templates/stack-fastapi-react` for Python FastAPI backend + React/Vite frontend.
-   - `templates/stack-polyglot` for Python API + Go Gateway + Rust Engine + Next.js.
-   - `templates/stack-node-react` for Node.js ESM Express backend + React/Vite frontend.
+   Read `docs/02-solution.md → ## Infrastructure Stack` for the resolved stack.
+
+   **Fast path (< 5 min to green) — use if stack matches a pre-built template:**
+   - `templates/stack-fastapi-react` → Python FastAPI backend + React 18/Vite frontend
+   - `templates/stack-polyglot` → Python API + Go Gateway + Rust Engine + Next.js
+   - `templates/stack-node-react` → Node.js ESM Express backend + React/Vite frontend
+
+   Copy the matching template into the active project workspace.
+
+   **Custom stack path (10–15 min to green) — use if no template matches:**
+   If ADR-000 specifies a language/framework not covered by the 3 templates, generate a minimal skeleton from scratch:
+   - Correct folder structure for the chosen stack (e.g. `src/`, `app/`, `cmd/`)
+   - `docker-compose.yml` spinning up PostgreSQL 16+ and the application service
+   - One `GET /healthz` endpoint in the chosen language returning `{"status": "ok", "db": "connected"}`
+   - One baseline migration file (language-appropriate: Alembic, Flyway, golang-migrate, node-pg-migrate, etc.)
+   - Working `Makefile` with `verify`, `dev`, `deploy`, `seed`, `reset-demo` targets
+   - Target: `make verify` exits 0 within 15 minutes
 
 2. **Environment & Secrets Setup:**
    - Copy `.env.example` to `.env`.

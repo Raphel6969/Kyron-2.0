@@ -19,12 +19,23 @@ Load during the `/ps` workflow after `solution-design` and `impact-model` are ap
 
 # EXECUTION PROTOCOL
 
-1. **Service Decomposition & Stack Mapping:**
-   Map responsibilities to proven historical defaults:
-   - **Public API / Proxy Layer:** Python FastAPI or Go/Chi (port 8000).
-   - **High-Performance Engine / Solver:** Rust Axum or Go worker (port 8080 or 8090).
-   - **Client Presentation:** React 18 + Vite or Next.js 14 (port 3000).
-   - **Persistent Storage:** PostgreSQL 16+ (Supabase / Neon / Docker Compose).
+1. **Priority-Resolved Service & Stack Mapping:**
+   Read `docs/02-solution.md → ## Infrastructure Stack` to determine languages and frameworks.
+   Apply this resolution order — highest wins:
+
+   | Priority | Source | Condition |
+   |---|---|---|
+   | 🥇 1st | User-specified | User named a specific language/framework at Step 3 checkpoint |
+   | 🥈 2nd | Scaffold template default | Python/FastAPI + React/Vite if no user override |
+   | 🥉 3rd | PS-inferred | Only if both above are absent |
+
+   Map resolved values to service roles:
+   - **Public API / Proxy Layer:** `<resolved from Infrastructure Stack>` (port 8000)
+   - **Computation / Engine Layer:** `<resolved from Infrastructure Stack>` (port 8080 if separate)
+   - **Client Presentation:** `<resolved from Infrastructure Stack>` (port 3000)
+   - **Persistent Storage:** PostgreSQL 16+ — non-negotiable regardless of user choice
+
+   Every service in `ARCHITECTURE.md` must list its `[source: user-specified / template-default / ps-inferred]` tag so the choice is auditable.
 
 2. **Establish the Service Trust Boundary Matrix:**
    Document in `ARCHITECTURE.md` which service can read which tables and secrets:

@@ -18,7 +18,12 @@ Load whenever implementing a new UI route, page view, or major frontend feature 
 
 # EXECUTION PROTOCOL
 
-1. **Review DoD Standard for Pages (Mandatory Lookup):**
+1. **Anchor to Product DNA Before Writing Any Code (Mandatory):**
+   - Load skill `ui-reference-library`: select 2 matching reference archetypes for the product domain. Record which hero archetype is chosen.
+   - Read `design/CONTEXT.md` (written by `ui-context-inject`): extract the layout constraint, emotional register, and motion constraints for this product. If `design/CONTEXT.md` does not exist yet, invoke `ui-context-inject` first.
+   - Only proceed to DoD execution after both inputs are internalized.
+
+2. **Review DoD Standard for Pages (Mandatory Lookup):**
    A page is done when it satisfies:
    - [ ] All four states: designed empty / skeleton loading / error / success — no spinners
    - [ ] Real seeded content, no lorem ipsum, no placeholder avatars
