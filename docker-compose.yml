@@ -27,8 +27,9 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-kyron}:${POSTGRES_PASSWORD:-kyron_secret}@postgres:5432/${POSTGRES_DB:-kyron_db}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-kyron}:${POSTGRES_PASSWORD:-kyron_secret}@postgres:5432/${POSTGRES_DB:-kyron_db}
       CONTROL_API_PORT: 8001
+
       CONTROL_API_HOST: "0.0.0.0"
       LOG_LEVEL: INFO
     ports:
