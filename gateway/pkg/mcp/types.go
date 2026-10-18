@@ -35,15 +35,20 @@ type JSONRPCError struct {
 	Data    *StructuredRemediation `json:"data,omitempty"`
 }
 
-// StructuredRemediation provides actionable guidance when a call is blocked (F12)
+// StructuredRemediation provides actionable guidance when a call is blocked (F12, F17)
 type StructuredRemediation struct {
-	Tool          string   `json:"tool,omitempty"`
-	State         string   `json:"state,omitempty"`
-	RiskScore     float32  `json:"risk_score,omitempty"`
-	RiskReasons   []string `json:"risk_reasons,omitempty"`
-	Remediation   string   `json:"remediation,omitempty"`
-	EscalationURL string   `json:"escalation_url,omitempty"`
+	ErrorCode        string   `json:"error_code,omitempty"`
+	Tool             string   `json:"tool,omitempty"`
+	State            string   `json:"state,omitempty"`
+	RiskScore        float32  `json:"risk_score,omitempty"`
+	RiskReasons      []string `json:"risk_reasons,omitempty"`
+	RuleViolated     string   `json:"rule_violated,omitempty"`
+	Remediation      string   `json:"remediation,omitempty"`
+	AlternativeTools []string `json:"alternative_tools,omitempty"`
+	RecoveryPlan     string   `json:"recovery_plan,omitempty"`
+	EscalationURL    string   `json:"escalation_url,omitempty"`
 }
+
 
 // ClientCapabilities declared during initialize
 type ClientCapabilities struct {

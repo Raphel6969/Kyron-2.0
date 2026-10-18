@@ -34,6 +34,7 @@ type Proxy struct {
 	SecretsBroker *secrets.Broker
 	AuditEmitter  *audit.Emitter
 	Authority     *authority.Service
+	Remediation   *RemediationEngine
 	Backend       BackendHandler
 	Mode          EnforcementMode
 	mu            sync.RWMutex
@@ -42,15 +43,18 @@ type Proxy struct {
 // NewProxy creates a new MCP protocol interceptor proxy
 func NewProxy(reg *ToolRegistry, sb *secrets.Broker, ae *audit.Emitter, backend BackendHandler) *Proxy {
 	authSvc, _ := authority.NewService(nil, nil)
+	remEngine := NewRemediationEngine(reg, "http://localhost:8001")
 	return &Proxy{
 		Registry:      reg,
 		SecretsBroker: sb,
 		AuditEmitter:  ae,
 		Authority:     authSvc,
+		Remediation:   remEngine,
 		Backend:       backend,
 		Mode:          ModeEnforce,
 	}
 }
+
 
 // SetAuthority attaches an authority service to the proxy
 func (p *Proxy) SetAuthority(auth *authority.Service) {
@@ -184,16 +188,22 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 				}
 				log.Printf("[KYRON MONITOR MODE] Tool '%s' restricted (%s). Permitting in monitor mode.", toolName, ruling.Reason)
 			} else {
-				remediation := &StructuredRemediation{
-					Tool:          toolName,
-					State:         "restricted",
-					RiskScore:     0.7,
-					RiskReasons:   []string{ruling.Reason},
-					Remediation:   "Obtain a signed capability lease from the Kyron Authority Service.",
-					EscalationURL: ruling.EscalationURL,
-				}
-				if remediation.EscalationURL == "" {
-					remediation.EscalationURL = fmt.Sprintf("http://localhost:8001/v1/approvals/%s", sess.ID)
+				var remediation *StructuredRemediation
+				if p.Remediation != nil {
+					if leaseID == "" {
+						remediation = p.Remediation.BuildLeaseRequiredRemediation(sess.ID, sess.TrajectoryID, toolName, ruling.Reason)
+					} else {
+						remediation = p.Remediation.BuildLeaseFailureRemediation(sess.ID, sess.TrajectoryID, toolName, ruling.Reason)
+					}
+				} else {
+					remediation = &StructuredRemediation{
+						Tool:          toolName,
+						State:         "restricted",
+						RiskScore:     0.7,
+						RiskReasons:   []string{ruling.Reason},
+						Remediation:   "Obtain a signed capability lease from the Kyron Authority Service.",
+						EscalationURL: ruling.EscalationURL,
+					}
 				}
 
 				if p.AuditEmitter != nil {
@@ -248,14 +258,20 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 				log.Printf("[KYRON MONITOR MODE] Tool '%s' triggered would-block policy violation (%v). Permitting execution without breaking workflow.", toolName, reg.RiskReasons)
 			} else {
 				// Enforce mode: block deterministically
-				remediation := &StructuredRemediation{
-					Tool:          toolName,
-					State:         reg.State,
-					RiskScore:     reg.RiskScore,
-					RiskReasons:   reg.RiskReasons,
-					Remediation:   "Request human approval in Kyron SOC console or substitute with an approved tool.",
-					EscalationURL: fmt.Sprintf("http://localhost:8001/v1/approvals/%s", sess.ID),
+				var remediation *StructuredRemediation
+				if p.Remediation != nil {
+					remediation = p.Remediation.BuildQuarantineRemediation(sess.ID, toolName, reg.State, reg.RiskScore, reg.RiskReasons)
+				} else {
+					remediation = &StructuredRemediation{
+						Tool:          toolName,
+						State:         reg.State,
+						RiskScore:     reg.RiskScore,
+						RiskReasons:   reg.RiskReasons,
+						Remediation:   "Request human approval in Kyron SOC console or substitute with an approved tool.",
+						EscalationURL: fmt.Sprintf("http://localhost:8001/v1/approvals/%s", sess.ID),
+					}
 				}
+
 
 				if p.AuditEmitter != nil {
 					_, _ = p.AuditEmitter.Emit(

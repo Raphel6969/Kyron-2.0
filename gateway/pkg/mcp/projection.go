@@ -45,6 +45,18 @@ func (tr *ToolRegistry) GetTool(name string) (*RegisteredTool, bool) {
 	return t, ok
 }
 
+// AllTools returns a slice of all registered tools
+func (tr *ToolRegistry) AllTools() []*RegisteredTool {
+	tr.mu.RLock()
+	defer tr.mu.RUnlock()
+	list := make([]*RegisteredTool, 0, len(tr.tools))
+	for _, t := range tr.tools {
+		list = append(list, t)
+	}
+	return list
+}
+
+
 // ProjectTools applies Dynamic Tool Projection (F19, F03, F04) to a list of raw tools.
 // - Filters out quarantined, blocked, or revoked tools so they are invisible to the model.
 // - Rewrites raw descriptions with TRUSTDESC canonical descriptions so the model is insulated
