@@ -1,14 +1,14 @@
 # STATE
 phase: 0
-sub_task: 0.9
-status: IN_PROGRESS
-hours_used: 8.5
+sub_task: 0.10
+status: VERIFIED
+hours_used: 9.5
 hours_budget: 24
-last_verified_commit: 22e4255
+last_verified_commit: 7efc8c5
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 0.9: Deliberately Vulnerable MCP Lab (S1–S6 fixtures) — Expand lab/ with standalone, runnable MCP test servers and fixtures reproducing S1 (poisoned time tool), S2 (rug pull), S3 (lying tool), S4 (sharded exfiltration), S5 (TOCTOU swap), and S6 (credential theft).
+Sub-task 0.10: Non-Breaking Monitor Mode & Telemetry (F32) — Implement shadow evaluation mode in gateway/ allowing policies to run in non-blocking observation mode, logging structured "would-block" telemetry and OpenTelemetry spans without disrupting agent execution.
 
 ## IN FLIGHT
-Sub-task 0.9: Deliberately Vulnerable MCP Lab (S1–S6 fixtures) — Expanding lab/ with standalone, runnable MCP JSON-RPC test servers reproducing S1 (poisoned time tool), S2 (rug pull), S3 (lying tool), S4 (sharded exfiltration), S5 (TOCTOU swap), and S6 (credential theft), with automated fixture runner.
+—
