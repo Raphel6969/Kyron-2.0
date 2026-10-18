@@ -81,7 +81,20 @@ app = FastAPI(
 # Health & Status
 # -------------------------------------------------------------------------
 
+@app.get("/", tags=["Health"])
+def root_info():
+    """Root info page pointing to API documentation and SOC console"""
+    return {
+        "service": "Kyron 2.0 Control Plane API",
+        "version": "2.0.0",
+        "status": "operational",
+        "documentation": "/docs",
+        "console_ui": "http://localhost:3000",
+        "healthz": "/healthz",
+    }
+
 @app.get("/healthz", tags=["Health"])
+
 def health_check(db: Session = Depends(get_db)):
     """Deep downstream health probe required by docs/OPS.md"""
     uptime = int((datetime.now(timezone.utc) - start_time).total_seconds())

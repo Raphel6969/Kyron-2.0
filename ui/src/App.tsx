@@ -1,13 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, LayoutGrid, KeyRound, History, RefreshCw, Terminal } from 'lucide-react';
+import {
+  Shield,
+  LayoutDashboard,
+  LayoutGrid,
+  KeyRound,
+  History,
+  Terminal,
+  Network,
+  Sliders,
+  RotateCw
+} from 'lucide-react';
 import { MetricsBar } from './components/MetricsBar';
+import { CommandOverview } from './components/CommandOverview';
 import { ToolInventory, ToolItem } from './components/ToolInventory';
 import { SemanticDriftModal } from './components/SemanticDriftModal';
 import { ApprovalQueue, ApprovalItem } from './components/ApprovalQueue';
 import { AuditDrawer, AuditEventItem } from './components/AuditDrawer';
+import { EgressMonitor } from './components/EgressMonitor';
+import { PolicyStudio } from './components/PolicyStudio';
+
+export type NavTab = 'overview' | 'registry' | 'approvals' | 'egress' | 'audit' | 'policies';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'inventory' | 'approvals' | 'audit'>('inventory');
+  const [activeTab, setActiveTab] = useState<NavTab>('overview');
 
   // Tools state
   const [tools, setTools] = useState<ToolItem[]>([]);
@@ -98,7 +113,7 @@ export const App: React.FC = () => {
         showNotification(`Tool '${toolId}' approved and pinned successfully.`);
         fetchTools();
       }
-    } catch (err) {
+    } catch {
       showNotification(`Failed to approve tool '${toolId}'.`);
     }
   };
@@ -114,7 +129,7 @@ export const App: React.FC = () => {
         showNotification(`Tool '${toolId}' blocked.`);
         fetchTools();
       }
-    } catch (err) {
+    } catch {
       showNotification(`Failed to reject tool '${toolId}'.`);
     }
   };
@@ -127,7 +142,7 @@ export const App: React.FC = () => {
         setActiveDiff(diffData);
         setIsDiffModalOpen(true);
       }
-    } catch (err) {
+    } catch {
       showNotification(`Failed to inspect semantic diff for '${toolId}'.`);
     }
   };
@@ -144,7 +159,7 @@ export const App: React.FC = () => {
         fetchApprovals();
         fetchTools();
       }
-    } catch (err) {
+    } catch {
       showNotification(`Approval failed for '${requestId}'.`);
     }
   };
@@ -160,7 +175,7 @@ export const App: React.FC = () => {
         showNotification(`Request '${requestId}' denied.`);
         fetchApprovals();
       }
-    } catch (err) {
+    } catch {
       showNotification(`Denial failed for '${requestId}'.`);
     }
   };
@@ -179,7 +194,7 @@ export const App: React.FC = () => {
         URL.revokeObjectURL(url);
         showNotification('EU AI Act Article 50 Dossier exported successfully.');
       }
-    } catch (err) {
+    } catch {
       showNotification('Export failed.');
     }
   };
@@ -188,13 +203,13 @@ export const App: React.FC = () => {
   const approvedCount = tools.filter((t) => t.state === 'approved' || t.state === 'active').length;
 
   return (
-    <div className="min-h-screen bg-surface-base text-gray-100 flex flex-col">
-      {/* Top Header */}
+    <div className="min-h-screen bg-surface-base text-gray-100 flex flex-col font-sans">
+      {/* Top Navigation Bar */}
       <header className="border-b border-neutral-border bg-surface-raised sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-accent/20 border border-accent flex items-center justify-center text-accent">
-              <Shield className="w-5 h-5" />
+            <div className="w-8 h-8 rounded bg-surface-base border border-neutral-border flex items-center justify-center text-accent">
+              <Shield className="w-4 h-4 text-accent" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -209,38 +224,69 @@ export const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-1 bg-surface-base border border-neutral-border p-1 rounded-lg text-xs font-mono">
+          {/* Clean Segmented Navigation */}
+          <nav className="flex items-center gap-1 bg-surface-base border border-neutral-border p-1 rounded-lg text-xs font-mono overflow-x-auto">
             <button
-              onClick={() => setActiveTab('inventory')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors ${
-                activeTab === 'inventory' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
+              onClick={() => setActiveTab('overview')}
+              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 'overview' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('registry')}
+              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 'registry' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
               Tool Registry
+              {quarantinedCount > 0 && (
+                <span className="w-1.5 h-1.5 rounded-full bg-status-danger inline-block ml-0.5"></span>
+              )}
             </button>
             <button
               onClick={() => setActiveTab('approvals')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors relative ${
+              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
                 activeTab === 'approvals' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
               }`}
             >
               <KeyRound className="w-3.5 h-3.5" />
               Approvals
               {approvals.length > 0 && (
-                <span className="w-2 h-2 rounded-full bg-status-warning inline-block ml-0.5"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-status-warning inline-block ml-0.5"></span>
               )}
             </button>
             <button
+              onClick={() => setActiveTab('egress')}
+              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 'egress' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
+              }`}
+            >
+              <Network className="w-3.5 h-3.5" />
+              Network Egress
+            </button>
+            <button
               onClick={() => setActiveTab('audit')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors ${
+              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
                 activeTab === 'audit' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
               }`}
             >
               <History className="w-3.5 h-3.5" />
               Audit Trail
             </button>
-          </div>
+            <button
+              onClick={() => setActiveTab('policies')}
+              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 'policies' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              Policies
+            </button>
+          </nav>
         </div>
       </header>
 
@@ -253,7 +299,7 @@ export const App: React.FC = () => {
       )}
 
       {/* Main Body */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
         <MetricsBar
           quarantinedCount={quarantinedCount}
           approvedCount={approvedCount}
@@ -261,7 +307,19 @@ export const App: React.FC = () => {
           attacksBlockedCount={33900}
         />
 
-        {activeTab === 'inventory' && (
+        {activeTab === 'overview' && (
+          <CommandOverview
+            quarantinedCount={quarantinedCount}
+            approvedCount={approvedCount}
+            activeLeasesCount={approvals.filter((a) => a.status === 'approved').length}
+            auditCount={auditEvents.length}
+            onNavigateTab={(tab) => setActiveTab(tab)}
+            onTriggerScan={fetchTools}
+            onExportEUAct={handleExportEUAct}
+          />
+        )}
+
+        {activeTab === 'registry' && (
           <ToolInventory
             tools={tools}
             loading={toolsLoading}
@@ -284,6 +342,8 @@ export const App: React.FC = () => {
           />
         )}
 
+        {activeTab === 'egress' && <EgressMonitor />}
+
         {activeTab === 'audit' && (
           <AuditDrawer
             events={auditEvents}
@@ -293,6 +353,8 @@ export const App: React.FC = () => {
             onExportEUAct={handleExportEUAct}
           />
         )}
+
+        {activeTab === 'policies' && <PolicyStudio />}
       </main>
 
       {/* Semantic Drift Inspection Modal */}
