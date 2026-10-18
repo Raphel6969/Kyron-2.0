@@ -118,6 +118,7 @@ type ListToolsResult struct {
 type CallToolParams struct {
 	Name      string          `json:"name"`
 	Arguments json.RawMessage `json:"arguments,omitempty"`
+	LeaseID   string          `json:"lease_id,omitempty"`
 }
 
 // ContentItem in CallToolResult

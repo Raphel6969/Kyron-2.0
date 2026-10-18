@@ -18,9 +18,11 @@ type Session struct {
 	LastActive    time.Time
 	Sequence      uint64
 	EgressBytes   uint64
+	ActiveLeases  map[string]string // toolName or "*" -> leaseID
 	mu            sync.RWMutex
 	Metadata      map[string]interface{}
 }
+
 
 // NextSequence increments and returns the monotonically increasing sequence number
 func (s *Session) NextSequence() uint64 {
@@ -54,6 +56,32 @@ func (s *Session) GetMeta(key string) (interface{}, bool) {
 	return val, ok
 }
 
+// AttachLease binds a capability lease to a tool or wildcard for this session
+func (s *Session) AttachLease(toolName, leaseID string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.ActiveLeases == nil {
+		s.ActiveLeases = make(map[string]string)
+	}
+	s.ActiveLeases[toolName] = leaseID
+}
+
+// GetAttachedLease retrieves an attached lease ID for a tool name or wildcard
+func (s *Session) GetAttachedLease(toolName string) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.ActiveLeases == nil {
+		return ""
+	}
+	if leaseID, ok := s.ActiveLeases[toolName]; ok {
+		return leaseID
+	}
+	if leaseID, ok := s.ActiveLeases["*"]; ok {
+		return leaseID
+	}
+	return ""
+}
+
 // SessionManager manages active sessions across stdio and HTTP/SSE transports
 type SessionManager struct {
 	sessions map[string]*Session
@@ -83,8 +111,10 @@ func (sm *SessionManager) CreateSession(clientName, clientVersion string) *Sessi
 		ClientVersion: clientVersion,
 		CreatedAt:     now,
 		LastActive:    now,
+		ActiveLeases:  make(map[string]string),
 		Metadata:      make(map[string]interface{}),
 	}
+
 
 	sm.sessions[sessionID] = sess
 	return sess

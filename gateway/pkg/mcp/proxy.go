@@ -9,8 +9,10 @@ import (
 	"sync"
 
 	"kyron.dev/gateway/pkg/audit"
+	"kyron.dev/gateway/pkg/authority"
 	"kyron.dev/gateway/pkg/secrets"
 )
+
 
 // EnforcementMode controls whether policy violations are blocked or monitored in shadow mode (F32)
 type EnforcementMode string
@@ -31,6 +33,7 @@ type Proxy struct {
 	Registry      *ToolRegistry
 	SecretsBroker *secrets.Broker
 	AuditEmitter  *audit.Emitter
+	Authority     *authority.Service
 	Backend       BackendHandler
 	Mode          EnforcementMode
 	mu            sync.RWMutex
@@ -38,14 +41,31 @@ type Proxy struct {
 
 // NewProxy creates a new MCP protocol interceptor proxy
 func NewProxy(reg *ToolRegistry, sb *secrets.Broker, ae *audit.Emitter, backend BackendHandler) *Proxy {
+	authSvc, _ := authority.NewService(nil, nil)
 	return &Proxy{
 		Registry:      reg,
 		SecretsBroker: sb,
 		AuditEmitter:  ae,
+		Authority:     authSvc,
 		Backend:       backend,
 		Mode:          ModeEnforce,
 	}
 }
+
+// SetAuthority attaches an authority service to the proxy
+func (p *Proxy) SetAuthority(auth *authority.Service) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Authority = auth
+}
+
+// GetAuthority returns the active authority service
+func (p *Proxy) GetAuthority() *authority.Service {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Authority
+}
+
 
 // SetMode toggles between blocking enforcement and non-breaking shadow monitor mode
 func (p *Proxy) SetMode(m EnforcementMode) {
@@ -138,55 +158,127 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 	hasher.Write([]byte(callHashRaw))
 	callHash := hex.EncodeToString(hasher.Sum(nil))
 
-	// 1. Stage 4 Check: Policy verification & Registry Firewall
-	if exists && (reg.State == "quarantined" || reg.State == "blocked" || reg.State == "revoked") {
-		mode := p.GetMode()
-		if mode == ModeMonitor {
-			// Non-breaking monitor mode (F32):
-			// Emit "would-block" telemetry event and continue execution without breaking live workflows
-			if p.AuditEmitter != nil {
-				_, _ = p.AuditEmitter.Emit(
-					sess.ID,
-					sess.TrajectoryID,
-					callHash,
-					toolName,
-					"would-block",
-					reg.RiskReasons,
-					1,
-				)
-			}
-			log.Printf("[KYRON MONITOR MODE] Tool '%s' triggered would-block policy violation (%v). Permitting execution without breaking workflow.", toolName, reg.RiskReasons)
-		} else {
-			// Enforce mode: block deterministically
-			remediation := &StructuredRemediation{
-				Tool:          toolName,
-				State:         reg.State,
-				RiskScore:     reg.RiskScore,
-				RiskReasons:   reg.RiskReasons,
-				Remediation:   "Request human approval in Kyron SOC console or substitute with an approved tool.",
-				EscalationURL: fmt.Sprintf("http://localhost:8001/v1/approvals/%s", sess.ID),
-			}
+	leaseID := params.LeaseID
+	if leaseID == "" && sess != nil {
+		leaseID = sess.GetAttachedLease(toolName)
+	}
 
-			if p.AuditEmitter != nil {
-				_, _ = p.AuditEmitter.Emit(
-					sess.ID,
-					sess.TrajectoryID,
-					callHash,
-					toolName,
-					"block",
-					reg.RiskReasons,
-					1,
-				)
-			}
+	auth := p.GetAuthority()
 
-			return NewErrorResponse(
-				msg.ID,
-				ErrCodePolicyBlocked,
-				fmt.Sprintf("Policy violation: Tool '%s' is %s and not permitted for execution.", toolName, reg.State),
-				remediation,
-			), nil
+	// Stage 4a: Authority Service Ruling & Lease Verification (C6, F18)
+	if auth != nil && auth.IsLeaseRequired(toolName) {
+		ruling, _ := auth.EvaluateCall(sess.ID, sess.TrajectoryID, toolName, callHash, leaseID)
+		if ruling != nil && ruling.Decision != authority.RulingAllow {
+			mode := p.GetMode()
+			if mode == ModeMonitor {
+				if p.AuditEmitter != nil {
+					_, _ = p.AuditEmitter.Emit(
+						sess.ID,
+						sess.TrajectoryID,
+						callHash,
+						toolName,
+						"would-block",
+						[]string{ruling.Reason},
+						1,
+					)
+				}
+				log.Printf("[KYRON MONITOR MODE] Tool '%s' restricted (%s). Permitting in monitor mode.", toolName, ruling.Reason)
+			} else {
+				remediation := &StructuredRemediation{
+					Tool:          toolName,
+					State:         "restricted",
+					RiskScore:     0.7,
+					RiskReasons:   []string{ruling.Reason},
+					Remediation:   "Obtain a signed capability lease from the Kyron Authority Service.",
+					EscalationURL: ruling.EscalationURL,
+				}
+				if remediation.EscalationURL == "" {
+					remediation.EscalationURL = fmt.Sprintf("http://localhost:8001/v1/approvals/%s", sess.ID)
+				}
+
+				if p.AuditEmitter != nil {
+					_, _ = p.AuditEmitter.Emit(
+						sess.ID,
+						sess.TrajectoryID,
+						callHash,
+						toolName,
+						"block",
+						[]string{ruling.Reason},
+						1,
+					)
+				}
+
+				return NewErrorResponse(
+					msg.ID,
+					ErrCodePolicyBlocked,
+					fmt.Sprintf("Authority restriction: Tool '%s' requires a valid capability lease: %s", toolName, ruling.Reason),
+					remediation,
+				), nil
+			}
 		}
 	}
+
+	// Stage 4b Check: Policy verification & Registry Firewall
+	if exists && (reg.State == "quarantined" || reg.State == "blocked" || reg.State == "revoked") {
+		// If an active capability lease was provided and validated, permit single authorized execution
+		var leasePermitted bool
+		if auth != nil && leaseID != "" {
+			ruling, _ := auth.EvaluateCall(sess.ID, sess.TrajectoryID, toolName, callHash, leaseID)
+			if ruling != nil && ruling.Decision == authority.RulingAllow {
+				leasePermitted = true
+			}
+		}
+
+		if !leasePermitted {
+			mode := p.GetMode()
+			if mode == ModeMonitor {
+				// Non-breaking monitor mode (F32):
+				// Emit "would-block" telemetry event and continue execution without breaking live workflows
+				if p.AuditEmitter != nil {
+					_, _ = p.AuditEmitter.Emit(
+						sess.ID,
+						sess.TrajectoryID,
+						callHash,
+						toolName,
+						"would-block",
+						reg.RiskReasons,
+						1,
+					)
+				}
+				log.Printf("[KYRON MONITOR MODE] Tool '%s' triggered would-block policy violation (%v). Permitting execution without breaking workflow.", toolName, reg.RiskReasons)
+			} else {
+				// Enforce mode: block deterministically
+				remediation := &StructuredRemediation{
+					Tool:          toolName,
+					State:         reg.State,
+					RiskScore:     reg.RiskScore,
+					RiskReasons:   reg.RiskReasons,
+					Remediation:   "Request human approval in Kyron SOC console or substitute with an approved tool.",
+					EscalationURL: fmt.Sprintf("http://localhost:8001/v1/approvals/%s", sess.ID),
+				}
+
+				if p.AuditEmitter != nil {
+					_, _ = p.AuditEmitter.Emit(
+						sess.ID,
+						sess.TrajectoryID,
+						callHash,
+						toolName,
+						"block",
+						reg.RiskReasons,
+						1,
+					)
+				}
+
+				return NewErrorResponse(
+					msg.ID,
+					ErrCodePolicyBlocked,
+					fmt.Sprintf("Policy violation: Tool '%s' is %s and not permitted for execution.", toolName, reg.State),
+					remediation,
+				), nil
+			}
+		}
+	}
+
 
 	if p.Backend == nil {
 		return NewErrorResponse(msg.ID, ErrCodeInternal, "no backend MCP server configured", nil), nil

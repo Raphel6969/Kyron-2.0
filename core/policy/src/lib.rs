@@ -61,9 +61,39 @@ impl PolicyEngine {
             };
         }
 
-        // Rule 3: Capability lease validation (if required)
+        // Rule 3: Capability lease validation (if required or provided)
         if let Some(lease) = active_lease {
-            if lease.calls_used >= lease.max_calls {
+            if lease.trajectory_id != ctx.trajectory_id {
+                return Verdict::Block {
+                    reasons: vec![format!(
+                        "Capability lease '{}' is bound to trajectory '{}', but call was made in trajectory '{}'.",
+                        lease.id, lease.trajectory_id, ctx.trajectory_id
+                    )],
+                    recovery_plan: Some("Obtain capability lease for active trajectory.".into()),
+                };
+            }
+
+            if lease.action != "*" && lease.action != ctx.tool_id {
+                return Verdict::Block {
+                    reasons: vec![format!(
+                        "Capability lease '{}' is scoped to action '{}', not requested tool '{}'.",
+                        lease.id, lease.action, ctx.tool_id
+                    )],
+                    recovery_plan: Some("Request capability lease scoped to the target action.".into()),
+                };
+            }
+
+            if lease.is_expired(chrono::Utc::now()) {
+                return Verdict::Block {
+                    reasons: vec![format!(
+                        "Capability lease '{}' expired at {}.",
+                        lease.id, lease.expires_at
+                    )],
+                    recovery_plan: Some("Request lease renewal from authority service.".into()),
+                };
+            }
+
+            if lease.is_exhausted() {
                 return Verdict::Block {
                     reasons: vec![format!(
                         "Capability lease '{}' exhausted ({} of {} calls used).",
@@ -73,6 +103,7 @@ impl PolicyEngine {
                 };
             }
         }
+
 
         // Rule 4: Contract trust floor check
         if let Some(c) = contract {
@@ -211,4 +242,99 @@ mod tests {
             _ => panic!("Expected block on egress budget exceeded"),
         }
     }
+
+    #[test]
+    fn test_capability_lease_validation() {
+        let engine = PolicyEngine::new(PolicyMode::Enforce);
+        let ctx = CallContext {
+            session_id: "s1".into(),
+            trajectory_id: "traj-alpha".into(),
+            tool_id: "system:admin_exec".into(),
+            arguments_json: "{}".into(),
+            caller_label: Label::new(vec!["agent".into()], 50),
+            cumulative_bytes_out: 100,
+        };
+
+        let tool = PinnedTool {
+            id: "system:admin_exec".into(),
+            server_id: "system".into(),
+            name: "admin_exec".into(),
+            hash: "abc123".into(),
+            risk_score: 0.8,
+            risk_reasons: vec![],
+            approver: Some("sec-admin".into()),
+            signature: None,
+            model_facing_description: "Admin tool".into(),
+            original_description: "Admin tool".into(),
+            state: ToolState::Approved,
+            approved_at: Some(Utc::now()),
+        };
+
+        let budget = Budget {
+            max_child_branches: 3,
+            max_recovery_steps: 5,
+            max_authority_requests: 4,
+            max_delegation_depth: 2,
+            egress_bytes_per_trajectory: 512000,
+        };
+
+        // 1. Valid Lease
+        let valid_lease = Lease {
+            id: "lease-1".into(),
+            trajectory_id: "traj-alpha".into(),
+            action: "system:admin_exec".into(),
+            recipient_group: vec!["agent".into()],
+            max_calls: 1,
+            calls_used: 0,
+            ttl_seconds: 60,
+            policy_version: 1,
+            signature: "sig".into(),
+            expires_at: Utc::now() + chrono::Duration::seconds(60),
+        };
+        assert_eq!(
+            engine.evaluate(&ctx, &tool, None, Some(&valid_lease), &budget),
+            Verdict::Allow
+        );
+
+        // 2. Trajectory mismatch
+        let mut traj_mismatch = valid_lease.clone();
+        traj_mismatch.trajectory_id = "traj-beta".into();
+        match engine.evaluate(&ctx, &tool, None, Some(&traj_mismatch), &budget) {
+            Verdict::Block { reasons, .. } => {
+                assert!(reasons[0].contains("bound to trajectory 'traj-beta'"));
+            }
+            _ => panic!("Expected trajectory mismatch block"),
+        }
+
+        // 3. Action mismatch
+        let mut action_mismatch = valid_lease.clone();
+        action_mismatch.action = "system:read_only".into();
+        match engine.evaluate(&ctx, &tool, None, Some(&action_mismatch), &budget) {
+            Verdict::Block { reasons, .. } => {
+                assert!(reasons[0].contains("scoped to action 'system:read_only'"));
+            }
+            _ => panic!("Expected action mismatch block"),
+        }
+
+        // 4. Exhausted lease
+        let mut exhausted_lease = valid_lease.clone();
+        exhausted_lease.calls_used = 1;
+        match engine.evaluate(&ctx, &tool, None, Some(&exhausted_lease), &budget) {
+            Verdict::Block { reasons, .. } => {
+                assert!(reasons[0].contains("exhausted"));
+            }
+            _ => panic!("Expected exhausted lease block"),
+        }
+
+        // 5. Expired lease
+        let mut expired_lease = valid_lease.clone();
+        expired_lease.expires_at = Utc::now() - chrono::Duration::seconds(10);
+        match engine.evaluate(&ctx, &tool, None, Some(&expired_lease), &budget) {
+            Verdict::Block { reasons, .. } => {
+                assert!(reasons[0].contains("expired"));
+            }
+            _ => panic!("Expected expired lease block"),
+        }
+    }
 }
+

@@ -237,3 +237,91 @@ func TestMonitorModeShadowEvaluation(t *testing.T) {
 	}
 }
 
+func TestProxyCapabilityLeaseAuthorization(t *testing.T) {
+	registry := NewToolRegistry()
+	secretsBroker := secrets.NewBroker()
+	auditEmitter, err := audit.NewEmitter()
+	if err != nil {
+		t.Fatalf("failed to create audit emitter: %v", err)
+	}
+
+	backend := &mockBackend{
+		tools: []Tool{
+			{Name: "execute_root", Description: "Privileged execution"},
+		},
+	}
+
+	registry.RegisterTool(&RegisteredTool{
+		ServerID:               "srv1",
+		Name:                   "execute_root",
+		State:                  "approved",
+		RiskScore:              0.8,
+		ModelFacingDescription: "Privileged execution tool",
+	})
+
+	proxy := NewProxy(registry, secretsBroker, auditEmitter, backend)
+	auth := proxy.GetAuthority()
+	auth.RequireLease("execute_root")
+
+	sm := NewSessionManager()
+	sess := sm.CreateSession("agent-with-lease", "1.0")
+
+	// 1. Call without lease -> must be blocked
+	callMsg := &JSONRPCMessage{
+		JSONRPC: "2.0",
+		ID:      20,
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"execute_root","arguments":{}}`),
+	}
+
+	resp, err := proxy.HandleMessage(sess, callMsg)
+	if err != nil || resp.Error == nil {
+		t.Fatalf("expected call to be blocked without lease, got resp=%+v, err=%v", resp, err)
+	}
+	if !strings.Contains(resp.Error.Message, "requires a valid capability lease") {
+		t.Fatalf("unexpected error message: %s", resp.Error.Message)
+	}
+
+	// 2. Issue a 1-time capability lease
+	lease, err := auth.IssueLease(sess.TrajectoryID, "execute_root", 1, 60, []string{"agent"})
+	if err != nil {
+		t.Fatalf("failed to issue lease: %v", err)
+	}
+
+	// 3. Call with lease_id in parameters
+	callWithLeaseMsg := &JSONRPCMessage{
+		JSONRPC: "2.0",
+		ID:      21,
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"execute_root","arguments":{},"lease_id":"` + lease.ID + `"}`),
+	}
+
+	resp, err = proxy.HandleMessage(sess, callWithLeaseMsg)
+	if err != nil || resp.Error != nil {
+		t.Fatalf("expected call with valid lease to succeed, got resp=%+v, err=%v", resp, err)
+	}
+
+	// 4. Second call with same lease must fail because max_calls (1) is exhausted
+	resp, err = proxy.HandleMessage(sess, callWithLeaseMsg)
+	if err != nil || resp.Error == nil {
+		t.Fatalf("expected second call with exhausted lease to be blocked, got resp=%+v", resp)
+	}
+
+	// 5. Test session attached lease
+	lease2, _ := auth.IssueLease(sess.TrajectoryID, "execute_root", 1, 60, []string{"agent"})
+	sess.AttachLease("execute_root", lease2.ID)
+
+	callAttachedMsg := &JSONRPCMessage{
+		JSONRPC: "2.0",
+		ID:      22,
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"execute_root","arguments":{}}`),
+	}
+
+	resp, err = proxy.HandleMessage(sess, callAttachedMsg)
+	if err != nil || resp.Error != nil {
+		t.Fatalf("expected call with session attached lease to succeed, got resp=%+v, err=%v", resp, err)
+	}
+}
+
+

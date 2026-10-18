@@ -91,6 +91,114 @@ pub struct Lease {
     pub expires_at: DateTime<Utc>,
 }
 
+impl Lease {
+    /// Formats the canonical message payload for signing and verification
+    pub fn canonical_payload(
+        id: &str,
+        trajectory_id: &str,
+        action: &str,
+        max_calls: u32,
+        policy_version: u32,
+        expires_at_unix: i64,
+    ) -> String {
+        format!(
+            "{}:{}:{}:{}:{}:{}",
+            id, trajectory_id, action, max_calls, policy_version, expires_at_unix
+        )
+    }
+
+    /// Creates and signs a new Capability Lease using an Ed25519 signing key
+    pub fn new(
+        id: String,
+        trajectory_id: String,
+        action: String,
+        recipient_group: Vec<Principal>,
+        max_calls: u32,
+        ttl_seconds: u32,
+        policy_version: u32,
+        signing_key: &ed25519_dalek::SigningKey,
+    ) -> Self {
+        use chrono::Duration;
+        use ed25519_dalek::Signer;
+
+        let expires_at = Utc::now() + Duration::seconds(ttl_seconds as i64);
+        let canonical = Self::canonical_payload(
+            &id,
+            &trajectory_id,
+            &action,
+            max_calls,
+            policy_version,
+            expires_at.timestamp(),
+        );
+        let sig = signing_key.sign(canonical.as_bytes());
+        let signature = hex::encode(sig.to_bytes());
+
+        Self {
+            id,
+            trajectory_id,
+            action,
+            recipient_group,
+            max_calls,
+            calls_used: 0,
+            ttl_seconds,
+            policy_version,
+            signature,
+            expires_at,
+        }
+    }
+
+    /// Verifies the cryptographic signature of the lease
+    pub fn verify_signature(&self, verifying_key: &ed25519_dalek::VerifyingKey) -> Result<(), String> {
+        use ed25519_dalek::Verifier;
+
+        let sig_bytes = hex::decode(&self.signature)
+            .map_err(|e| format!("Invalid signature hex: {}", e))?;
+        let sig = ed25519_dalek::Signature::from_slice(&sig_bytes)
+            .map_err(|e| format!("Invalid signature format: {}", e))?;
+        let canonical = Self::canonical_payload(
+            &self.id,
+            &self.trajectory_id,
+            &self.action,
+            self.max_calls,
+            self.policy_version,
+            self.expires_at.timestamp(),
+        );
+
+        verifying_key
+            .verify(canonical.as_bytes(), &sig)
+            .map_err(|e| format!("Lease signature verification failed: {}", e))
+    }
+
+    /// Checks if the lease has expired based on current time
+    pub fn is_expired(&self, now: DateTime<Utc>) -> bool {
+        now >= self.expires_at
+    }
+
+    /// Checks if all allowed invocations have been used
+    pub fn is_exhausted(&self) -> bool {
+        self.calls_used >= self.max_calls
+    }
+
+    /// Consumes one invocation from the lease if valid and unexpired
+    pub fn consume(&mut self, now: DateTime<Utc>) -> Result<u32, String> {
+        if self.is_expired(now) {
+            return Err(format!(
+                "Capability lease '{}' expired at {}",
+                self.id, self.expires_at
+            ));
+        }
+        if self.is_exhausted() {
+            return Err(format!(
+                "Capability lease '{}' exhausted ({} of {} calls used)",
+                self.id, self.calls_used, self.max_calls
+            ));
+        }
+        self.calls_used += 1;
+        Ok(self.calls_used)
+    }
+}
+
+
 /// Recorded side effect outcome
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -192,4 +300,70 @@ pub struct ModelJudgeVerdict {
     pub rationale: String,
     pub flagged_spans: Vec<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Duration, Utc};
+    use ed25519_dalek::SigningKey;
+
+    #[test]
+    fn test_lease_signing_and_verification() {
+        let signing_key = SigningKey::from_bytes(&[55u8; 32]);
+        let verifying_key = signing_key.verifying_key();
+
+        let lease = Lease::new(
+            "lease-test-1".into(),
+            "traj-100".into(),
+            "read_file".into(),
+            vec!["agent".into()],
+            1,
+            60,
+            1,
+            &signing_key,
+        );
+
+        assert_eq!(lease.calls_used, 0);
+        assert!(!lease.is_expired(Utc::now()));
+        assert!(!lease.is_exhausted());
+        assert!(lease.verify_signature(&verifying_key).is_ok());
+
+        // Tamper with action
+        let mut tampered = lease.clone();
+        tampered.action = "delete_file".into();
+        assert!(tampered.verify_signature(&verifying_key).is_err());
+    }
+
+    #[test]
+    fn test_lease_consumption_and_expiry() {
+        let signing_key = SigningKey::from_bytes(&[55u8; 32]);
+        let mut lease = Lease::new(
+            "lease-test-2".into(),
+            "traj-200".into(),
+            "execute_cmd".into(),
+            vec!["agent".into()],
+            2,
+            10,
+            1,
+            &signing_key,
+        );
+
+        let now = Utc::now();
+        assert_eq!(lease.consume(now).unwrap(), 1);
+        assert_eq!(lease.calls_used, 1);
+        assert!(!lease.is_exhausted());
+
+        assert_eq!(lease.consume(now).unwrap(), 2);
+        assert_eq!(lease.calls_used, 2);
+        assert!(lease.is_exhausted());
+
+        // Third call should fail (exhausted)
+        assert!(lease.consume(now).is_err());
+
+        // Test expired lease
+        let future = now + Duration::seconds(15);
+        assert!(lease.is_expired(future));
+    }
+}
+
 
