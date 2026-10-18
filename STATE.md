@@ -1,14 +1,14 @@
 # STATE
 phase: 0
-sub_task: 0.4
-status: IN_PROGRESS
-hours_used: 3.5
+sub_task: 0.5
+status: VERIFIED
+hours_used: 4.5
 hours_budget: 24
-last_verified_commit: c821739
+last_verified_commit: 0bf35fb
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 0.4: Custom Go MCP Protocol Gateway (C1) — Implement bidirectional JSON-RPC 2.0 stdio subprocess proxy + HTTP/SSE streaming, zero-alloc buffer pooling, dynamic tool projection, and session/trajectory tracking.
+Sub-task 0.5: In-Process OpenAPPA IFC Adapter (C4) — Implement contract translation layer isolating upstream RFC churn, algebraic label lattice combination (meet operator), prospective dispatch checks, and admission checks.
 
 ## IN FLIGHT
-Sub-task 0.4: Custom Go MCP Protocol Gateway (C1) — Expanding gateway with full JSON-RPC 2.0 stdio subprocess proxy, SSE streaming handler, zero-alloc sync.Pool framing, dynamic tool projection (filtering unapproved tools & delivering canonical descriptions), and session trajectory tracking.
+—
