@@ -40,6 +40,10 @@ from control.app.schemas import (
     ApprovalCreateRequest,
     ApprovalDecisionRequest,
     ApprovalResponse,
+    ResourceBindRequest,
+    ResourceBindResponse,
+    ResourceVerifyRequest,
+    ResourceVerifyResponse,
     AuditEventCreate,
     AuditEventResponse,
     AuditExportResponse,
@@ -569,7 +573,18 @@ def approve_request(request_id: str, dec: ApprovalDecisionRequest, db: Session =
     if appr.tool_id:
         lease_id = f"lease-{uuid.uuid4().hex[:8]}"
         expires_at = now + timedelta(seconds=120)
-        sig = hashlib.sha256(f"{lease_id}:{appr.trajectory_id}:{appr.tool_id}".encode()).hexdigest()
+        constraints = {}
+        if appr.details and ("resource_path" in appr.details or "resource_binding" in appr.details):
+            if "resource_binding" in appr.details:
+                constraints["resource_binding"] = appr.details["resource_binding"]
+            else:
+                constraints["resource_binding"] = {
+                    "path": appr.details.get("resource_path"),
+                    "expected_hash": appr.details.get("expected_hash"),
+                    "algorithm": appr.details.get("algorithm", "sha256"),
+                }
+        sig_payload = f"{lease_id}:{appr.trajectory_id}:{appr.tool_id}:{json.dumps(constraints, sort_keys=True)}"
+        sig = hashlib.sha256(sig_payload.encode()).hexdigest()
         lease = LeaseModel(
             id=lease_id,
             trajectory_id=appr.trajectory_id,
@@ -581,6 +596,7 @@ def approve_request(request_id: str, dec: ApprovalDecisionRequest, db: Session =
             calls_used=0,
             created_at=now,
         )
+        lease.constraints = constraints
         db.add(lease)
 
     db.commit()
@@ -595,6 +611,40 @@ def approve_request(request_id: str, dec: ApprovalDecisionRequest, db: Session =
         decided_by=appr.decided_by,
         decided_at=appr.decided_at,
         created_at=appr.created_at,
+    )
+
+@app.post("/v1/resources/bind", response_model=ResourceBindResponse, tags=["Security"])
+def bind_resource(req: ResourceBindRequest):
+    """Cryptographically binds a resource path to a SHA-256 content hash (F26)"""
+    if req.expected_hash:
+        final_hash = req.expected_hash
+    elif req.content is not None:
+        final_hash = hashlib.sha256(req.content.encode("utf-8")).hexdigest()
+    else:
+        raise HTTPException(status_code=400, detail="Must provide either content or expected_hash")
+
+    return ResourceBindResponse(
+        path=req.path,
+        expected_hash=final_hash,
+        algorithm="sha256",
+        status="bound",
+    )
+
+@app.post("/v1/resources/verify", response_model=ResourceVerifyResponse, tags=["Security"])
+def verify_resource(req: ResourceVerifyRequest):
+    """Re-verifies resource content hash at execution time to defeat TOCTOU race conditions (S5)"""
+    current_hash = hashlib.sha256(req.current_content.encode("utf-8")).hexdigest()
+    if current_hash != req.expected_hash:
+        return ResourceVerifyResponse(
+            path=req.path,
+            match=False,
+            status="violation",
+            violation=f"TOCTOU race detected: expected hash {req.expected_hash}, actual {current_hash}",
+        )
+    return ResourceVerifyResponse(
+        path=req.path,
+        match=True,
+        status="verified",
     )
 
 @app.post("/v1/approvals/{request_id}/deny", response_model=ApprovalResponse, tags=["Approvals"])

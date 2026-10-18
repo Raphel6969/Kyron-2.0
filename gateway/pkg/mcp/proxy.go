@@ -386,6 +386,86 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 	}
 
 
+	// Stage 4c: TOCTOU Resource-Identity Binding Verification (F26, S5)
+	if auth != nil && leaseID != "" {
+		if activeLease, exists := auth.GetLease(leaseID); exists && activeLease.ResourceBinding != nil {
+			var toctouErr error
+			var targetPath string
+			var targetContent []byte
+
+			var argsMap map[string]interface{}
+			if len(params.Arguments) > 0 {
+				_ = json.Unmarshal(params.Arguments, &argsMap)
+			}
+
+			if argsMap != nil {
+				if p, ok := argsMap["path"].(string); ok && p != "" {
+					targetPath = p
+				} else if p, ok := argsMap["file"].(string); ok && p != "" {
+					targetPath = p
+				} else if p, ok := argsMap["filepath"].(string); ok && p != "" {
+					targetPath = p
+				} else if p, ok := argsMap["target"].(string); ok && p != "" {
+					targetPath = p
+				}
+
+				if c, ok := argsMap["content"].(string); ok {
+					targetContent = []byte(c)
+				}
+			}
+
+			if targetContent != nil {
+				toctouErr = activeLease.VerifyContentBytes(targetContent)
+			} else if targetPath != "" {
+				toctouErr = activeLease.VerifyFile(targetPath)
+			}
+
+			if toctouErr != nil {
+				mode := p.GetMode()
+				if mode == ModeMonitor {
+					if p.AuditEmitter != nil {
+						_, _ = p.AuditEmitter.Emit(
+							sess.ID,
+							sess.TrajectoryID,
+							callHash,
+							toolName,
+							"would-block",
+							[]string{fmt.Sprintf("TOCTOU race detected: %v", toctouErr)},
+							1,
+						)
+					}
+					log.Printf("[KYRON MONITOR MODE] Tool '%s' TOCTOU race detected (%v). Permitting in monitor mode.", toolName, toctouErr)
+				} else {
+					if p.AuditEmitter != nil {
+						_, _ = p.AuditEmitter.Emit(
+							sess.ID,
+							sess.TrajectoryID,
+							callHash,
+							toolName,
+							"block",
+							[]string{fmt.Sprintf("TOCTOU race detected: %v", toctouErr)},
+							1,
+						)
+					}
+					remediation := &StructuredRemediation{
+						Tool:        toolName,
+						State:       "blocked",
+						RiskScore:   1.0,
+						RiskReasons: []string{fmt.Sprintf("TOCTOU Violation (S5): %v", toctouErr)},
+						Remediation: "Resource content has mutated or swapped after approval was granted. Re-inspect resource and request a fresh capability lease.",
+						EscalationURL: fmt.Sprintf("http://localhost:8001/v1/approvals/%s", sess.ID),
+					}
+					return NewErrorResponse(
+						msg.ID,
+						ErrCodePolicyBlocked,
+						fmt.Sprintf("TOCTOU security violation: %v", toctouErr),
+						remediation,
+					), nil
+				}
+			}
+		}
+	}
+
 	if p.Backend == nil {
 		return NewErrorResponse(msg.ID, ErrCodeInternal, "no backend MCP server configured", nil), nil
 	}

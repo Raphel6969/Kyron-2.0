@@ -236,3 +236,40 @@ def test_reports_summary(client):
     rep = r.json()
     assert rep["total_tools"] >= 1
     assert "total_audit_events" in rep
+
+def test_resource_binding_and_toctou_verification(client):
+    # 1. Bind resource content to path
+    approved_content = "Monthly financial summary: all balances normal."
+    r_bind = client.post("/v1/resources/bind", json={
+        "path": "/tmp/financial_report.txt",
+        "content": approved_content,
+    })
+    assert r_bind.status_code == 200
+    bind_data = r_bind.json()
+    assert bind_data["path"] == "/tmp/financial_report.txt"
+    assert bind_data["status"] == "bound"
+    expected_hash = bind_data["expected_hash"]
+
+    # 2. Re-verify exact content (passes)
+    r_verify_ok = client.post("/v1/resources/verify", json={
+        "path": "/tmp/financial_report.txt",
+        "expected_hash": expected_hash,
+        "current_content": approved_content,
+    })
+    assert r_verify_ok.status_code == 200
+    assert r_verify_ok.json()["match"] is True
+    assert r_verify_ok.json()["status"] == "verified"
+
+    # 3. Re-verify mutated/swapped content (catches TOCTOU race)
+    swapped_content = "root:$6$xyz... (shadow password hashes)"
+    r_verify_fail = client.post("/v1/resources/verify", json={
+        "path": "/tmp/financial_report.txt",
+        "expected_hash": expected_hash,
+        "current_content": swapped_content,
+    })
+    assert r_verify_fail.status_code == 200
+    res_fail = r_verify_fail.json()
+    assert res_fail["match"] is False
+    assert res_fail["status"] == "violation"
+    assert "TOCTOU race detected" in res_fail["violation"]
+

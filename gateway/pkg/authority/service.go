@@ -145,6 +145,44 @@ func (s *Service) IssueLease(
 	return lease, nil
 }
 
+// IssueLeaseWithResource creates, signs, and registers a capability lease bound to a resource identity (F26)
+func (s *Service) IssueLeaseWithResource(
+	trajectoryID string,
+	action string,
+	maxCalls uint32,
+	ttlSeconds uint32,
+	recipientGroup []string,
+	resBinding *ResourceBinding,
+) (*Lease, error) {
+	randomBytes := make([]byte, 8)
+	if _, err := rand.Read(randomBytes); err != nil {
+		return nil, fmt.Errorf("failed to generate random lease id: %w", err)
+	}
+	leaseID := fmt.Sprintf("lease-%s", hex.EncodeToString(randomBytes))
+
+	s.mu.RLock()
+	policyVer := s.policyVersion
+	s.mu.RUnlock()
+
+	lease, err := NewLeaseWithResource(
+		leaseID,
+		trajectoryID,
+		action,
+		recipientGroup,
+		maxCalls,
+		ttlSeconds,
+		policyVer,
+		resBinding,
+		s.privKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	s.leases.Store(leaseID, lease)
+	return lease, nil
+}
+
 // StoreLease registers an externally issued or received lease
 func (s *Service) StoreLease(lease *Lease) {
 	s.leases.Store(lease.ID, lease)

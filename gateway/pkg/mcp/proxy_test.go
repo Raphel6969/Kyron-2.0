@@ -1,11 +1,14 @@
 package mcp
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"strings"
 	"testing"
 
 	"kyron.dev/gateway/pkg/audit"
+	"kyron.dev/gateway/pkg/authority"
 	"kyron.dev/gateway/pkg/secrets"
 )
 
@@ -321,6 +324,85 @@ func TestProxyCapabilityLeaseAuthorization(t *testing.T) {
 	resp, err = proxy.HandleMessage(sess, callAttachedMsg)
 	if err != nil || resp.Error != nil {
 		t.Fatalf("expected call with session attached lease to succeed, got resp=%+v, err=%v", resp, err)
+	}
+}
+
+func TestToolsCallTOCTOUResourceBindingVerification(t *testing.T) {
+	backend := &mockBackend{
+		tools: []Tool{
+			{Name: "inspect_file", Description: "Inspects file contents"},
+		},
+	}
+	registry := NewToolRegistry()
+	registry.RegisterTool(&RegisteredTool{
+		ServerID: "srv1",
+		Name:     "inspect_file",
+		State:    "approved",
+	})
+
+	auth, err := authority.NewService(nil, nil)
+	if err != nil {
+		t.Fatalf("failed to init authority: %v", err)
+	}
+	auth.RequireLease("inspect_file")
+
+	proxy := NewProxy(registry, nil, nil, backend)
+	proxy.SetAuthority(auth)
+	sm := NewSessionManager()
+	sess := sm.CreateSession("agent-toctou", "1.0")
+
+	approvedContent := []byte("Strictly approved financial record data")
+
+	hasher := sha256.New()
+	hasher.Write(approvedContent)
+	expectedHash := hex.EncodeToString(hasher.Sum(nil))
+
+	binding := &authority.ResourceBinding{
+		Path:         "/tmp/financial.txt",
+		ExpectedHash: expectedHash,
+		Algorithm:    "sha256",
+	}
+
+	lease1, err := auth.IssueLeaseWithResource(sess.TrajectoryID, "inspect_file", 1, 60, []string{"analyst"}, binding)
+	if err != nil {
+		t.Fatalf("failed to issue lease: %v", err)
+	}
+
+	// 1. Call with exact approved content passes
+	callOkMsg := &JSONRPCMessage{
+		JSONRPC: "2.0",
+		ID:      31,
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"inspect_file","arguments":{"path":"/tmp/financial.txt","content":"Strictly approved financial record data"},"lease_id":"` + lease1.ID + `"}`),
+	}
+	resp, err := proxy.HandleMessage(sess, callOkMsg)
+	if err != nil || resp.Error != nil {
+		t.Fatalf("expected call with valid content to succeed, got resp=%+v, err=%v", resp, err)
+	}
+
+	// 2. Call with swapped/tampered content must trigger TOCTOU rejection (S5)
+	lease2, _ := auth.IssueLeaseWithResource(sess.TrajectoryID, "inspect_file", 1, 60, []string{"analyst"}, binding)
+	callTamperedMsg := &JSONRPCMessage{
+		JSONRPC: "2.0",
+		ID:      32,
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"inspect_file","arguments":{"path":"/tmp/financial.txt","content":"Malicious tampered record data"},"lease_id":"` + lease2.ID + `"}`),
+	}
+	resp, err = proxy.HandleMessage(sess, callTamperedMsg)
+	if err != nil {
+		t.Fatalf("unexpected proxy error: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("expected TOCTOU error response for swapped content, got success")
+	}
+	if resp.Error.Code != ErrCodePolicyBlocked {
+		t.Errorf("expected error code %d, got %d", ErrCodePolicyBlocked, resp.Error.Code)
+	}
+	if !strings.Contains(resp.Error.Message, "TOCTOU security violation") {
+		t.Errorf("expected error message to explain TOCTOU violation, got %s", resp.Error.Message)
+	}
+	if resp.Error.Data == nil || resp.Error.Data.RiskScore != 1.0 {
+		t.Errorf("expected risk score 1.0 for TOCTOU violation, got %+v", resp.Error.Data)
 	}
 }
 

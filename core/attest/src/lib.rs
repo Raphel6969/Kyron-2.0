@@ -11,6 +11,9 @@ pub use sandbox::{
     ContractConformanceReport, ContractViolation, SandboxAttestation, SyscallOp, SyscallTraceEvent,
 };
 
+pub mod toctou;
+pub use toctou::{ResourceBinding, ToctouViolation};
+
 pub const GENESIS_HASH: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 
 #[derive(Debug, Clone, PartialEq, Eq)]

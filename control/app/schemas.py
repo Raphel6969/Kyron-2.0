@@ -106,12 +106,35 @@ class LeaseResponse(BaseModel):
     id: str
     trajectory_id: str
     action_spec: str
+    constraints: Optional[Dict[str, Any]] = None
     policy_version: int
     signature: str
     expires_at: datetime
     calls_used: int
     max_calls: int
     created_at: datetime
+
+class ResourceBindRequest(BaseModel):
+    path: str
+    content: Optional[str] = None
+    expected_hash: Optional[str] = None
+
+class ResourceBindResponse(BaseModel):
+    path: str
+    expected_hash: str
+    algorithm: str = "sha256"
+    status: str = "bound"
+
+class ResourceVerifyRequest(BaseModel):
+    path: str
+    expected_hash: str
+    current_content: str
+
+class ResourceVerifyResponse(BaseModel):
+    path: str
+    match: bool
+    status: str
+    violation: Optional[str] = None
 
 class ApprovalCreateRequest(BaseModel):
     trajectory_id: str

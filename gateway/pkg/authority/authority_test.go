@@ -3,6 +3,9 @@ package authority
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -183,5 +186,80 @@ func TestAuthorityServiceRulingPipeline(t *testing.T) {
 	ruling, err = svc.EvaluateCall("sess-1", "traj-1", "execute_sql", "hash6", wildcardLease.ID)
 	if err != nil || ruling.Decision != RulingAllow {
 		t.Fatalf("expected allow with wildcard lease, got ruling=%+v, err=%v", ruling, err)
+	}
+}
+
+func TestLeaseResourceBindingTOCTOU(t *testing.T) {
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("failed to generate key: %v", err)
+	}
+
+	approvedContent := []byte("Monthly financial summary: all balances normal.")
+	swappedContent := []byte("root:$6$xyz... (shadow password hashes)")
+
+	hasher := sha256.New()
+	hasher.Write(approvedContent)
+	expectedHash := hex.EncodeToString(hasher.Sum(nil))
+
+	resBinding := &ResourceBinding{
+		Path:         "/tmp/report.txt",
+		ExpectedHash: expectedHash,
+		Algorithm:    "sha256",
+	}
+
+	lease, err := NewLeaseWithResource(
+		"lease-toctou-01",
+		"traj-toctou",
+		"inspect_file",
+		[]string{"auditor"},
+		1,
+		60,
+		1,
+		resBinding,
+		priv,
+	)
+	if err != nil {
+		t.Fatalf("failed to create lease with resource: %v", err)
+	}
+
+	// 1. Signature verifies
+	if err := lease.Verify(pub); err != nil {
+		t.Fatalf("expected valid signature, got: %v", err)
+	}
+
+	// 2. Exact approved content passes TOCTOU verification
+	if err := lease.VerifyContentBytes(approvedContent); err != nil {
+		t.Fatalf("expected approved content to pass, got: %v", err)
+	}
+
+	// 3. Swapped malicious content triggers TOCTOU mismatch (S5)
+	err = lease.VerifyContentBytes(swappedContent)
+	if err == nil {
+		t.Fatal("expected TOCTOU mismatch error for swapped content")
+	}
+
+	// 4. File disk verification test
+	tmpFile, err := os.CreateTemp("", "kyron_toctou_*.txt")
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err := tmpFile.Write(approvedContent); err != nil {
+		t.Fatalf("failed to write temp file: %v", err)
+	}
+	tmpFile.Close()
+
+	if err := lease.VerifyFile(tmpFile.Name()); err != nil {
+		t.Fatalf("expected disk file to pass verification, got: %v", err)
+	}
+
+	// Tamper disk file
+	if err := os.WriteFile(tmpFile.Name(), swappedContent, 0644); err != nil {
+		t.Fatalf("failed to tamper temp file: %v", err)
+	}
+	if err := lease.VerifyFile(tmpFile.Name()); err == nil {
+		t.Fatal("expected TOCTOU mismatch on tampered disk file")
 	}
 }
