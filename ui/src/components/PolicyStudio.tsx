@@ -96,11 +96,13 @@ ttl_seconds = 600
         )}
 
         {/* Policy Selector Tabs */}
-        <div className="flex items-center gap-2 mb-4 font-mono text-xs">
+        <div className="flex items-center gap-2 mb-4 font-mono text-xs" role="group" aria-label="Select active policy">
           {['enterprise-strict', 'developer-sandbox', 'pci-compliance'].map((p) => (
             <button
               key={p}
+              type="button"
               onClick={() => setActivePolicy(p)}
+              aria-pressed={activePolicy === p}
               className={`px-3 py-1.5 rounded border transition-colors ${
                 activePolicy === p
                   ? 'bg-neutral-border text-gray-100 border-neutral-muted'

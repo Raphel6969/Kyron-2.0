@@ -56,11 +56,10 @@ func (tr *ToolRegistry) AllTools() []*RegisteredTool {
 	return list
 }
 
-
 // ProjectTools applies Dynamic Tool Projection (F19, F03, F04) to a list of raw tools.
-// - Filters out quarantined, blocked, or revoked tools so they are invisible to the model.
-// - Rewrites raw descriptions with TRUSTDESC canonical descriptions so the model is insulated
-//   from prompt injection in tool metadata.
+//   - Filters out quarantined, blocked, or revoked tools so they are invisible to the model.
+//   - Rewrites raw descriptions with TRUSTDESC canonical descriptions so the model is insulated
+//     from prompt injection in tool metadata.
 func (tr *ToolRegistry) ProjectTools(rawTools []Tool) []Tool {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()

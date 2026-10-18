@@ -6,6 +6,7 @@ interface MetricsBarProps {
   approvedCount: number;
   activeLeasesCount: number;
   attacksBlockedCount: number;
+  impactLoading: boolean;
 }
 
 export const MetricsBar: React.FC<MetricsBarProps> = ({
@@ -13,6 +14,7 @@ export const MetricsBar: React.FC<MetricsBarProps> = ({
   approvedCount,
   activeLeasesCount,
   attacksBlockedCount,
+  impactLoading,
 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -38,8 +40,11 @@ export const MetricsBar: React.FC<MetricsBarProps> = ({
 
       <div className="motion-stagger-3 bg-surface-raised border border-neutral-border p-4 rounded-lg flex items-center justify-between transition-colors hover:border-neutral-muted">
         <div>
-          <span className="text-xs uppercase tracking-wider text-neutral-muted block mb-1">Active Leases</span>
-          <span className="text-2xl font-bold font-mono text-accent">{activeLeasesCount}</span>
+          <span className="text-xs uppercase tracking-wider text-neutral-muted block mb-1">Blocked Calls</span>
+          <span className="text-2xl font-bold font-mono text-accent" aria-live="polite">
+            {impactLoading ? '—' : attacksBlockedCount}
+          </span>
+          <span className="block text-[10px] text-neutral-muted mt-1">{activeLeasesCount} active leases</span>
         </div>
         <div className="p-2.5 bg-surface-base border border-neutral-border rounded text-accent">
           <Lock className="w-5 h-5" />

@@ -405,5 +405,3 @@ func TestToolsCallTOCTOUResourceBindingVerification(t *testing.T) {
 		t.Errorf("expected risk score 1.0 for TOCTOU violation, got %+v", resp.Error.Data)
 	}
 }
-
-

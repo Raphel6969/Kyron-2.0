@@ -14,11 +14,11 @@ type ReloadHook func(oldBundle, newBundle *PolicyBundle)
 
 // Manager manages declarative TOML policy bundles with lockless atomic hot-reloading (C3, F35)
 type Manager struct {
-	active     atomic.Pointer[PolicyBundle]
-	filePath   string
-	hooks      []ReloadHook
-	mu         sync.Mutex // guards hooks and reload orchestration
-	authority  *authority.Service
+	active    atomic.Pointer[PolicyBundle]
+	filePath  string
+	hooks     []ReloadHook
+	mu        sync.Mutex // guards hooks and reload orchestration
+	authority *authority.Service
 }
 
 // NewManager creates a new policy manager initialized with an optional initial bundle

@@ -61,20 +61,20 @@ impl PinningEngine {
         let scan_result = scanner.scan(name, original_description, schema_json);
 
         // Derive functional summary from tool name
-        let functional_verb = if name.starts_with("get_") {
-            format!("Retrieves {}", &name[4..].replace('_', " "))
-        } else if name.starts_with("fetch_") {
-            format!("Fetches {}", &name[6..].replace('_', " "))
-        } else if name.starts_with("read_") {
-            format!("Reads {}", &name[5..].replace('_', " "))
-        } else if name.starts_with("list_") {
-            format!("Lists {}", &name[5..].replace('_', " "))
-        } else if name.starts_with("search_") {
-            format!("Searches {}", &name[7..].replace('_', " "))
-        } else if name.starts_with("send_") {
-            format!("Sends {}", &name[5..].replace('_', " "))
-        } else if name.starts_with("execute_") {
-            format!("Executes {}", &name[8..].replace('_', " "))
+        let functional_verb = if let Some(rest) = name.strip_prefix("get_") {
+            format!("Retrieves {}", rest.replace('_', " "))
+        } else if let Some(rest) = name.strip_prefix("fetch_") {
+            format!("Fetches {}", rest.replace('_', " "))
+        } else if let Some(rest) = name.strip_prefix("read_") {
+            format!("Reads {}", rest.replace('_', " "))
+        } else if let Some(rest) = name.strip_prefix("list_") {
+            format!("Lists {}", rest.replace('_', " "))
+        } else if let Some(rest) = name.strip_prefix("search_") {
+            format!("Searches {}", rest.replace('_', " "))
+        } else if let Some(rest) = name.strip_prefix("send_") {
+            format!("Sends {}", rest.replace('_', " "))
+        } else if let Some(rest) = name.strip_prefix("execute_") {
+            format!("Executes {}", rest.replace('_', " "))
         } else {
             format!("Executes tool '{}'", name)
         };
@@ -82,7 +82,7 @@ impl PinningEngine {
         // If the original description is completely clean (risk < 0.25), we can preserve its first clean declarative sentence
         let base_summary = if scan_result.risk_score < 0.25 {
             let first_sentence = original_description
-                .split(|c| c == '.' || c == '\n')
+                .split(['.', '\n'])
                 .next()
                 .unwrap_or(original_description)
                 .trim();

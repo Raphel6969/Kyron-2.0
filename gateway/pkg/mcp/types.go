@@ -49,11 +49,10 @@ type StructuredRemediation struct {
 	EscalationURL    string   `json:"escalation_url,omitempty"`
 }
 
-
 // ClientCapabilities declared during initialize
 type ClientCapabilities struct {
-	Roots        *RootsCapability        `json:"roots,omitempty"`
-	Sampling     *SamplingCapability     `json:"sampling,omitempty"`
+	Roots        *RootsCapability       `json:"roots,omitempty"`
+	Sampling     *SamplingCapability    `json:"sampling,omitempty"`
 	Experimental map[string]interface{} `json:"experimental,omitempty"`
 }
 
@@ -65,10 +64,10 @@ type SamplingCapability struct{}
 
 // ServerCapabilities declared by Kyron Gateway
 type ServerCapabilities struct {
-	Tools        *ToolsCapability        `json:"tools,omitempty"`
-	Resources    *ResourcesCapability    `json:"resources,omitempty"`
-	Prompts      *PromptsCapability      `json:"prompts,omitempty"`
-	Logging      *LoggingCapability      `json:"logging,omitempty"`
+	Tools        *ToolsCapability       `json:"tools,omitempty"`
+	Resources    *ResourcesCapability   `json:"resources,omitempty"`
+	Prompts      *PromptsCapability     `json:"prompts,omitempty"`
+	Logging      *LoggingCapability     `json:"logging,omitempty"`
 	Experimental map[string]interface{} `json:"experimental,omitempty"`
 }
 

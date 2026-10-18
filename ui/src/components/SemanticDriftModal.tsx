@@ -27,8 +27,8 @@ export const SemanticDriftModal: React.FC<SemanticDriftModalProps> = ({
   if (!isOpen || !diff) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-surface-raised border border-neutral-border rounded-xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" role="presentation">
+      <div className="bg-surface-raised border border-neutral-border rounded-xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh]" role="dialog" aria-modal="true" aria-labelledby="drift-dialog-title">
         {/* Header */}
         <div className="p-5 border-b border-neutral-border flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -36,7 +36,7 @@ export const SemanticDriftModal: React.FC<SemanticDriftModalProps> = ({
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
+               <h2 id="drift-dialog-title" className="text-lg font-semibold text-gray-100 flex items-center gap-2">
                 Semantic Drift Inspection: <span className="font-mono text-accent">{diff.tool_id}</span>
               </h2>
               <p className="text-xs text-neutral-muted">

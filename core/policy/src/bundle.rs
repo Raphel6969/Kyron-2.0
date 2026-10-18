@@ -153,12 +153,9 @@ impl PolicyBundle {
 
     /// Resolves the first matching tool rule for a given tool name
     pub fn resolve_tool_rule(&self, tool_name: &str) -> Option<&ToolPolicyRule> {
-        for rule in &self.tools {
-            if match_pattern(&rule.pattern, tool_name) {
-                return Some(rule);
-            }
-        }
-        None
+        self.tools
+            .iter()
+            .find(|rule| match_pattern(&rule.pattern, tool_name))
     }
 
     /// Evaluates if an egress host is allowed under this policy

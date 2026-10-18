@@ -23,7 +23,6 @@ type Session struct {
 	Metadata      map[string]interface{}
 }
 
-
 // NextSequence increments and returns the monotonically increasing sequence number
 func (s *Session) NextSequence() uint64 {
 	return atomic.AddUint64(&s.Sequence, 1)
@@ -114,7 +113,6 @@ func (sm *SessionManager) CreateSession(clientName, clientVersion string) *Sessi
 		ActiveLeases:  make(map[string]string),
 		Metadata:      make(map[string]interface{}),
 	}
-
 
 	sm.sessions[sessionID] = sess
 	return sess

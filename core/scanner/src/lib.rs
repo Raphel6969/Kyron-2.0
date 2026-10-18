@@ -329,8 +329,6 @@ impl ToolScanner {
         let risk_score = score.min(1.0);
         let recommended_state = if risk_score >= 0.60 {
             ToolState::Quarantined
-        } else if risk_score >= 0.25 {
-            ToolState::Scanned
         } else {
             ToolState::Scanned
         };

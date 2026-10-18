@@ -14,7 +14,6 @@ import (
 	"kyron.dev/gateway/pkg/secrets"
 )
 
-
 // EnforcementMode controls whether policy violations are blocked or monitored in shadow mode (F32)
 type EnforcementMode string
 
@@ -56,7 +55,6 @@ func NewProxy(reg *ToolRegistry, sb *secrets.Broker, ae *audit.Emitter, backend 
 		Mode:          ModeEnforce,
 	}
 }
-
 
 // SetAuthority attaches an authority service to the proxy
 func (p *Proxy) SetAuthority(auth *authority.Service) {
@@ -104,7 +102,6 @@ func (p *Proxy) GetPolicyManager() *policy.Manager {
 	defer p.mu.RUnlock()
 	return p.PolicyManager
 }
-
 
 // SetMode toggles between blocking enforcement and non-breaking shadow monitor mode
 func (p *Proxy) SetMode(m EnforcementMode) {
@@ -362,7 +359,6 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 					}
 				}
 
-
 				if p.AuditEmitter != nil {
 					_, _ = p.AuditEmitter.Emit(
 						sess.ID,
@@ -384,7 +380,6 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 			}
 		}
 	}
-
 
 	// Stage 4c: TOCTOU Resource-Identity Binding Verification (F26, S5)
 	if auth != nil && leaseID != "" {
@@ -448,11 +443,11 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 						)
 					}
 					remediation := &StructuredRemediation{
-						Tool:        toolName,
-						State:       "blocked",
-						RiskScore:   1.0,
-						RiskReasons: []string{fmt.Sprintf("TOCTOU Violation (S5): %v", toctouErr)},
-						Remediation: "Resource content has mutated or swapped after approval was granted. Re-inspect resource and request a fresh capability lease.",
+						Tool:          toolName,
+						State:         "blocked",
+						RiskScore:     1.0,
+						RiskReasons:   []string{fmt.Sprintf("TOCTOU Violation (S5): %v", toctouErr)},
+						Remediation:   "Resource content has mutated or swapped after approval was granted. Re-inspect resource and request a fresh capability lease.",
 						EscalationURL: fmt.Sprintf("http://localhost:8001/v1/approvals/%s", sess.ID),
 					}
 					return NewErrorResponse(

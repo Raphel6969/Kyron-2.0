@@ -16,11 +16,11 @@ import (
 
 // Default quotas for data sources
 const (
-	DefaultMaxBytesPerSource  = 1024 * 1024 // 1 MB
-	DefaultMaxCallsPerSource  = 50
-	DefaultMaxDestsPerSource  = 5
-	DefaultMaxRedirects       = 3
-	DefaultRequestTimeout     = 10 * time.Second
+	DefaultMaxBytesPerSource = 1024 * 1024 // 1 MB
+	DefaultMaxCallsPerSource = 50
+	DefaultMaxDestsPerSource = 5
+	DefaultMaxRedirects      = 3
+	DefaultRequestTimeout    = 10 * time.Second
 )
 
 // Private/Link-Local CIDRs blocked from egress (anti-SSRF and cloud metadata protection)
@@ -28,14 +28,14 @@ var blockedIPNets []*net.IPNet
 
 func init() {
 	cidrs := []string{
-		"127.0.0.0/8",          // Loopback
-		"10.0.0.0/8",           // Private RFC 1918
-		"172.16.0.0/12",        // Private RFC 1918
-		"192.168.0.0/16",       // Private RFC 1918
-		"169.254.0.0/16",       // Link-Local / Cloud Metadata (AWS/GCP/Azure)
-		"::1/128",              // IPv6 Loopback
-		"fc00::/7",             // IPv6 Unique Local
-		"fe80::/10",            // IPv6 Link-Local
+		"127.0.0.0/8",    // Loopback
+		"10.0.0.0/8",     // Private RFC 1918
+		"172.16.0.0/12",  // Private RFC 1918
+		"192.168.0.0/16", // Private RFC 1918
+		"169.254.0.0/16", // Link-Local / Cloud Metadata (AWS/GCP/Azure)
+		"::1/128",        // IPv6 Loopback
+		"fc00::/7",       // IPv6 Unique Local
+		"fe80::/10",      // IPv6 Link-Local
 	}
 	for _, cidr := range cidrs {
 		_, ipNet, err := net.ParseCIDR(cidr)

@@ -38,9 +38,9 @@ func init() {
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	resp := map[string]interface{}{
-		"status":         "healthy",
-		"service":        "kyron-gateway",
-		"uptime_seconds": int(time.Since(startTime).Seconds()),
+		"status":          "healthy",
+		"service":         "kyron-gateway",
+		"uptime_seconds":  int(time.Since(startTime).Seconds()),
 		"active_sessions": sessionManager.Count(),
 		"checks": map[string]string{
 			"egress_broker":  "ok",

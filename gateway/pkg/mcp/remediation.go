@@ -131,14 +131,14 @@ func (e *RemediationEngine) BuildLeaseRequiredRemediation(
 	}
 
 	return &StructuredRemediation{
-		ErrorCode:    CodeLeaseRequired,
-		Tool:         toolName,
-		State:        "restricted",
-		RiskScore:    0.7,
-		RiskReasons:  []string{reason},
-		RuleViolated: RuleCapabilityLease,
-		Remediation:  fmt.Sprintf("Tool '%s' requires an authenticated capability lease: %s", toolName, reason),
-		RecoveryPlan: recoveryPlan,
+		ErrorCode:     CodeLeaseRequired,
+		Tool:          toolName,
+		State:         "restricted",
+		RiskScore:     0.7,
+		RiskReasons:   []string{reason},
+		RuleViolated:  RuleCapabilityLease,
+		Remediation:   fmt.Sprintf("Tool '%s' requires an authenticated capability lease: %s", toolName, reason),
+		RecoveryPlan:  recoveryPlan,
 		EscalationURL: escalationURL,
 	}
 }
@@ -198,14 +198,14 @@ func (e *RemediationEngine) BuildEgressQuotaRemediation(
 	}
 
 	return &StructuredRemediation{
-		ErrorCode:    CodeEgressQuotaExceeded,
-		Tool:         toolName,
-		State:        "quota_exceeded",
-		RiskScore:    0.9,
-		RiskReasons:  []string{fmt.Sprintf("Cumulative trajectory egress limit exceeded: %d bytes used, max %d bytes allowed.", bytesUsed, maxAllowed)},
-		RuleViolated: RuleEgressBudget,
-		Remediation:  "Outbound network egress budget exceeded for current agent trajectory.",
-		RecoveryPlan: recoveryPlan,
+		ErrorCode:     CodeEgressQuotaExceeded,
+		Tool:          toolName,
+		State:         "quota_exceeded",
+		RiskScore:     0.9,
+		RiskReasons:   []string{fmt.Sprintf("Cumulative trajectory egress limit exceeded: %d bytes used, max %d bytes allowed.", bytesUsed, maxAllowed)},
+		RuleViolated:  RuleEgressBudget,
+		Remediation:   "Outbound network egress budget exceeded for current agent trajectory.",
+		RecoveryPlan:  recoveryPlan,
 		EscalationURL: escalationURL,
 	}
 }

@@ -136,12 +136,21 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
         </div>
       </div>
 
-      {/* Quick Navigation Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div
-          onClick={() => onNavigateTab('registry')}
-          className="bg-surface-raised border border-neutral-border p-4 rounded-lg cursor-pointer hover:border-neutral-muted transition-colors flex flex-col justify-between"
-        >
+       {/* Operator next steps */}
+       <div className="flex items-end justify-between gap-4">
+         <div>
+           <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-accent">Operator next steps</p>
+           <h2 className="text-base font-semibold text-gray-100">Move from posture to action</h2>
+         </div>
+         <p className="hidden sm:block text-xs text-neutral-muted">Prioritized views for the current workspace</p>
+       </div>
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+         <button
+           type="button"
+           onClick={() => onNavigateTab('registry')}
+           className="text-left bg-surface-raised border border-neutral-border p-4 rounded-lg hover:border-neutral-muted transition-colors flex flex-col justify-between"
+           aria-label="Open Tool Registry to inspect approved tools and quarantined threats"
+         >
           <div className="space-y-1 mb-4">
             <div className="flex items-center justify-between">
               <span className="font-mono text-xs text-gray-200 font-semibold">Tool Registry</span>
@@ -154,11 +163,13 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
           <div className="font-mono text-xs text-accent flex items-center gap-1">
             <span>Manage Registry</span>
           </div>
-        </div>
+         </button>
 
-        <div
-          onClick={() => onNavigateTab('approvals')}
-          className="bg-surface-raised border border-neutral-border p-4 rounded-lg cursor-pointer hover:border-neutral-muted transition-colors flex flex-col justify-between"
+         <button
+           type="button"
+           onClick={() => onNavigateTab('approvals')}
+           className="text-left bg-surface-raised border border-neutral-border p-4 rounded-lg hover:border-neutral-muted transition-colors flex flex-col justify-between"
+           aria-label="Open Authority Queue to review capability requests"
         >
           <div className="space-y-1 mb-4">
             <div className="flex items-center justify-between">
@@ -172,26 +183,28 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
           <div className="font-mono text-xs text-accent flex items-center gap-1">
             <span>Review Requests</span>
           </div>
-        </div>
+         </button>
 
-        <div
-          onClick={() => onNavigateTab('audit')}
-          className="bg-surface-raised border border-neutral-border p-4 rounded-lg cursor-pointer hover:border-neutral-muted transition-colors flex flex-col justify-between"
-        >
-          <div className="space-y-1 mb-4">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs text-gray-200 font-semibold">Cryptographic Trail</span>
-              <ArrowRight className="w-3.5 h-3.5 text-neutral-muted" />
-            </div>
-            <p className="text-xs text-neutral-muted">
-              {auditCount} hash-chained audit events with Ed25519 digital signatures complying with EU AI Act Article 50.
-            </p>
-          </div>
-          <div className="font-mono text-xs text-accent flex items-center gap-1">
-            <span>View Signatures</span>
-          </div>
+         <button
+           type="button"
+           onClick={() => onNavigateTab('audit')}
+           className="text-left bg-surface-raised border border-neutral-border p-4 rounded-lg hover:border-neutral-muted transition-colors flex flex-col justify-between"
+           aria-label="Open Cryptographic Trail to view signed audit events"
+          >
+           <div className="space-y-1 mb-4">
+             <div className="flex items-center justify-between">
+               <span className="font-mono text-xs text-gray-200 font-semibold">Cryptographic Trail</span>
+               <ArrowRight className="w-3.5 h-3.5 text-neutral-muted" />
+             </div>
+             <p className="text-xs text-neutral-muted">
+               {auditCount} hash-chained audit events with Ed25519 digital signatures complying with EU AI Act Article 50.
+             </p>
+           </div>
+           <div className="font-mono text-xs text-accent flex items-center gap-1">
+             <span>View Signatures</span>
+           </div>
+          </button>
         </div>
-      </div>
-    </div>
+   </div>
   );
 };

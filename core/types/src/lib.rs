@@ -108,6 +108,7 @@ impl Lease {
     }
 
     /// Creates and signs a new Capability Lease using an Ed25519 signing key
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: String,
         trajectory_id: String,
@@ -365,5 +366,4 @@ mod tests {
         assert!(lease.is_expired(future));
     }
 }
-
 

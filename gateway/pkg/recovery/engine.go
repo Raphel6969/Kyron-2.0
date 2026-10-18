@@ -11,12 +11,12 @@ import (
 
 // Standard Strategy Types (C5, F17)
 const (
-	StrategyAutoSubstitute  = "auto_substitute"
-	StrategyRebindAndIssue  = "rebind_and_reissue"
+	StrategyAutoSubstitute   = "auto_substitute"
+	StrategyRebindAndIssue   = "rebind_and_reissue"
 	StrategyChunkAndCompress = "chunk_and_compress"
-	StrategyRequestLease    = "request_lease"
-	StrategyIsolateMock     = "isolate_mock"
-	StrategyRetryBackoff    = "retry_with_backoff"
+	StrategyRequestLease     = "request_lease"
+	StrategyIsolateMock      = "isolate_mock"
+	StrategyRetryBackoff     = "retry_with_backoff"
 )
 
 // RecoveryPlan defines a precomputed, deterministic self-healing plan
@@ -90,10 +90,10 @@ func (e *Engine) seedStandardPlans() {
 
 	// 2. TOCTOU Resource Swap (S5) -> Re-read and re-bind capability lease
 	e.Memoize(&RecoveryPlan{
-		ToolID:        "inspect_file",
-		ErrorCode:     "KYRON_TOCTOU_MISMATCH",
-		Strategy:      StrategyRebindAndIssue,
-		PrimaryAction: "Target file content mutated post-approval. Re-read target and request fresh capability lease.",
+		ToolID:           "inspect_file",
+		ErrorCode:        "KYRON_TOCTOU_MISMATCH",
+		Strategy:         StrategyRebindAndIssue,
+		PrimaryAction:    "Target file content mutated post-approval. Re-read target and request fresh capability lease.",
 		AlternativeTools: []string{},
 		StepByStepGuide: []string{
 			"1. Abort tool dispatch to prevent symlink/file swap exploit.",

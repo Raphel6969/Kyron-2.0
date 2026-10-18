@@ -44,6 +44,7 @@ pub struct RecoveryPlan {
 }
 
 impl RecoveryPlan {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         tool_id: impl Into<String>,
         error_code: impl Into<String>,

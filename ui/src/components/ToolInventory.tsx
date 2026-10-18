@@ -59,11 +59,13 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 bg-surface-base border border-neutral-border rounded-md p-1 text-xs">
+          <div className="flex items-center gap-1 bg-surface-base border border-neutral-border rounded-md p-1 text-xs" role="group" aria-label="Filter tools by state">
             {['all', 'approved', 'quarantined', 'blocked'].map((tab) => (
               <button
                 key={tab}
+                type="button"
                 onClick={() => setStateFilter(tab)}
+                aria-pressed={stateFilter === tab}
                 className={`px-2.5 py-1 rounded capitalize font-medium transition-colors ${
                   stateFilter === tab
                     ? 'bg-neutral-border text-gray-100'

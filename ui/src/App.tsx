@@ -21,6 +21,15 @@ import { PolicyStudio } from './components/PolicyStudio';
 
 export type NavTab = 'overview' | 'registry' | 'approvals' | 'egress' | 'audit' | 'policies';
 
+const navigation: Array<{ id: NavTab; label: string; shortLabel: string; icon: React.ComponentType<{ className?: string }> }> = [
+  { id: 'overview', label: 'Overview', shortLabel: 'Overview', icon: LayoutDashboard },
+  { id: 'registry', label: 'Tool Registry', shortLabel: 'Registry', icon: LayoutGrid },
+  { id: 'approvals', label: 'Approvals', shortLabel: 'Approvals', icon: KeyRound },
+  { id: 'egress', label: 'Network Egress', shortLabel: 'Egress', icon: Network },
+  { id: 'audit', label: 'Audit Trail', shortLabel: 'Audit', icon: History },
+  { id: 'policies', label: 'Policies', shortLabel: 'Policies', icon: Sliders },
+];
+
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
 
@@ -39,12 +48,33 @@ export const App: React.FC = () => {
   const [auditLoading, setAuditLoading] = useState<boolean>(true);
   const [auditError, setAuditError] = useState<string | null>(null);
 
+  // Live impact summary
+  const [blockedCalls, setBlockedCalls] = useState<number>(0);
+  const [impactLoading, setImpactLoading] = useState<boolean>(true);
+
   // Semantic drift inspection modal state
   const [activeDiff, setActiveDiff] = useState<any | null>(null);
   const [isDiffModalOpen, setIsDiffModalOpen] = useState<boolean>(false);
 
   // Notification message
   const [notification, setNotification] = useState<string | null>(null);
+
+  const pageTitle = navigation.find((item) => item.id === activeTab)?.label ?? 'Overview';
+
+  const handleNavKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, tab: NavTab) => {
+    const currentIndex = navigation.findIndex((item) => item.id === tab);
+    let nextIndex = currentIndex;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (currentIndex + 1) % navigation.length;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (currentIndex - 1 + navigation.length) % navigation.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = navigation.length - 1;
+    if (nextIndex !== currentIndex) {
+      event.preventDefault();
+      const nextTab = navigation[nextIndex].id;
+      setActiveTab(nextTab);
+      document.getElementById(`nav-${nextTab}`)?.focus();
+    }
+  };
 
   const showNotification = (msg: string) => {
     setNotification(msg);
@@ -96,10 +126,26 @@ export const App: React.FC = () => {
     }
   };
 
+  const fetchImpactSummary = async () => {
+    try {
+      setImpactLoading(true);
+      const res = await fetch('/v1/reports/summary');
+      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch impact summary`);
+      const data = await res.json();
+      setBlockedCalls(Number(data.blocked_calls) || 0);
+    } catch {
+      // Keep the metric honest when the control plane is unavailable.
+      setBlockedCalls(0);
+    } finally {
+      setImpactLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchTools();
     fetchApprovals();
     fetchAuditEvents();
+    fetchImpactSummary();
   }, []);
 
   const handleApproveTool = async (toolId: string) => {
@@ -204,9 +250,10 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-surface-base text-gray-100 flex flex-col font-sans">
+      <a href="#main-content" className="skip-link">Skip to console content</a>
       {/* Top Navigation Bar */}
       <header className="border-b border-neutral-border bg-surface-raised sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 min-h-16 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded bg-surface-base border border-neutral-border flex items-center justify-center text-accent">
               <Shield className="w-4 h-4 text-accent" />
@@ -225,86 +272,54 @@ export const App: React.FC = () => {
           </div>
 
           {/* Clean Segmented Navigation */}
-          <nav className="flex items-center gap-1 bg-surface-base border border-neutral-border p-1 rounded-lg text-xs font-mono overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 'overview' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
-              }`}
-            >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('registry')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 'registry' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              Tool Registry
-              {quarantinedCount > 0 && (
-                <span className="w-1.5 h-1.5 rounded-full bg-status-danger inline-block ml-0.5"></span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('approvals')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 'approvals' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
-              }`}
-            >
-              <KeyRound className="w-3.5 h-3.5" />
-              Approvals
-              {approvals.length > 0 && (
-                <span className="w-1.5 h-1.5 rounded-full bg-status-warning inline-block ml-0.5"></span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('egress')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 'egress' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
-              }`}
-            >
-              <Network className="w-3.5 h-3.5" />
-              Network Egress
-            </button>
-            <button
-              onClick={() => setActiveTab('audit')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 'audit' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
-              }`}
-            >
-              <History className="w-3.5 h-3.5" />
-              Audit Trail
-            </button>
-            <button
-              onClick={() => setActiveTab('policies')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 'policies' ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
-              }`}
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              Policies
-            </button>
+          <nav aria-label="SOC console sections" role="tablist" className="w-full lg:w-auto flex items-center gap-1 bg-surface-base border border-neutral-border p-1 rounded-lg text-xs font-mono overflow-x-auto">
+            {navigation.map(({ id, label, shortLabel, icon: Icon }) => (
+              <button
+                key={id}
+                id={`nav-${id}`}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === id}
+                aria-current={activeTab === id ? 'page' : undefined}
+                onClick={() => setActiveTab(id)}
+                onKeyDown={(event) => handleNavKeyDown(event, id)}
+                className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                  activeTab === id ? 'bg-neutral-border text-gray-100' : 'text-neutral-muted hover:text-gray-300'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                <span className="sm:hidden">{shortLabel}</span><span className="hidden sm:inline">{label}</span>
+                {id === 'registry' && quarantinedCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-status-danger inline-block ml-0.5" aria-label={`${quarantinedCount} quarantined tools`} />}
+                {id === 'approvals' && approvals.length > 0 && <span className="w-1.5 h-1.5 rounded-full bg-status-warning inline-block ml-0.5" aria-label={`${approvals.length} pending approvals`} />}
+              </button>
+            ))}
           </nav>
         </div>
       </header>
 
       {/* Notification Toast */}
       {notification && (
-        <div className="fixed bottom-5 right-5 z-50 bg-surface-raised border border-neutral-border text-gray-100 px-4 py-3 rounded-lg shadow-xl text-xs font-mono flex items-center gap-2">
+         <div role="status" aria-live="polite" className="fixed bottom-5 right-5 z-50 bg-surface-raised border border-neutral-border text-gray-100 px-4 py-3 rounded-lg shadow-xl text-xs font-mono flex items-center gap-2">
           <Terminal className="w-4 h-4 text-accent" />
           <span>{notification}</span>
         </div>
       )}
 
       {/* Main Body */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+       <main id="main-content" tabIndex={-1} aria-labelledby="page-title" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+         <div className="flex items-end justify-between gap-4">
+           <div>
+             <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-accent">SOC Console / Live workspace</p>
+             <h1 id="page-title" className="text-2xl font-semibold tracking-tight text-gray-100">{pageTitle}</h1>
+           </div>
+           <p className="hidden sm:block text-right text-xs text-neutral-muted">Use arrow keys to move between sections</p>
+         </div>
         <MetricsBar
           quarantinedCount={quarantinedCount}
           approvedCount={approvedCount}
           activeLeasesCount={approvals.filter((a) => a.status === 'approved').length}
-          attacksBlockedCount={33900}
+           attacksBlockedCount={blockedCalls}
+           impactLoading={impactLoading}
         />
 
         {activeTab === 'overview' && (
