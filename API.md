@@ -71,9 +71,12 @@ All write endpoints require a signed JWT. Policy bundles are signed with Ed25519
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/v1/policies` | List all policy versions |
+| `GET` | `/v1/policies/active` | Get currently active policy bundle |
 | `GET` | `/v1/policies/{version}` | Get a specific policy bundle (signed TOML) |
 | `POST` | `/v1/policies` | Create and sign a new policy version |
 | `PUT` | `/v1/policies/active` | Promote a policy version to active (pushed to gateway) |
+| `POST` | `/v1/policies/compile` | Compile and validate proposed declarative TOML policy |
+| `POST` | `/v1/policies/reload` | Atomically hot-reload active policy across gateway with zero downtime |
 | `POST` | `/v1/policies/simulate` | Run a recorded trace against a proposed policy; returns would-block counts |
 
 ### Approvals & Leases

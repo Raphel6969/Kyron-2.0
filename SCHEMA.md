@@ -306,36 +306,47 @@ CREATE INDEX idx_sessions_started ON sessions(started_at DESC);
 
 ---
 
-## Policy File Schema (TOML)
+## Policy File Schema (Declarative TOML, C3, F35)
 
 ```toml
-[policy]
-name = "default"
-mode = "monitor"        # monitor | enforce
+[meta]
 version = 1
-
-[registry]
-quarantine_above = 0.6
-auto_approve_below = 0.2    # only if allowed by org policy
-require_pin = true
-canonical_descriptions = true
-
-[egress]
-bytes_per_trajectory = 524288       # 512 KB
-max_distinct_requests_per_source = 40
-allowed_hosts = ["api.internal.example"]
-
-[leases]
-default_ttl_s = 60
-max_calls = 5
-
-[secrets]
-inject = "gateway"
-ttl_s = 120
+name = "enterprise-strict"
+mode = "enforce"                     # enforce | monitor
+description = "Default corporate zero-trust policy for tool-using AI agents"
+signed_by = "sec-admin-corp"
 
 [budgets]
-max_child_branches = 3
-max_recovery_steps = 5
-max_authority_requests = 4
-max_delegation_depth = 2
+egress_bytes_per_trajectory = 1048576 # 1 MB
+max_calls_per_trajectory = 100
+max_distinct_destinations = 5
+
+[egress]
+default_action = "deny"              # deny | allow
+allowed_destinations = [
+    "api.github.com",
+    "*.corp.net",
+]
+blocked_destinations = [
+    "169.254.169.254",               # Cloud metadata SSRF
+    "evil.com",
+    "webhook.site",
+]
+
+[[tools]]
+pattern = "bash"
+action = "block"                     # allow | block | require_lease
+reason = "Direct raw shell execution is permanently banned"
+
+[[tools]]
+pattern = "k8s:restart_deployment"
+action = "require_lease"
+max_calls = 1
+ttl_seconds = 600
+reason = "Production deployment restart requires call-scoped capability lease"
+
+[[tools]]
+pattern = "*"
+action = "allow"
+reason = "Permit registered approved tools"
 ```
