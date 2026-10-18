@@ -5,10 +5,19 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"sync"
 
 	"kyron.dev/gateway/pkg/audit"
 	"kyron.dev/gateway/pkg/secrets"
+)
+
+// EnforcementMode controls whether policy violations are blocked or monitored in shadow mode (F32)
+type EnforcementMode string
+
+const (
+	ModeEnforce EnforcementMode = "enforce"
+	ModeMonitor EnforcementMode = "monitor"
 )
 
 // BackendHandler defines an interface to dispatch calls to the upstream MCP server
@@ -23,6 +32,7 @@ type Proxy struct {
 	SecretsBroker *secrets.Broker
 	AuditEmitter  *audit.Emitter
 	Backend       BackendHandler
+	Mode          EnforcementMode
 	mu            sync.RWMutex
 }
 
@@ -33,7 +43,25 @@ func NewProxy(reg *ToolRegistry, sb *secrets.Broker, ae *audit.Emitter, backend 
 		SecretsBroker: sb,
 		AuditEmitter:  ae,
 		Backend:       backend,
+		Mode:          ModeEnforce,
 	}
+}
+
+// SetMode toggles between blocking enforcement and non-breaking shadow monitor mode
+func (p *Proxy) SetMode(m EnforcementMode) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Mode = m
+}
+
+// GetMode returns the current active enforcement mode
+func (p *Proxy) GetMode() EnforcementMode {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if p.Mode == "" {
+		return ModeEnforce
+	}
+	return p.Mode
 }
 
 // HandleMessage processes a single client JSON-RPC message through the Kyron security interceptor pipeline
@@ -112,35 +140,52 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 
 	// 1. Stage 4 Check: Policy verification & Registry Firewall
 	if exists && (reg.State == "quarantined" || reg.State == "blocked" || reg.State == "revoked") {
-		// Call is blocked deterministically
-		remediation := &StructuredRemediation{
-			Tool:          toolName,
-			State:         reg.State,
-			RiskScore:     reg.RiskScore,
-			RiskReasons:   reg.RiskReasons,
-			Remediation:   "Request human approval in Kyron SOC console or substitute with an approved tool.",
-			EscalationURL: fmt.Sprintf("http://localhost:8001/v1/approvals/%s", sess.ID),
-		}
+		mode := p.GetMode()
+		if mode == ModeMonitor {
+			// Non-breaking monitor mode (F32):
+			// Emit "would-block" telemetry event and continue execution without breaking live workflows
+			if p.AuditEmitter != nil {
+				_, _ = p.AuditEmitter.Emit(
+					sess.ID,
+					sess.TrajectoryID,
+					callHash,
+					toolName,
+					"would-block",
+					reg.RiskReasons,
+					1,
+				)
+			}
+			log.Printf("[KYRON MONITOR MODE] Tool '%s' triggered would-block policy violation (%v). Permitting execution without breaking workflow.", toolName, reg.RiskReasons)
+		} else {
+			// Enforce mode: block deterministically
+			remediation := &StructuredRemediation{
+				Tool:          toolName,
+				State:         reg.State,
+				RiskScore:     reg.RiskScore,
+				RiskReasons:   reg.RiskReasons,
+				Remediation:   "Request human approval in Kyron SOC console or substitute with an approved tool.",
+				EscalationURL: fmt.Sprintf("http://localhost:8001/v1/approvals/%s", sess.ID),
+			}
 
-		// Emit signed audit event for the block
-		if p.AuditEmitter != nil {
-			_, _ = p.AuditEmitter.Emit(
-				sess.ID,
-				sess.TrajectoryID,
-				callHash,
-				toolName,
-				"block",
-				reg.RiskReasons,
-				1,
-			)
-		}
+			if p.AuditEmitter != nil {
+				_, _ = p.AuditEmitter.Emit(
+					sess.ID,
+					sess.TrajectoryID,
+					callHash,
+					toolName,
+					"block",
+					reg.RiskReasons,
+					1,
+				)
+			}
 
-		return NewErrorResponse(
-			msg.ID,
-			ErrCodePolicyBlocked,
-			fmt.Sprintf("Policy violation: Tool '%s' is %s and not permitted for execution.", toolName, reg.State),
-			remediation,
-		), nil
+			return NewErrorResponse(
+				msg.ID,
+				ErrCodePolicyBlocked,
+				fmt.Sprintf("Policy violation: Tool '%s' is %s and not permitted for execution.", toolName, reg.State),
+				remediation,
+			), nil
+		}
 	}
 
 	if p.Backend == nil {
@@ -172,8 +217,8 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 		}
 	}
 
-	// 5. Emit signed audit event for successful execution
-	if p.AuditEmitter != nil {
+	// 5. Emit signed audit event for successful execution (if not already recorded in monitor mode)
+	if p.AuditEmitter != nil && p.GetMode() != ModeMonitor {
 		_, _ = p.AuditEmitter.Emit(
 			sess.ID,
 			sess.TrajectoryID,

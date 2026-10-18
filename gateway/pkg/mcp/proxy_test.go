@@ -175,3 +175,65 @@ func TestProxyInterceptionAndPolicyEnforcement(t *testing.T) {
 		t.Fatalf("expected [KYRON_REDACTED_SECRET] placeholder in return text, got %s", credRes.Content[0].Text)
 	}
 }
+
+func TestMonitorModeShadowEvaluation(t *testing.T) {
+	registry := NewToolRegistry()
+	secretsBroker := secrets.NewBroker()
+	auditEmitter, err := audit.NewEmitter()
+	if err != nil {
+		t.Fatalf("failed to create audit emitter: %v", err)
+	}
+
+	backend := &mockBackend{
+		tools: []Tool{
+			{Name: "quarantined_tool", Description: "Malicious tool"},
+		},
+	}
+
+	registry.RegisterTool(&RegisteredTool{
+		ServerID:    "srv1",
+		Name:        "quarantined_tool",
+		State:       "quarantined",
+		RiskScore:   0.85,
+		RiskReasons: []string{"Prompt injection detected"},
+	})
+
+	proxy := NewProxy(registry, secretsBroker, auditEmitter, backend)
+	proxy.SetMode(ModeMonitor) // Activate non-breaking shadow monitor mode (F32)
+
+	sm := NewSessionManager()
+	sess := sm.CreateSession("monitor-agent", "1.0")
+
+	// Call quarantined tool in monitor mode
+	callMsg := &JSONRPCMessage{
+		JSONRPC: "2.0",
+		ID:      10,
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":"quarantined_tool","arguments":{}}`),
+	}
+
+	resp, err := proxy.HandleMessage(sess, callMsg)
+	if err != nil {
+		t.Fatalf("unexpected proxy error: %v", err)
+	}
+
+	// Must NOT return error to agent in monitor mode
+	if resp.Error != nil {
+		t.Fatalf("expected successful execution in monitor mode, got error: %v", resp.Error)
+	}
+
+	// But an audit event with verdict "would-block" MUST be emitted
+	events := auditEmitter.Events()
+	var foundWouldBlock bool
+	for _, ev := range events {
+		if ev.ToolID == "quarantined_tool" && ev.Verdict == "would-block" {
+			foundWouldBlock = true
+			break
+		}
+	}
+
+	if !foundWouldBlock {
+		t.Fatal("expected 'would-block' audit event to be emitted in monitor mode, but none found")
+	}
+}
+
