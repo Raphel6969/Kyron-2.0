@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "kyron-protected-filesystem": {
+      "command": "kyron",
+      "args": [
+        "gateway",
+        "--stdio",
+        "--",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/workspace/safe-data"
+      ],
+      "env": {
+        "KYRON_MODE": "enforce",
+        "KYRON_CONTROL_PLANE_URL": "http://127.0.0.1:8001"
+      }
+    },
+    "kyron-protected-fetch": {
+      "command": "kyron",
+      "args": [
+        "gateway",
+        "--stdio",
+        "--",
+        "uvx",
+        "mcp-server-fetch"
+      ],
+      "env": {
+        "KYRON_MODE": "enforce",
+        "KYRON_EGRESS_BUDGET_BYTES": "1048576"
+      }
+    }
+  }
+}

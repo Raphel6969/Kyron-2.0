@@ -1,0 +1,21 @@
+{
+  "name": "Kyron Protected Agent Tools",
+  "version": "1.0.0",
+  "mcpServers": {
+    "enterprise-tools": {
+      "command": "kyron",
+      "args": [
+        "gateway",
+        "--stdio",
+        "--",
+        "node",
+        "./servers/enterprise-tools/index.js"
+      ],
+      "env": {
+        "KYRON_MODE": "enforce",
+        "KYRON_AUDIT_LOG": "true",
+        "KYRON_CONTROL_PLANE_URL": "http://127.0.0.1:8001"
+      }
+    }
+  }
+}
