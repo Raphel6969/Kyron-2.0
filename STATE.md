@@ -1,14 +1,14 @@
 # STATE
 phase: 0
-sub_task: 0.6
-status: IN_PROGRESS
-hours_used: 5.5
+sub_task: 0.7
+status: VERIFIED
+hours_used: 6.5
 hours_budget: 24
-last_verified_commit: 6e93c76
+last_verified_commit: 89c4145
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 0.6: Source-Attributed Egress Broker (C8) — Implement outbound proxy with byte, rate, and distinct-destination budgets aggregated per data source, destination whitelist filtering, and DNS rebinding protection.
+Sub-task 0.7: Automated Secrets Broker (C9) — Expand gateway/pkg/secrets/ with scoped JIT token minting, TTL-based token expiration, tool parameter template injection, and deep credential scanning & redaction across text, JSON, and base64.
 
 ## IN FLIGHT
-Sub-task 0.6: Source-Attributed Egress Broker (C8) — Expanding gateway/pkg/egress/ with source-attributed byte/rate/destination budgeting, DNS rebinding mitigation, redirect chain inspection, and scenario S4 sharded exfiltration defenses.
+—
