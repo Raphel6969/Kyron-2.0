@@ -334,6 +334,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "hex",
+ "kyron-scanner",
  "kyron-types",
  "serde",
  "serde_json",

@@ -12,3 +12,7 @@ sha2.workspace = true
 hex.workspace = true
 thiserror.workspace = true
 regex = "1.10"
+
+[[bin]]
+name = "kyron-scan"
+path = "src/bin/kyron_scan.rs"

@@ -150,3 +150,46 @@ pub struct AuditEvent {
     pub signature: String,
     pub timestamp: DateTime<Utc>,
 }
+
+/// Severity classification for tool drift
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DriftSeverity {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+/// Detailed field modification in tool manifest drift
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FieldChange {
+    pub field: String,
+    pub old_value: Option<String>,
+    pub new_value: Option<String>,
+    pub semantic_risk: String,
+}
+
+/// Semantic difference record emitted when a pinned tool definition mutates
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ToolDriftDiff {
+    pub tool_id: String,
+    pub server_id: String,
+    pub tool_name: String,
+    pub old_hash: String,
+    pub new_hash: String,
+    pub severity: DriftSeverity,
+    pub summary: String,
+    pub changes: Vec<FieldChange>,
+    pub detected_at: DateTime<Utc>,
+}
+
+/// Offline or online model judge analysis verdict for tool definitions
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ModelJudgeVerdict {
+    pub is_suspicious: bool,
+    pub confidence: f32,
+    pub rationale: String,
+    pub flagged_spans: Vec<String>,
+}
+
