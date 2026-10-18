@@ -6,6 +6,11 @@ use ed25519_dalek::{Signature, VerifyingKey};
 use kyron_types::AuditEvent;
 use sha2::{Digest, Sha256};
 
+pub mod sandbox;
+pub use sandbox::{
+    ContractConformanceReport, ContractViolation, SandboxAttestation, SyscallOp, SyscallTraceEvent,
+};
+
 pub const GENESIS_HASH: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
