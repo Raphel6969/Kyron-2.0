@@ -50,6 +50,19 @@ services:
     ports:
       - "8080:8080"
 
+  ui:
+    build:
+      context: .
+      dockerfile: ui/Dockerfile
+    container_name: kyron-ui
+    restart: unless-stopped
+    depends_on:
+      - control-api
+      - gateway
+    ports:
+      - "3000:80"
+
 volumes:
   pgdata:
     driver: local
+

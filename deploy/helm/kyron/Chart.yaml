@@ -1,0 +1,15 @@
+apiVersion: v2
+name: kyron
+description: Kyron 2.0 — Deterministic Trust Layer for Tool-Using AI Agents Helm Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - security
+  - mcp
+  - ai-agents
+  - trust-gateway
+  - openappa
+maintainers:
+  - name: Kyron Core Security Team
+    email: security@kyron.dev

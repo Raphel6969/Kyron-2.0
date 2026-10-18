@@ -1,14 +1,14 @@
 # STATE
 phase: 3
-sub_task: 3.1
+sub_task: 3.2
 status: VERIFIED
-hours_used: 28.0
+hours_used: 28.5
 hours_budget: 36
-last_verified_commit: 9452998
+last_verified_commit: 1ec7c51
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 3.2: Production Packaging — Multi-stage minimal Docker images and Kubernetes Helm charts.
+Sub-task 3.3: Zero-Code Drop-In Configurations (Claude Desktop, Cursor, LangChain, CrewAI).
 
 ## IN FLIGHT
 
