@@ -76,8 +76,8 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
               Every tool call traverses all seven deterministic gates before reaching execution or model context.
             </p>
           </div>
-          <span className="font-mono text-[11px] text-neutral-muted bg-surface-base border border-neutral-border px-2 py-0.5 rounded">
-            Hot-Path p95: 3.8ms
+             <span className="font-mono text-[11px] text-neutral-muted bg-surface-base border border-neutral-border px-2 py-0.5 rounded">
+             Deterministic path
           </span>
         </div>
 

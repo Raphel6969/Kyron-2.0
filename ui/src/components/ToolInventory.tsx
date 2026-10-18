@@ -162,7 +162,7 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                       </div>
                       {tool.risk_reasons && tool.risk_reasons.length > 0 && (
                         <div className="text-[10px] text-status-danger mt-1 font-mono">
-                          ⚠️ {tool.risk_reasons[0]}
+                           Risk reason: {tool.risk_reasons[0]}
                         </div>
                       )}
                     </td>
