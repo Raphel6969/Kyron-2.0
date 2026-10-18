@@ -310,6 +310,8 @@ dependencies = [
 name = "kyron-attest"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "ed25519-dalek",
  "hex",
  "kyron-types",
  "serde",
