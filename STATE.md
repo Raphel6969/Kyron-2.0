@@ -1,14 +1,14 @@
 # STATE
 phase: 0
-sub_task: 0.10
-status: IN_PROGRESS
-hours_used: 9.5
+sub_task: 0.11
+status: VERIFIED
+hours_used: 10.5
 hours_budget: 24
-last_verified_commit: 3787d3b
+last_verified_commit: fd240c3
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 0.10: Non-Breaking Monitor Mode & Telemetry (F32) — Implement shadow evaluation mode in gateway/ allowing policies to run in non-blocking observation mode, logging structured "would-block" telemetry and OpenTelemetry spans without disrupting agent execution.
+Sub-task 0.11: Gate 0 Benchmark Comparison — Execute reproducible empirical head-to-head benchmark evaluation comparing No Defense vs MCP-Scan vs OpenAPPA Alone vs Kyron 2.0 across S1–S6 and MCPTox, generating verified markdown and JSON benchmark matrices in eval/.
 
 ## IN FLIGHT
-Sub-task 0.10: Non-Breaking Monitor Mode & Telemetry (F32) — Implementing monitor/shadow evaluation mode in gateway/pkg/mcp/proxy.go with "would-block" structured telemetry events, non-blocking execution fallback, and unit tests.
+—
