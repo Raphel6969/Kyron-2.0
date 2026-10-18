@@ -127,3 +127,27 @@ class ApprovalRequestModel(Base):
     @details.setter
     def details(self, val):
         self.details_json = json.dumps(val)
+
+class EffectModel(Base):
+    __tablename__ = "effects"
+
+    token = Column(String, primary_key=True)
+    trajectory_id = Column(String, nullable=False, index=True)
+    call_hash = Column(String, nullable=False)
+    tool_name = Column(String, nullable=False)
+    outcome = Column(String, nullable=False, default="committed", index=True)  # committed | indeterminate | aborted
+    idempotency_key = Column(String, nullable=True, index=True)
+    details_json = Column(Text, nullable=False, default="{}")
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+
+    @property
+    def details(self):
+        try:
+            return json.loads(self.details_json)
+        except Exception:
+            return {}
+
+    @details.setter
+    def details(self, val):
+        self.details_json = json.dumps(val)
+

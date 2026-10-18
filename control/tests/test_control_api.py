@@ -340,5 +340,51 @@ def test_provenance_filter_endpoint(client):
     assert "token" not in filtered["secrets"]
     assert "$.secrets.token" in res["pruned_paths"]
 
+def test_effect_ledger_and_reconciliation(client):
+    # 1. Record an indeterminate effect (simulating timed-out external payment)
+    r_indet = client.post("/v1/effects", json={
+        "token": "eff-timeout-tx-100",
+        "trajectory_id": "traj-effects-99",
+        "call_hash": "hash-tx-call-100",
+        "tool_name": "stripe_charge",
+        "outcome": "indeterminate",
+        "idempotency_key": "idemp-pay-404",
+        "details": {"amount": 2500, "currency": "USD"},
+    })
+    assert r_indet.status_code == 200
+    indet_data = r_indet.json()
+    assert indet_data["token"] == "eff-timeout-tx-100"
+    assert indet_data["outcome"] == "indeterminate"
+
+    # 2. Idempotent re-submission returns existing effect without duplicate insert
+    r_dup = client.post("/v1/effects", json={
+        "trajectory_id": "traj-effects-99",
+        "call_hash": "hash-tx-call-100",
+        "tool_name": "stripe_charge",
+        "outcome": "committed",
+        "idempotency_key": "idemp-pay-404",
+    })
+    assert r_dup.status_code == 200
+    assert r_dup.json()["token"] == "eff-timeout-tx-100"
+
+    # 3. Query effects by trajectory
+    r_list = client.get("/v1/effects?trajectory_id=traj-effects-99")
+    assert r_list.status_code == 200
+    assert len(r_list.json()) >= 1
+
+    # 4. Trigger reconciliation job
+    r_recon = client.post("/v1/effects/reconcile")
+    assert r_recon.status_code == 200
+    recon_data = r_recon.json()
+    assert recon_data["reconciled_count"] >= 1
+    assert "eff-timeout-tx-100" in recon_data["reconciled_tokens"]
+
+    # 5. Verify outcome is now committed
+    r_list_after = client.get("/v1/effects?trajectory_id=traj-effects-99&outcome=committed")
+    assert r_list_after.status_code == 200
+    tokens = [e["token"] for e in r_list_after.json()]
+    assert "eff-timeout-tx-100" in tokens
+
+
 
 

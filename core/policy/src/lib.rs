@@ -14,6 +14,9 @@ pub use recovery::{
     CompositeFingerprint, MemoizedRecoveryCache, RecoveryCacheStats, RecoveryPlan,
 };
 
+pub mod ledger;
+pub use ledger::EffectLedger;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CallContext {
     pub session_id: String,

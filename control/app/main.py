@@ -21,6 +21,7 @@ from control.app.models import (
     AuditEventModel,
     LeaseModel,
     ApprovalRequestModel,
+    EffectModel,
 )
 from control.app.schemas import (
     ToolScanRequest,
@@ -50,6 +51,9 @@ from control.app.schemas import (
     FieldProvenanceItem,
     ProvenanceFilterRequest,
     ProvenanceFilterResponse,
+    EffectCreateRequest,
+    EffectResponse,
+    EffectReconcileResponse,
     AuditEventCreate,
     AuditEventResponse,
     AuditExportResponse,
@@ -811,6 +815,98 @@ def filter_provenance(req: ProvenanceFilterRequest):
         filtered_payload=filtered or {},
         pruned_paths=pruned,
         status="filtered",
+    )
+
+# -------------------------------------------------------------------------
+# Effect Ledger & Idempotency (C7)
+# -------------------------------------------------------------------------
+
+@app.get("/v1/effects", response_model=List[EffectResponse], tags=["Effects"])
+def list_effects(
+    trajectory_id: Optional[str] = None,
+    outcome: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """Lists committed and indeterminate side effect tokens (C7)"""
+    q = db.query(EffectModel)
+    if trajectory_id:
+        q = q.filter(EffectModel.trajectory_id == trajectory_id)
+    if outcome:
+        q = q.filter(EffectModel.outcome == outcome)
+    effects = q.order_by(EffectModel.created_at.desc()).all()
+    return [
+        EffectResponse(
+            token=e.token,
+            trajectory_id=e.trajectory_id,
+            call_hash=e.call_hash,
+            tool_name=e.tool_name,
+            outcome=e.outcome,
+            idempotency_key=e.idempotency_key,
+            details=e.details,
+            created_at=e.created_at,
+        )
+        for e in effects
+    ]
+
+@app.post("/v1/effects", response_model=EffectResponse, tags=["Effects"])
+def record_effect(req: EffectCreateRequest, db: Session = Depends(get_db)):
+    """Records a side-effect token with optional idempotency key (C7)"""
+    if req.idempotency_key:
+        existing = db.query(EffectModel).filter(EffectModel.idempotency_key == req.idempotency_key).first()
+        if existing:
+            # Idempotent return of existing effect
+            return EffectResponse(
+                token=existing.token,
+                trajectory_id=existing.trajectory_id,
+                call_hash=existing.call_hash,
+                tool_name=existing.tool_name,
+                outcome=existing.outcome,
+                idempotency_key=existing.idempotency_key,
+                details=existing.details,
+                created_at=existing.created_at,
+            )
+
+    token = req.token or f"eff-{uuid.uuid4().hex[:12]}"
+    eff = EffectModel(
+        token=token,
+        trajectory_id=req.trajectory_id,
+        call_hash=req.call_hash,
+        tool_name=req.tool_name,
+        outcome=req.outcome,
+        idempotency_key=req.idempotency_key,
+    )
+    if req.details:
+        eff.details = req.details
+
+    db.add(eff)
+    db.commit()
+    db.refresh(eff)
+
+    return EffectResponse(
+        token=eff.token,
+        trajectory_id=eff.trajectory_id,
+        call_hash=eff.call_hash,
+        tool_name=eff.tool_name,
+        outcome=eff.outcome,
+        idempotency_key=eff.idempotency_key,
+        details=eff.details,
+        created_at=eff.created_at,
+    )
+
+@app.post("/v1/effects/reconcile", response_model=EffectReconcileResponse, tags=["Effects"])
+def reconcile_effects(db: Session = Depends(get_db)):
+    """Scans and reconciles all indeterminate side effects into committed state (C7)"""
+    indet = db.query(EffectModel).filter(EffectModel.outcome == "indeterminate").all()
+    tokens = []
+    for e in indet:
+        e.outcome = "committed"
+        tokens.append(e.token)
+    db.commit()
+
+    return EffectReconcileResponse(
+        reconciled_count=len(tokens),
+        reconciled_tokens=tokens,
+        status="reconciled",
     )
 
 @app.post("/v1/approvals/{request_id}/deny", response_model=ApprovalResponse, tags=["Approvals"])

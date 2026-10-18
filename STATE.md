@@ -1,13 +1,14 @@
 # STATE
 phase: 2
-sub_task: 2.4
+sub_task: 2.5
 status: VERIFIED
-hours_used: 25.0
+hours_used: 25.5
 hours_budget: 32
-last_verified_commit: 8dbac25
+last_verified_commit: b9152b4
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 2.5: Effect Ledger & Idempotency (C7) — Effect tokens with reconciliation jobs.
+Sub-task 2.6: Adaptive Red-Team Evaluation (RQ6) — Adversarial resilience against scanner-aware attackers.
 
 ## IN FLIGHT
+

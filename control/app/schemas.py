@@ -174,6 +174,32 @@ class ProvenanceFilterResponse(BaseModel):
     pruned_paths: List[str]
     status: str
 
+class EffectCreateRequest(BaseModel):
+    token: Optional[str] = None
+    trajectory_id: str
+    call_hash: str
+    tool_name: str
+    outcome: str = "committed"
+    idempotency_key: Optional[str] = None
+    details: Optional[Dict[str, Any]] = None
+
+class EffectResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    token: str
+    trajectory_id: str
+    call_hash: str
+    tool_name: str
+    outcome: str
+    idempotency_key: Optional[str] = None
+    details: Dict[str, Any]
+    created_at: datetime
+
+class EffectReconcileResponse(BaseModel):
+    reconciled_count: int
+    reconciled_tokens: List[str]
+    status: str
+
 class ApprovalCreateRequest(BaseModel):
     trajectory_id: str
     kind: str  # tool_approval | lease_request

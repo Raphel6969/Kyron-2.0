@@ -324,6 +324,7 @@ dependencies = [
 name = "kyron-openappa-adapter"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "kyron-types",
  "serde",
  "serde_json",
@@ -349,9 +350,11 @@ name = "kyron-policy"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "hex",
  "kyron-types",
  "serde",
  "serde_json",
+ "sha2",
  "thiserror",
  "toml",
 ]
