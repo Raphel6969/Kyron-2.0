@@ -1,14 +1,14 @@
 # STATE
 phase: 1
-sub_task: 1.2
+sub_task: 1.3
 status: VERIFIED
-hours_used: 13.5
+hours_used: 15.0
 hours_budget: 24
-last_verified_commit: 338e2b6
+last_verified_commit: d39d752
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 1.2: Actionable Error Remediation Engine — Structured JSON error returns with rule violations, remediation advice, and instant escalation URLs.
+Sub-task 1.3: Control Plane REST API (C12) — FastAPI service with backing for policies, registry state, approval queues, and EU AI Act exports.
 
 ## IN FLIGHT
 —
