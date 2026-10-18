@@ -16,7 +16,7 @@ export const MetricsBar: React.FC<MetricsBarProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div className="bg-surface-raised border border-neutral-border p-4 rounded-lg flex items-center justify-between">
+      <div className="motion-stagger-1 bg-surface-raised border border-neutral-border p-4 rounded-lg flex items-center justify-between transition-colors hover:border-neutral-muted">
         <div>
           <span className="text-xs uppercase tracking-wider text-neutral-muted block mb-1">Tools Approved</span>
           <span className="text-2xl font-bold font-mono text-gray-100">{approvedCount}</span>
@@ -26,7 +26,7 @@ export const MetricsBar: React.FC<MetricsBarProps> = ({
         </div>
       </div>
 
-      <div className="bg-surface-raised border border-neutral-border p-4 rounded-lg flex items-center justify-between">
+      <div className="motion-stagger-2 bg-surface-raised border border-neutral-border p-4 rounded-lg flex items-center justify-between transition-colors hover:border-neutral-muted">
         <div>
           <span className="text-xs uppercase tracking-wider text-neutral-muted block mb-1">Quarantined Threats</span>
           <span className="text-2xl font-bold font-mono text-status-danger">{quarantinedCount}</span>
@@ -36,7 +36,7 @@ export const MetricsBar: React.FC<MetricsBarProps> = ({
         </div>
       </div>
 
-      <div className="bg-surface-raised border border-neutral-border p-4 rounded-lg flex items-center justify-between">
+      <div className="motion-stagger-3 bg-surface-raised border border-neutral-border p-4 rounded-lg flex items-center justify-between transition-colors hover:border-neutral-muted">
         <div>
           <span className="text-xs uppercase tracking-wider text-neutral-muted block mb-1">Active Leases</span>
           <span className="text-2xl font-bold font-mono text-accent">{activeLeasesCount}</span>
@@ -46,7 +46,7 @@ export const MetricsBar: React.FC<MetricsBarProps> = ({
         </div>
       </div>
 
-      <div className="bg-surface-raised border border-neutral-border p-4 rounded-lg flex items-center justify-between">
+      <div className="motion-stagger-4 bg-surface-raised border border-neutral-border p-4 rounded-lg flex items-center justify-between transition-colors hover:border-neutral-muted">
         <div>
           <span className="text-xs uppercase tracking-wider text-neutral-muted block mb-1">Hot-Path Model Tokens</span>
           <span className="text-2xl font-bold font-mono text-status-success">0</span>

@@ -26,14 +26,15 @@ FAILURES=0
 check_pattern() {
   local pattern="$1"
   local description="$2"
-  local exclude_flags="--glob=!*.test.* --glob=!*.spec.* --glob=!*TOKENS.css --glob=!*.svg"
+  local exclude_flags="--glob=!*.test.* --glob=!*.spec.* --glob=!*TOKENS.css --glob=!*.svg --glob=!**/dist/** --glob=!**/build/**"
   
   local matches
   if command -v rg >/dev/null 2>&1; then
     matches=$(rg -i "$pattern" "${UI_DIRS[@]}" $exclude_flags 2>/dev/null || true)
   else
-    matches=$(grep -rEi --exclude-dir=node_modules --exclude-dir=.git --exclude='*.test.*' --exclude='*.spec.*' --exclude='*TOKENS.css' --exclude='*.svg' "$pattern" "${UI_DIRS[@]}" 2>/dev/null || true)
+    matches=$(grep -rEi --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=build --exclude='*.test.*' --exclude='*.spec.*' --exclude='*TOKENS.css' --exclude='*.svg' "$pattern" "${UI_DIRS[@]}" 2>/dev/null || true)
   fi
+
 
   if [ -n "$matches" ]; then
     echo "  [ui-audit] FAIL: Banned aesthetic pattern detected — $description"

@@ -1,14 +1,14 @@
 # STATE
 phase: 3
-sub_task: 3.5
+sub_task: 3.6
 status: VERIFIED
-hours_used: 30.5
+hours_used: 31.0
 hours_budget: 36
-last_verified_commit: 382189c
+last_verified_commit: 2c9a881
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 3.6: UI/UX Motion Pass (GSAP reveals, responsive layout, theme alignment).
+Sub-task 3.7: Documentation & EU AI Act Dossier (architecture whitepaper, API reference, DEMO.md walkthrough).
 
 ## IN FLIGHT
 
