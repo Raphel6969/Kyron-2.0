@@ -1,14 +1,14 @@
 # STATE
 phase: 2
-sub_task: 2.6
+sub_task: 2.7
 status: VERIFIED
-hours_used: 26.0
+hours_used: 27.0
 hours_budget: 32
-last_verified_commit: c88896a
+last_verified_commit: 49fc737
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 2.7: Phase 2 Close — Author docs/phases/PHASE-2.md, refresh ARCHITECTURE/API/SCHEMA, run verify-full, and tag demo-ready-p2.
+Sub-task 3.1: Static Multi-Platform Binaries (GoReleaser / Cargo builds for Linux, macOS, and Windows).
 
 ## IN FLIGHT
 

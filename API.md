@@ -89,6 +89,40 @@ All write endpoints require a signed JWT. Policy bundles are signed with Ed25519
 | `GET` | `/v1/leases` | List active capability leases |
 | `DELETE` | `/v1/leases/{lease_id}` | Revoke a lease |
 
+### Resources & TOCTOU (P2)
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/v1/resources/bind` | Cryptographically bind resource URI/path to SHA-256 content hash |
+| `POST` | `/v1/resources/verify` | Verify current resource content against bound hash at execution instant |
+
+### Memoized Recovery Engine (P2)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/v1/recovery/stats` | Memoized recovery plan cache statistics and hit rates |
+| `POST` | `/v1/recovery/lookup` | Query zero-token precomputed recovery plan by composite state fingerprint |
+
+### Field-Level Provenance (P2)
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/v1/provenance/filter` | Apply RFC 6901 JSON-path field-level provenance pruning for reader |
+
+### Effect Ledger & Idempotency (P2)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/v1/effects` | Query recorded side-effects by trajectory or outcome |
+| `POST` | `/v1/effects` | Record effect with idempotency token and precondition checks |
+| `POST` | `/v1/effects/reconcile` | Asynchronously reconcile indeterminate / timed-out effects |
+
+### Evaluation & Red-Team (P2)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/v1/eval/adaptive-redteam` | Run live RQ6 adaptive red-team evaluation against 6 evasion vectors |
+
 ### Audit & Evidence
 
 | Method | Path | Description |
