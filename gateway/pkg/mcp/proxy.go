@@ -149,7 +149,13 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 
 	// 2. Stage 5: Secrets injection (JIT)
 	args := params.Arguments
-	// In a real execution, if the tool requires credentials, secrets.Broker provides them here.
+	if p.SecretsBroker != nil {
+		injectedArgs, err := p.SecretsBroker.InjectSecrets(args)
+		if err != nil {
+			return NewErrorResponse(msg.ID, ErrCodeInternal, fmt.Sprintf("failed to inject secrets: %v", err), nil), nil
+		}
+		args = injectedArgs
+	}
 
 	// 3. Dispatch call to upstream MCP server
 	rawResult, err := p.Backend.CallTool(toolName, args)
