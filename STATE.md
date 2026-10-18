@@ -2,13 +2,13 @@
 phase: 1
 sub_task: 1.4
 status: VERIFIED
-hours_used: 16.5
+hours_used: 17.5
 hours_budget: 24
-last_verified_commit: a1ec813
+last_verified_commit: ac8d0f9
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 1.4: React 18 SOC Console Modernization (C13) — Tool inventory table, side-by-side visual semantic drift diffs, 1-click approvals, and trajectory audit drawer.
+Sub-task 1.5: Declarative TOML Policy Compiler & Hot-Reload (C3, C12) — Instant policy bundle reloading across active gateway sessions with zero downtime.
 
 ## IN FLIGHT
-—
+

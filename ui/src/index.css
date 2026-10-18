@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-surface-base: #0A0D12;
+  --color-surface-raised: #121722;
+  --color-neutral-muted: #7E8C9F;
+  --color-neutral-border: #1C2433;
+  --color-accent: #2563EB;
+
+  --font-display: clamp(2.4rem, 5vw, 4.2rem);
+  --font-heading: clamp(1.4rem, 2.5vw, 2.2rem);
+  --font-body: clamp(0.875rem, 1vw, 1rem);
+}
+
+body {
+  background-color: var(--color-surface-base);
+  color: #F3F4F6;
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Skeleton shimmer utility (no spinners per dod.md) */
+.skeleton-box {
+  background: linear-gradient(90deg, #121722 25%, #1C2433 50%, #121722 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2s infinite ease-in-out;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

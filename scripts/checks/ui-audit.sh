@@ -8,11 +8,12 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # Identify UI source locations
 UI_DIRS=()
-for DIR in "$REPO_ROOT/src" "$REPO_ROOT/frontend/src" "$REPO_ROOT/app" "$REPO_ROOT/public"; do
+for DIR in "$REPO_ROOT/ui" "$REPO_ROOT/src" "$REPO_ROOT/frontend/src" "$REPO_ROOT/app" "$REPO_ROOT/public"; do
   if [ -d "$DIR" ]; then
     UI_DIRS+=("$DIR")
   fi
 done
+
 
 # If no UI directories exist yet, pass cleanly (scaffolding phase)
 if [ ${#UI_DIRS[@]} -eq 0 ]; then
@@ -31,7 +32,7 @@ check_pattern() {
   if command -v rg >/dev/null 2>&1; then
     matches=$(rg -i "$pattern" "${UI_DIRS[@]}" $exclude_flags 2>/dev/null || true)
   else
-    matches=$(grep -rEi "$pattern" "${UI_DIRS[@]}" 2>/dev/null || true)
+    matches=$(grep -rEi --exclude-dir=node_modules --exclude-dir=.git --exclude='*.test.*' --exclude='*.spec.*' --exclude='*TOKENS.css' --exclude='*.svg' "$pattern" "${UI_DIRS[@]}" 2>/dev/null || true)
   fi
 
   if [ -n "$matches" ]; then
