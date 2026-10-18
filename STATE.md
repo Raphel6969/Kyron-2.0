@@ -1,14 +1,14 @@
 # STATE
 phase: 3
-sub_task: 3.3
+sub_task: 3.4
 status: VERIFIED
-hours_used: 29.0
+hours_used: 29.5
 hours_budget: 36
-last_verified_commit: 2290a1e
+last_verified_commit: 330be8a
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 3.4: Automated Demo Reset (make reset-demo) — Restores fresh demo state in < 5 seconds.
+Sub-task 3.5: Cloud Production Deployment — Live HTTPS endpoints with zero localhost dependencies.
 
 ## IN FLIGHT
 

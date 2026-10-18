@@ -393,6 +393,15 @@ def test_adaptive_redteam_api_endpoint(client):
     assert data["metrics"]["kyron_full_stack"]["attack_success_rate_pct"] == 0.0
     assert data["metrics"]["scanner_only"]["attack_success_rate_pct"] >= 80.0
 
+def test_circuit_breakers_endpoint(client):
+    r = client.get("/v1/circuit-breakers")
+    assert r.status_code == 200
+    data = r.json()
+    assert "ENABLE_LLM_INFERENCE" in data
+    assert "ENABLE_PAYMENT_GATEWAY" in data
+    assert data["fallback_mode"] == "deterministic_seeded_mocks"
+
+
 
 
 

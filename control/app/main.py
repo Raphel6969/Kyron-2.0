@@ -1120,3 +1120,14 @@ def get_adaptive_redteam_report():
     from eval.adaptive_redteam import run_adaptive_redteam_evaluation
     return run_adaptive_redteam_evaluation()
 
+# -------------------------------------------------------------------------
+# Circuit Breakers (demo-resilience)
+# -------------------------------------------------------------------------
+
+@app.get("/v1/circuit-breakers", tags=["Operational Resilience"])
+def get_circuit_breakers():
+    """Return circuit breaker feature flag statuses and fallback configuration"""
+    from control.app.circuit_breakers import get_circuit_breaker_status
+    return get_circuit_breaker_status()
+
+
