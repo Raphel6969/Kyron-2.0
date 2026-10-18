@@ -1,14 +1,14 @@
 # STATE
 phase: 0
-sub_task: 0.7
-status: IN_PROGRESS
-hours_used: 6.5
+sub_task: 0.8
+status: VERIFIED
+hours_used: 7.5
 hours_budget: 24
-last_verified_commit: b38b217
+last_verified_commit: b1c90e8
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 0.7: Automated Secrets Broker (C9) — Expand gateway/pkg/secrets/ with scoped JIT token minting, TTL-based token expiration, tool parameter template injection, and deep credential scanning & redaction across text, JSON, and base64.
+Sub-task 0.8: Ed25519 Signed Audit Log (C11) — Implement canonical event hashing, SHA-256 hash chaining across trajectory sequences, Ed25519 digital signatures per event, and 'kyron-audit-verify' CLI command validating chain integrity and cryptographic signatures.
 
 ## IN FLIGHT
-Sub-task 0.7: Automated Secrets Broker (C9) — Expanding gateway/pkg/secrets/ with JIT scoped credential minting, TTL expiry, template placeholder replacement in tool arguments, and redaction across raw text, JSON objects, and base64 strings.
+—
