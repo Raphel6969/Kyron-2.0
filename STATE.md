@@ -1,14 +1,14 @@
 # STATE
 phase: 0
-sub_task: 0.8
-status: IN_PROGRESS
-hours_used: 7.5
+sub_task: 0.9
+status: VERIFIED
+hours_used: 8.5
 hours_budget: 24
-last_verified_commit: 513432c
+last_verified_commit: 3662688
 blocked_on: —
 
 ## NEXT ACTION
-Sub-task 0.8: Ed25519 Signed Audit Log (C11) — Implement canonical event hashing, SHA-256 hash chaining across trajectory sequences, Ed25519 digital signatures per event, and 'kyron-audit-verify' CLI command validating chain integrity and cryptographic signatures.
+Sub-task 0.9: Deliberately Vulnerable MCP Lab (S1–S6 fixtures) — Expand lab/ with standalone, runnable MCP test servers and fixtures reproducing S1 (poisoned time tool), S2 (rug pull), S3 (lying tool), S4 (sharded exfiltration), S5 (TOCTOU swap), and S6 (credential theft).
 
 ## IN FLIGHT
-Sub-task 0.8: Ed25519 Signed Audit Log (C11) — Implementing canonical SHA-256 event hash chaining, Ed25519 digital signature signing in Go & Rust, JSON-L export for EU AI Act Article 50, and kyron-audit-verify CLI verification tool.
+—
