@@ -10,22 +10,22 @@ FAILURES=0
 
 # 1. Python (pytest)
 if command -v pytest >/dev/null 2>&1; then
-  if [ -d "$REPO_ROOT/tests" ] || [ -d "$REPO_ROOT/backend/tests" ]; then
+  if [ -d "$REPO_ROOT/tests" ] || [ -d "$REPO_ROOT/control/tests" ]; then
     TESTS_RAN=1
     echo "  [test-unit] Running Python pytest..."
-    pytest "$REPO_ROOT" -v || FAILURES=$((FAILURES + 1))
+    pytest "$REPO_ROOT/control/tests" -v || FAILURES=$((FAILURES + 1))
   fi
 fi
 
-# 2. Node / JS (Node native test runner or npm test)
+# 2. Node / JS (npm test)
 if [ -f "$REPO_ROOT/package.json" ]; then
   TESTS_RAN=1
   echo "  [test-unit] Running Node test suite..."
   (cd "$REPO_ROOT" && npm test) || FAILURES=$((FAILURES + 1))
-elif [ -f "$REPO_ROOT/backend/package.json" ]; then
+elif [ -f "$REPO_ROOT/ui/package.json" ]; then
   TESTS_RAN=1
-  echo "  [test-unit] Running Backend Node test suite..."
-  (cd "$REPO_ROOT/backend" && npm test) || FAILURES=$((FAILURES + 1))
+  echo "  [test-unit] Running UI test suite..."
+  (cd "$REPO_ROOT/ui" && npm test) || FAILURES=$((FAILURES + 1))
 fi
 
 # 3. Go (go test)
@@ -33,10 +33,10 @@ if [ -f "$REPO_ROOT/go.mod" ] && command -v go >/dev/null 2>&1; then
   TESTS_RAN=1
   echo "  [test-unit] Running Go unit tests..."
   (cd "$REPO_ROOT" && go test -v ./...) || FAILURES=$((FAILURES + 1))
-elif [ -f "$REPO_ROOT/backend/go.mod" ] && command -v go >/dev/null 2>&1; then
+elif [ -f "$REPO_ROOT/gateway/go.mod" ] && command -v go >/dev/null 2>&1; then
   TESTS_RAN=1
-  echo "  [test-unit] Running Backend Go unit tests..."
-  (cd "$REPO_ROOT/backend" && go test -v ./...) || FAILURES=$((FAILURES + 1))
+  echo "  [test-unit] Running Gateway Go unit tests..."
+  (cd "$REPO_ROOT/gateway" && go test ./...) || FAILURES=$((FAILURES + 1))
 fi
 
 # 4. Rust (cargo test)
@@ -44,6 +44,10 @@ if [ -f "$REPO_ROOT/Cargo.toml" ] && command -v cargo >/dev/null 2>&1; then
   TESTS_RAN=1
   echo "  [test-unit] Running Cargo test..."
   (cd "$REPO_ROOT" && cargo test) || FAILURES=$((FAILURES + 1))
+elif [ -f "$REPO_ROOT/core/Cargo.toml" ] && command -v cargo >/dev/null 2>&1; then
+  TESTS_RAN=1
+  echo "  [test-unit] Running Core Rust workspace Cargo test..."
+  (cd "$REPO_ROOT/core" && cargo test) || FAILURES=$((FAILURES + 1))
 fi
 
 if [ $TESTS_RAN -eq 0 ]; then

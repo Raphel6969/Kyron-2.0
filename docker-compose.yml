@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kyron-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kyron}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kyron_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-kyron_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kyron} -d ${POSTGRES_DB:-kyron_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  control-api:
+    build:
+      context: .
+      dockerfile: control/Dockerfile
+    container_name: kyron-control-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kyron}:${POSTGRES_PASSWORD:-kyron_secret}@postgres:5432/${POSTGRES_DB:-kyron_db}
+      CONTROL_API_PORT: 8001
+      CONTROL_API_HOST: "0.0.0.0"
+      LOG_LEVEL: INFO
+    ports:
+      - "8001:8001"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: kyron-gateway
+    restart: unless-stopped
+    depends_on:
+      control-api:
+        condition: service_started
+    environment:
+      GATEWAY_PORT: 8080
+      GATEWAY_MODE: monitor
+      CONTROL_PLANE_URL: http://control-api:8001
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
+    driver: local
