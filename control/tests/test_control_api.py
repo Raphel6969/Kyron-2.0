@@ -385,6 +385,15 @@ def test_effect_ledger_and_reconciliation(client):
     tokens = [e["token"] for e in r_list_after.json()]
     assert "eff-timeout-tx-100" in tokens
 
+def test_adaptive_redteam_api_endpoint(client):
+    r = client.get("/v1/eval/adaptive-redteam")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["hypothesis_confirmed"] is True
+    assert data["metrics"]["kyron_full_stack"]["attack_success_rate_pct"] == 0.0
+    assert data["metrics"]["scanner_only"]["attack_success_rate_pct"] >= 80.0
+
+
 
 
 

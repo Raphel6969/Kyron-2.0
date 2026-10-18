@@ -1109,3 +1109,14 @@ def reports_summary(db: Session = Depends(get_db)):
         blocked_calls=blocked,
         allowed_calls=allowed,
     )
+
+# -------------------------------------------------------------------------
+# Evaluation / Red-Team (RQ6)
+# -------------------------------------------------------------------------
+
+@app.get("/v1/eval/adaptive-redteam", tags=["Evaluation"])
+def get_adaptive_redteam_report():
+    """Execute and return the RQ6 Adaptive Red-Team Adversarial Resilience Evaluation"""
+    from eval.adaptive_redteam import run_adaptive_redteam_evaluation
+    return run_adaptive_redteam_evaluation()
+
