@@ -159,6 +159,21 @@ class RecoveryStatsResponse(BaseModel):
     misses: int
     tokens_saved: int
 
+class FieldProvenanceItem(BaseModel):
+    path: str
+    readers: List[str]
+    trust: int = 100
+
+class ProvenanceFilterRequest(BaseModel):
+    payload: Dict[str, Any]
+    target_reader: str
+    field_labels: Optional[List[FieldProvenanceItem]] = None
+
+class ProvenanceFilterResponse(BaseModel):
+    filtered_payload: Dict[str, Any]
+    pruned_paths: List[str]
+    status: str
+
 class ApprovalCreateRequest(BaseModel):
     trajectory_id: str
     kind: str  # tool_approval | lease_request

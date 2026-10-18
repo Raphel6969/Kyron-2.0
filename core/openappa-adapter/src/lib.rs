@@ -6,6 +6,9 @@
 use kyron_types::{Contract, Label, Principal};
 use serde::{Deserialize, Serialize};
 
+pub mod provenance;
+pub use provenance::{FieldProvenance, FieldProvenanceMap};
+
 /// Upstream OpenAPPA RFC-compliant tool contract representation
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OpenAppaContract {

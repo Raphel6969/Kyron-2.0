@@ -47,6 +47,9 @@ from control.app.schemas import (
     RecoveryPlanResponse,
     RecoveryLookupRequest,
     RecoveryStatsResponse,
+    FieldProvenanceItem,
+    ProvenanceFilterRequest,
+    ProvenanceFilterResponse,
     AuditEventCreate,
     AuditEventResponse,
     AuditExportResponse,
@@ -759,6 +762,55 @@ def lookup_recovery_plan(req: RecoveryLookupRequest):
         alternative_tools=synth["alternative_tools"],
         step_by_step_guide=synth["step_by_step_guide"],
         tokens_consumed=0,
+    )
+
+# -------------------------------------------------------------------------
+# JSON-Path Field-Level Provenance (C7, F21)
+# -------------------------------------------------------------------------
+
+@app.post("/v1/provenance/filter", response_model=ProvenanceFilterResponse, tags=["Security"])
+def filter_provenance(req: ProvenanceFilterRequest):
+    """Filters structured JSON payload for target reader based on field-level provenance labels (C7, F21)"""
+    label_map = {}
+    if req.field_labels:
+        for item in req.field_labels:
+            label_map[item.path] = item.readers
+
+    pruned = []
+
+    def filter_node(val: Any, path: str) -> Any:
+        allowed_readers = label_map.get(path, ["*"])
+        if path != "$" and "*" not in allowed_readers and req.target_reader not in allowed_readers:
+            pruned.append(path)
+            return None
+
+        if isinstance(val, dict):
+            out = {}
+            for k, v in val.items():
+                child_path = f"$.{k}" if path == "$" else f"{path}.{k}"
+                child_readers = label_map.get(child_path, allowed_readers)
+                if "*" not in child_readers and req.target_reader not in child_readers:
+                    pruned.append(child_path)
+                    continue
+                filtered_child = filter_node(v, child_path)
+                if filtered_child is not None:
+                    out[k] = filtered_child
+            return out
+        elif isinstance(val, list):
+            out = []
+            for i, item in enumerate(val):
+                child_path = f"{path}[{i}]"
+                filtered_child = filter_node(item, child_path)
+                if filtered_child is not None:
+                    out.append(filtered_child)
+            return out
+        return val
+
+    filtered = filter_node(req.payload, "$")
+    return ProvenanceFilterResponse(
+        filtered_payload=filtered or {},
+        pruned_paths=pruned,
+        status="filtered",
     )
 
 @app.post("/v1/approvals/{request_id}/deny", response_model=ApprovalResponse, tags=["Approvals"])

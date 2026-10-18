@@ -311,4 +311,34 @@ def test_memoized_recovery_engine_endpoints(client):
     assert plan_dyn["tool_id"] == "unseeded_worker"
     assert plan_dyn["tokens_consumed"] == 0
 
+def test_provenance_filter_endpoint(client):
+    payload = {
+        "user_id": "usr_42",
+        "public_name": "Antigravity Pair",
+        "secrets": {
+            "token": "ghp_super_secret_9988",
+            "score": 100,
+        },
+    }
+    field_labels = [
+        {"path": "$.public_name", "readers": ["*"], "trust": 100},
+        {"path": "$.secrets.token", "readers": ["compliance_admin"], "trust": 0},
+        {"path": "$.secrets.score", "readers": ["*"], "trust": 100},
+    ]
+
+    # Filter for public reader: secrets.token must be pruned while public_name and secrets.score are preserved
+    r = client.post("/v1/provenance/filter", json={
+        "payload": payload,
+        "target_reader": "public_agent",
+        "field_labels": field_labels,
+    })
+    assert r.status_code == 200
+    res = r.json()
+    filtered = res["filtered_payload"]
+    assert filtered["public_name"] == "Antigravity Pair"
+    assert filtered["secrets"]["score"] == 100
+    assert "token" not in filtered["secrets"]
+    assert "$.secrets.token" in res["pruned_paths"]
+
+
 
