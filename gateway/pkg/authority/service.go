@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 )
@@ -71,12 +72,41 @@ func (s *Service) ReleaseLeaseRequirement(toolName string) {
 
 // IsLeaseRequired checks whether a tool requires an explicit capability lease
 func (s *Service) IsLeaseRequired(toolName string) bool {
-	val, ok := s.restrictedTools.Load(toolName)
-	if !ok {
-		return false
+	if val, ok := s.restrictedTools.Load(toolName); ok {
+		if b, ok := val.(bool); ok && b {
+			return true
+		}
 	}
-	b, ok := val.(bool)
-	return ok && b
+
+	var required bool
+	s.restrictedTools.Range(func(key, value interface{}) bool {
+		pat, ok := key.(string)
+		if !ok {
+			return true
+		}
+		b, ok := value.(bool)
+		if ok && b && matchToolPattern(pat, toolName) {
+			required = true
+			return false
+		}
+		return true
+	})
+	return required
+}
+
+func matchToolPattern(pattern, target string) bool {
+	if pattern == "*" || pattern == target {
+		return true
+	}
+	if strings.HasSuffix(pattern, "*") {
+		prefix := strings.TrimSuffix(pattern, "*")
+		return strings.HasPrefix(target, prefix)
+	}
+	if strings.HasPrefix(pattern, "*") {
+		suffix := strings.TrimPrefix(pattern, "*")
+		return strings.HasSuffix(target, suffix)
+	}
+	return false
 }
 
 // IssueLease creates, signs, and registers a new capability lease

@@ -4,6 +4,11 @@
 use kyron_types::{Budget, Contract, Label, Lease, PinnedTool, ToolState, Verdict};
 use serde::{Deserialize, Serialize};
 
+pub mod bundle;
+pub use bundle::{
+    BudgetsConfig, EgressConfig, PolicyBundle, PolicyCompileError, PolicyMeta, ToolPolicyRule,
+};
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CallContext {
     pub session_id: String,
@@ -115,6 +120,107 @@ impl PolicyEngine {
                     )],
                     recovery_plan: Some("Acquire authority ruling to elevate trust or sanitize input.".into()),
                 };
+            }
+        }
+
+        Verdict::Allow
+    }
+
+    /// Evaluates a proposed tool call deterministically against a compiled declarative TOML policy bundle (C3, F35)
+    pub fn evaluate_bundle(
+        &self,
+        ctx: &CallContext,
+        pinned_tool: &PinnedTool,
+        bundle: &PolicyBundle,
+        active_lease: Option<&Lease>,
+    ) -> Verdict {
+        // 1. Tool state verification
+        if pinned_tool.state != ToolState::Approved && pinned_tool.state != ToolState::Active {
+            return Verdict::Block {
+                reasons: vec![format!(
+                    "Tool '{}' is in '{:?}' state; execution disallowed by registry firewall.",
+                    pinned_tool.id, pinned_tool.state
+                )],
+                recovery_plan: Some("Submit tool for administrative review and approval.".into()),
+            };
+        }
+
+        // 2. Trajectory egress budget check
+        if ctx.cumulative_bytes_out > bundle.budgets.egress_bytes_per_trajectory {
+            return Verdict::Block {
+                reasons: vec![format!(
+                    "Egress budget exceeded for trajectory '{}': {} bytes used, max allowed {} bytes.",
+                    ctx.trajectory_id, ctx.cumulative_bytes_out, bundle.budgets.egress_bytes_per_trajectory
+                )],
+                recovery_plan: Some("Request capability lease extension with elevated egress quota.".into()),
+            };
+        }
+
+        // 3. Resolve tool policy rule from declarative bundle
+        if let Some(rule) = bundle.resolve_tool_rule(&ctx.tool_id) {
+            match rule.action.as_str() {
+                "block" => {
+                    return Verdict::Block {
+                        reasons: vec![if rule.reason.is_empty() {
+                            format!("Tool '{}' is blocked by policy rule '{}'", ctx.tool_id, rule.pattern)
+                        } else {
+                            rule.reason.clone()
+                        }],
+                        recovery_plan: Some("Select an authorized alternative tool from the registry.".into()),
+                    };
+                }
+                "require_lease" => {
+                    let Some(lease) = active_lease else {
+                        return Verdict::Escalate {
+                            kind: "human_approval".into(),
+                            details: Some(format!("Tool '{}' requires capability lease", ctx.tool_id)),
+                        };
+                    };
+
+                    if lease.trajectory_id != ctx.trajectory_id {
+                        return Verdict::Block {
+                            reasons: vec![format!(
+                                "Capability lease '{}' is bound to trajectory '{}', but call was made in trajectory '{}'.",
+                                lease.id, lease.trajectory_id, ctx.trajectory_id
+                            )],
+                            recovery_plan: Some("Obtain capability lease for active trajectory.".into()),
+                        };
+                    }
+
+                    if lease.action != "*" && lease.action != ctx.tool_id {
+                        return Verdict::Block {
+                            reasons: vec![format!(
+                                "Capability lease '{}' is scoped to action '{}', not requested tool '{}'.",
+                                lease.id, lease.action, ctx.tool_id
+                            )],
+                            recovery_plan: Some("Request capability lease scoped to the target action.".into()),
+                        };
+                    }
+
+                    if lease.is_expired(chrono::Utc::now()) {
+                        return Verdict::Block {
+                            reasons: vec![format!(
+                                "Capability lease '{}' expired at {}.",
+                                lease.id, lease.expires_at
+                            )],
+                            recovery_plan: Some("Request lease renewal from authority service.".into()),
+                        };
+                    }
+
+                    if lease.is_exhausted() {
+                        return Verdict::Block {
+                            reasons: vec![format!(
+                                "Capability lease '{}' exhausted ({} of {} calls used).",
+                                lease.id, lease.calls_used, lease.max_calls
+                            )],
+                            recovery_plan: Some("Request new capability lease from authority service.".into()),
+                        };
+                    }
+                }
+                "allow" => {
+                    // Allowed
+                }
+                _ => {}
             }
         }
 
@@ -334,6 +440,93 @@ mod tests {
                 assert!(reasons[0].contains("expired"));
             }
             _ => panic!("Expected expired lease block"),
+        }
+    }
+
+    #[test]
+    fn test_evaluate_bundle_scenarios() {
+        let toml_data = r#"
+        [meta]
+        version = 1
+        name = "prod-policy"
+        mode = "enforce"
+
+        [budgets]
+        egress_bytes_per_trajectory = 1000
+
+        [[tools]]
+        pattern = "bash"
+        action = "block"
+        reason = "Banned shell"
+
+        [[tools]]
+        pattern = "exec_*"
+        action = "require_lease"
+
+        [[tools]]
+        pattern = "*"
+        action = "allow"
+        "#;
+
+        let bundle = PolicyBundle::from_toml(toml_data).unwrap();
+        let engine = PolicyEngine::new(PolicyMode::Enforce);
+
+        let ctx = CallContext {
+            session_id: "s1".into(),
+            trajectory_id: "t1".into(),
+            tool_id: "bash".into(),
+            arguments_json: "{}".into(),
+            caller_label: Label::new(vec!["*".into()], 100),
+            cumulative_bytes_out: 100,
+        };
+
+        let tool = PinnedTool {
+            id: "bash".into(),
+            server_id: "srv".into(),
+            name: "bash".into(),
+            hash: "h".into(),
+            risk_score: 0.1,
+            risk_reasons: vec![],
+            state: ToolState::Approved,
+            approver: Some("adm".into()),
+            signature: Some("sig".into()),
+            model_facing_description: "desc".into(),
+            original_description: "orig".into(),
+            approved_at: None,
+        };
+
+        // 1. bash is blocked by rule
+        match engine.evaluate_bundle(&ctx, &tool, &bundle, None) {
+            Verdict::Block { reasons, .. } => {
+                assert_eq!(reasons[0], "Banned shell");
+            }
+            _ => panic!("Expected block for bash"),
+        }
+
+        // 2. exec_cmd requires lease -> escalates when no lease
+        let mut exec_ctx = ctx.clone();
+        exec_ctx.tool_id = "exec_command".into();
+        let mut exec_tool = tool.clone();
+        exec_tool.id = "exec_command".into();
+        assert_eq!(
+            engine.evaluate_bundle(&exec_ctx, &exec_tool, &bundle, None),
+            Verdict::Escalate {
+                kind: "human_approval".into(),
+                details: Some("Tool 'exec_command' requires capability lease".into()),
+            }
+        );
+
+        // 3. budget exceeded
+        let mut overbudget_ctx = ctx.clone();
+        overbudget_ctx.tool_id = "other_tool".into();
+        overbudget_ctx.cumulative_bytes_out = 2000;
+        let mut other_tool = tool.clone();
+        other_tool.id = "other_tool".into();
+        match engine.evaluate_bundle(&overbudget_ctx, &other_tool, &bundle, None) {
+            Verdict::Block { reasons, .. } => {
+                assert!(reasons[0].contains("Egress budget exceeded"));
+            }
+            _ => panic!("Expected budget block"),
         }
     }
 }

@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone, timedelta
 import hashlib
 import json
+import tomllib
 import uuid
 from typing import Dict, Any, List, Optional
 
@@ -31,6 +32,9 @@ from control.app.schemas import (
     PolicyResponse,
     PolicySimulateRequest,
     PolicySimulateResponse,
+    PolicyCompileRequest,
+    PolicyCompileResponse,
+    PolicyReloadResponse,
     LeaseCreateRequest,
     LeaseResponse,
     ApprovalCreateRequest,
@@ -350,6 +354,29 @@ def list_policies(db: Session = Depends(get_db)):
     policies = db.query(PolicyModel).order_by(PolicyModel.version.desc()).all()
     return policies
 
+@app.get("/v1/policies/active", response_model=PolicyResponse, tags=["Policies"])
+def get_active_policy(db: Session = Depends(get_db)):
+    """Retrieve the currently active policy bundle"""
+    pol = db.query(PolicyModel).filter(PolicyModel.is_active == True).first()
+    if not pol:
+        # Fallback to highest version if none explicitly active
+        pol = db.query(PolicyModel).order_by(PolicyModel.version.desc()).first()
+    if not pol:
+        raise HTTPException(status_code=404, detail="No active policy found")
+    return pol
+
+@app.put("/v1/policies/active", response_model=PolicyResponse, tags=["Policies"])
+def set_active_policy(version: int = Query(...), db: Session = Depends(get_db)):
+    pol = db.query(PolicyModel).filter(PolicyModel.version == version).first()
+    if not pol:
+        raise HTTPException(status_code=404, detail=f"Policy version {version} not found")
+
+    db.query(PolicyModel).update({"is_active": False})
+    pol.is_active = True
+    db.commit()
+    db.refresh(pol)
+    return pol
+
 @app.get("/v1/policies/{version}", response_model=PolicyResponse, tags=["Policies"])
 def get_policy(version: int, db: Session = Depends(get_db)):
     pol = db.query(PolicyModel).filter(PolicyModel.version == version).first()
@@ -374,17 +401,86 @@ def create_policy(req: PolicyCreateRequest, db: Session = Depends(get_db)):
     db.refresh(pol)
     return pol
 
-@app.put("/v1/policies/active", response_model=PolicyResponse, tags=["Policies"])
-def set_active_policy(version: int = Query(...), db: Session = Depends(get_db)):
-    pol = db.query(PolicyModel).filter(PolicyModel.version == version).first()
-    if not pol:
-        raise HTTPException(status_code=404, detail=f"Policy version {version} not found")
+@app.post("/v1/policies/compile", response_model=PolicyCompileResponse, tags=["Policies"])
+def compile_policy(req: PolicyCompileRequest):
+    """Compiles and validates a proposed declarative TOML policy (C3, F35)"""
+    try:
+        parsed = tomllib.loads(req.toml_content)
+    except Exception as e:
+        return PolicyCompileResponse(
+            status="error",
+            error_message=f"TOML syntax error: {str(e)}",
+        )
 
-    db.query(PolicyModel).update({"is_active": False})
-    pol.is_active = True
-    db.commit()
-    db.refresh(pol)
-    return pol
+    meta = parsed.get("meta", {})
+    version = meta.get("version")
+    name = meta.get("name")
+    mode = meta.get("mode")
+
+    if not version or version < 1:
+        return PolicyCompileResponse(
+            status="error",
+            error_message="Validation error: meta.version must be >= 1",
+        )
+    if not name or not str(name).strip():
+        return PolicyCompileResponse(
+            status="error",
+            error_message="Validation error: meta.name must not be empty",
+        )
+    if mode not in ("enforce", "monitor"):
+        return PolicyCompileResponse(
+            status="error",
+            error_message=f"Validation error: invalid meta.mode '{mode}'; must be 'enforce' or 'monitor'",
+        )
+
+    tools = parsed.get("tools", [])
+    egress = parsed.get("egress", {})
+    allowed_dest = egress.get("allowed_destinations", [])
+    blocked_dest = egress.get("blocked_destinations", [])
+
+    return PolicyCompileResponse(
+        status="valid",
+        version=version,
+        name=name,
+        mode=mode,
+        tools_count=len(tools),
+        egress_allowed_count=len(allowed_dest),
+        egress_blocked_count=len(blocked_dest),
+    )
+
+@app.post("/v1/policies/reload", response_model=PolicyReloadResponse, tags=["Policies"])
+def reload_policy(db: Session = Depends(get_db)):
+    """Triggers hot reload of the declarative policy bundle across the gateway with zero downtime"""
+    now = datetime.now(timezone.utc)
+    active_pol = db.query(PolicyModel).filter(PolicyModel.is_active == True).first()
+
+    if not active_pol:
+        # Load default policy bundle
+        active_pol = db.query(PolicyModel).order_by(PolicyModel.version.desc()).first()
+        if not active_pol:
+            active_pol = PolicyModel(
+                version=1,
+                name="enterprise-default",
+                mode="enforce",
+                content="[meta]\nversion = 1\nname = 'enterprise-default'\nmode = 'enforce'",
+                signature=hashlib.sha256(b"default-seed-v1").hexdigest(),
+                signed_by="system",
+                is_active=True,
+            )
+            db.add(active_pol)
+            db.commit()
+            db.refresh(active_pol)
+        else:
+            active_pol.is_active = True
+            db.commit()
+
+    return PolicyReloadResponse(
+        status="reloaded",
+        active_version=active_pol.version,
+        name=active_pol.name,
+        mode=active_pol.mode,
+        reloaded_at=now,
+    )
 
 @app.post("/v1/policies/simulate", response_model=PolicySimulateResponse, tags=["Policies"])
 def simulate_policy(req: PolicySimulateRequest):

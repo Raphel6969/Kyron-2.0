@@ -73,6 +73,26 @@ class PolicySimulateResponse(BaseModel):
     would_block_count: int
     blocked_tools: List[str]
 
+class PolicyCompileRequest(BaseModel):
+    toml_content: str
+
+class PolicyCompileResponse(BaseModel):
+    status: str
+    version: Optional[int] = None
+    name: Optional[str] = None
+    mode: Optional[str] = None
+    tools_count: int = 0
+    egress_allowed_count: int = 0
+    egress_blocked_count: int = 0
+    error_message: Optional[str] = None
+
+class PolicyReloadResponse(BaseModel):
+    status: str
+    active_version: int
+    name: str
+    mode: str
+    reloaded_at: datetime
+
 class LeaseCreateRequest(BaseModel):
     trajectory_id: str
     action_spec: str

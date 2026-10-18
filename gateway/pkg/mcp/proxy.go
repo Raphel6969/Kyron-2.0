@@ -10,6 +10,7 @@ import (
 
 	"kyron.dev/gateway/pkg/audit"
 	"kyron.dev/gateway/pkg/authority"
+	"kyron.dev/gateway/pkg/policy"
 	"kyron.dev/gateway/pkg/secrets"
 )
 
@@ -35,6 +36,7 @@ type Proxy struct {
 	AuditEmitter  *audit.Emitter
 	Authority     *authority.Service
 	Remediation   *RemediationEngine
+	PolicyManager *policy.Manager
 	Backend       BackendHandler
 	Mode          EnforcementMode
 	mu            sync.RWMutex
@@ -68,6 +70,39 @@ func (p *Proxy) GetAuthority() *authority.Service {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.Authority
+}
+
+// SetPolicyManager attaches a policy manager to the proxy and registers hot-reload hooks
+func (p *Proxy) SetPolicyManager(pm *policy.Manager) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.PolicyManager = pm
+	if pm != nil {
+		pm.SetAuthority(p.Authority)
+		if active := pm.Active(); active != nil {
+			if active.Meta.Mode == "monitor" {
+				p.Mode = ModeMonitor
+			} else {
+				p.Mode = ModeEnforce
+			}
+		}
+		pm.OnReload(func(oldBundle, newBundle *policy.PolicyBundle) {
+			if newBundle != nil {
+				if newBundle.Meta.Mode == "monitor" {
+					p.SetMode(ModeMonitor)
+				} else {
+					p.SetMode(ModeEnforce)
+				}
+			}
+		})
+	}
+}
+
+// GetPolicyManager returns the active policy manager
+func (p *Proxy) GetPolicyManager() *policy.Manager {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.PolicyManager
 }
 
 
@@ -168,6 +203,61 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 	}
 
 	auth := p.GetAuthority()
+
+	// Stage 4.0: Declarative TOML Policy Rule Check (C3, F35)
+	pm := p.GetPolicyManager()
+	if pm != nil {
+		if bundle := pm.Active(); bundle != nil {
+			if rule := bundle.ResolveToolRule(toolName); rule != nil {
+				if rule.Action == "block" {
+					reason := rule.Reason
+					if reason == "" {
+						reason = fmt.Sprintf("Tool '%s' is blocked by declarative policy rule '%s'", toolName, rule.Pattern)
+					}
+					mode := p.GetMode()
+					if mode == ModeMonitor {
+						if p.AuditEmitter != nil {
+							_, _ = p.AuditEmitter.Emit(
+								sess.ID,
+								sess.TrajectoryID,
+								callHash,
+								toolName,
+								"would-block",
+								[]string{reason},
+								1,
+							)
+						}
+						log.Printf("[KYRON MONITOR MODE] Tool '%s' blocked by policy (%s). Permitting in monitor mode.", toolName, reason)
+					} else {
+						if p.AuditEmitter != nil {
+							_, _ = p.AuditEmitter.Emit(
+								sess.ID,
+								sess.TrajectoryID,
+								callHash,
+								toolName,
+								"block",
+								[]string{reason},
+								1,
+							)
+						}
+						remediation := &StructuredRemediation{
+							Tool:        toolName,
+							State:       "blocked",
+							RiskScore:   0.9,
+							RiskReasons: []string{reason},
+							Remediation: "Tool is blocked by active corporate TOML policy bundle. Select an authorized alternative tool.",
+						}
+						return NewErrorResponse(
+							msg.ID,
+							ErrCodePolicyBlocked,
+							fmt.Sprintf("Policy restriction: %s", reason),
+							remediation,
+						), nil
+					}
+				}
+			}
+		}
+	}
 
 	// Stage 4a: Authority Service Ruling & Lease Verification (C6, F18)
 	if auth != nil && auth.IsLeaseRequired(toolName) {

@@ -110,7 +110,46 @@ def test_policy_management_and_simulation(client):
     assert r_act.status_code == 200
     assert r_act.json()["is_active"] is True
 
-    # 3. Simulate policy against recorded trace
+    # 3. Get Active Policy
+    r_get_act = client.get("/v1/policies/active")
+    assert r_get_act.status_code == 200
+    assert r_get_act.json()["version"] == 1
+
+    # 4. Compile valid TOML policy
+    valid_toml = """[meta]
+version = 2
+name = "compiled-test"
+mode = "enforce"
+
+[[tools]]
+pattern = "bash"
+action = "block"
+
+[egress]
+allowed_destinations = ["api.github.com"]
+"""
+    r_compile = client.post("/v1/policies/compile", json={"toml_content": valid_toml})
+    assert r_compile.status_code == 200
+    comp = r_compile.json()
+    assert comp["status"] == "valid"
+    assert comp["version"] == 2
+    assert comp["tools_count"] == 1
+    assert comp["egress_allowed_count"] == 1
+
+    # 5. Compile invalid TOML policy (syntax error or validation error)
+    bad_toml = "invalid = [toml unclosed"
+    r_bad_compile = client.post("/v1/policies/compile", json={"toml_content": bad_toml})
+    assert r_bad_compile.status_code == 200
+    assert r_bad_compile.json()["status"] == "error"
+
+    # 6. Hot-reload policy endpoint
+    r_reload = client.post("/v1/policies/reload")
+    assert r_reload.status_code == 200
+    reload_data = r_reload.json()
+    assert reload_data["status"] == "reloaded"
+    assert reload_data["active_version"] == 1
+
+    # 7. Simulate policy against recorded trace
     sim_req = {
         "policy_content": "block_quarantined = true",
         "trace_events": [

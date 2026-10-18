@@ -1,0 +1,58 @@
+# Kyron 2.0 Enterprise Policy Bundle (C3, F35)
+# Declarative, deterministic zero-trust policy for tool-using AI agents.
+
+[meta]
+version = 1
+name = "enterprise-strict"
+mode = "enforce"
+description = "Default corporate zero-trust security policy for tool-using AI agents"
+signed_by = "sec-admin-corp"
+
+[budgets]
+egress_bytes_per_trajectory = 1048576 # 1 MB
+max_calls_per_trajectory = 100
+max_distinct_destinations = 5
+
+[egress]
+default_action = "deny"
+allowed_destinations = [
+    "api.github.com",
+    "internal.corp.net",
+    "status.corp.net",
+]
+blocked_destinations = [
+    "169.254.169.254",
+    "metadata.google.internal",
+    "evil.com",
+    "pastebin.com",
+    "webhook.site",
+]
+
+[[tools]]
+pattern = "bash"
+action = "block"
+reason = "Direct raw shell execution is permanently banned"
+
+[[tools]]
+pattern = "exec_command"
+action = "require_lease"
+max_calls = 1
+ttl_seconds = 300
+reason = "Process spawning requires an authenticated single-use capability lease"
+
+[[tools]]
+pattern = "deploy_*"
+action = "require_lease"
+max_calls = 1
+ttl_seconds = 600
+reason = "Production deployment triggers require operator authorization"
+
+[[tools]]
+pattern = "database_drop_*"
+action = "block"
+reason = "Destructive schema or table drops are banned across all trajectories"
+
+[[tools]]
+pattern = "*"
+action = "allow"
+reason = "Approved and pinned read/write tools are permitted"
