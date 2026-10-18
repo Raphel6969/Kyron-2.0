@@ -3,6 +3,8 @@ package mcp
 import (
 	"fmt"
 	"strings"
+
+	"kyron.dev/gateway/pkg/recovery"
 )
 
 // Standard Kyron Error Codes (F12, F17)
@@ -29,8 +31,9 @@ const (
 
 // RemediationEngine synthesizes actionable structured remediation responses for blocked calls (C5, F12, F17)
 type RemediationEngine struct {
-	registry   *ToolRegistry
-	socBaseURL string
+	registry       *ToolRegistry
+	socBaseURL     string
+	recoveryEngine *recovery.Engine
 }
 
 // NewRemediationEngine creates a new Actionable Error Remediation Engine
@@ -39,9 +42,15 @@ func NewRemediationEngine(registry *ToolRegistry, socBaseURL string) *Remediatio
 		socBaseURL = "http://localhost:8001"
 	}
 	return &RemediationEngine{
-		registry:   registry,
-		socBaseURL: strings.TrimRight(socBaseURL, "/"),
+		registry:       registry,
+		socBaseURL:     strings.TrimRight(socBaseURL, "/"),
+		recoveryEngine: recovery.NewEngine(),
 	}
+}
+
+// GetRecoveryEngine returns the underlying memoized recovery cache engine
+func (e *RemediationEngine) GetRecoveryEngine() *recovery.Engine {
+	return e.recoveryEngine
 }
 
 // BuildQuarantineRemediation generates remediation for tools flagged or quarantined by the registry firewall
@@ -55,19 +64,36 @@ func (e *RemediationEngine) BuildQuarantineRemediation(
 	alternatives := e.findAlternatives(toolName)
 	escalationURL := fmt.Sprintf("%s/v1/approvals/%s", e.socBaseURL, sessionID)
 
-	var recoveryPlan string
-	if len(alternatives) > 0 {
-		recoveryPlan = fmt.Sprintf(
-			"1. Substitute tool '%s' with approved alternative '%s'. 2. Alternatively, request administrative approval via escalation_url.",
-			toolName, alternatives[0],
-		)
-	} else {
-		recoveryPlan = "1. Tool is untrusted. Pause execution and request human operator sign-off via escalation_url. 2. Await capability lease before re-attempting."
-	}
-
 	errCode := CodeQuarantinedTool
 	if state == "blocked" || state == "revoked" {
 		errCode = CodeBlockedTool
+	}
+
+	var recoveryPlan string
+	if e.recoveryEngine != nil {
+		plan := e.recoveryEngine.ResolvePlan(toolName, errCode, RuleRegistryTrust, 1, "agent", alternatives)
+		recoveryPlan = plan.PrimaryAction
+		for _, alt := range plan.AlternativeTools {
+			var found bool
+			for _, ex := range alternatives {
+				if ex == alt {
+					found = true
+					break
+				}
+			}
+			if !found {
+				alternatives = append(alternatives, alt)
+			}
+		}
+	} else {
+		if len(alternatives) > 0 {
+			recoveryPlan = fmt.Sprintf(
+				"1. Substitute tool '%s' with approved alternative '%s'. 2. Alternatively, request administrative approval via escalation_url.",
+				toolName, alternatives[0],
+			)
+		} else {
+			recoveryPlan = "1. Tool is untrusted. Pause execution and request human operator sign-off via escalation_url. 2. Await capability lease before re-attempting."
+		}
 	}
 
 	return &StructuredRemediation{
@@ -93,6 +119,17 @@ func (e *RemediationEngine) BuildLeaseRequiredRemediation(
 ) *StructuredRemediation {
 	escalationURL := fmt.Sprintf("%s/v1/approvals/%s", e.socBaseURL, sessionID)
 
+	var recoveryPlan string
+	if e.recoveryEngine != nil {
+		plan := e.recoveryEngine.ResolvePlan(toolName, CodeLeaseRequired, RuleCapabilityLease, 1, "agent", nil)
+		recoveryPlan = plan.PrimaryAction
+	} else {
+		recoveryPlan = fmt.Sprintf(
+			"1. Request capability lease from authority service for trajectory '%s'. 2. Pass the granted lease_id in subsequent tools/call parameters.",
+			trajectoryID,
+		)
+	}
+
 	return &StructuredRemediation{
 		ErrorCode:    CodeLeaseRequired,
 		Tool:         toolName,
@@ -101,10 +138,7 @@ func (e *RemediationEngine) BuildLeaseRequiredRemediation(
 		RiskReasons:  []string{reason},
 		RuleViolated: RuleCapabilityLease,
 		Remediation:  fmt.Sprintf("Tool '%s' requires an authenticated capability lease: %s", toolName, reason),
-		RecoveryPlan: fmt.Sprintf(
-			"1. Request capability lease from authority service for trajectory '%s'. 2. Pass the granted lease_id in subsequent tools/call parameters.",
-			trajectoryID,
-		),
+		RecoveryPlan: recoveryPlan,
 		EscalationURL: escalationURL,
 	}
 }
@@ -127,6 +161,11 @@ func (e *RemediationEngine) BuildLeaseFailureRemediation(
 	} else if strings.Contains(strings.ToLower(reason), "expire") {
 		errCode = CodeLeaseExpired
 		recoveryPlan = "1. Capability lease TTL expired. Request a renewed lease with adequate time-to-live."
+	}
+
+	if e.recoveryEngine != nil {
+		plan := e.recoveryEngine.ResolvePlan(toolName, errCode, RuleCapabilityLease, 1, "agent", nil)
+		recoveryPlan = plan.PrimaryAction
 	}
 
 	return &StructuredRemediation{
@@ -152,6 +191,12 @@ func (e *RemediationEngine) BuildEgressQuotaRemediation(
 ) *StructuredRemediation {
 	escalationURL := fmt.Sprintf("%s/v1/approvals/%s", e.socBaseURL, sessionID)
 
+	recoveryPlan := "1. Request capability lease extension with elevated egress quota from authority service. 2. Compress payload before outbound dispatch."
+	if e.recoveryEngine != nil {
+		plan := e.recoveryEngine.ResolvePlan(toolName, CodeEgressQuotaExceeded, RuleEgressBudget, 1, "agent", nil)
+		recoveryPlan = plan.PrimaryAction
+	}
+
 	return &StructuredRemediation{
 		ErrorCode:    CodeEgressQuotaExceeded,
 		Tool:         toolName,
@@ -160,7 +205,7 @@ func (e *RemediationEngine) BuildEgressQuotaRemediation(
 		RiskReasons:  []string{fmt.Sprintf("Cumulative trajectory egress limit exceeded: %d bytes used, max %d bytes allowed.", bytesUsed, maxAllowed)},
 		RuleViolated: RuleEgressBudget,
 		Remediation:  "Outbound network egress budget exceeded for current agent trajectory.",
-		RecoveryPlan: "1. Request capability lease extension with elevated egress quota from authority service. 2. Compress payload before outbound dispatch.",
+		RecoveryPlan: recoveryPlan,
 		EscalationURL: escalationURL,
 	}
 }

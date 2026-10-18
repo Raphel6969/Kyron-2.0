@@ -136,6 +136,29 @@ class ResourceVerifyResponse(BaseModel):
     status: str
     violation: Optional[str] = None
 
+class RecoveryPlanResponse(BaseModel):
+    fingerprint: str
+    tool_id: str
+    error_code: str
+    strategy: str
+    primary_action: str
+    alternative_tools: List[str]
+    step_by_step_guide: List[str]
+    tokens_consumed: int = 0
+
+class RecoveryLookupRequest(BaseModel):
+    tool_id: str
+    error_code: str
+    rule_violated: str = "RULE_REGISTRY_TRUST"
+    policy_version: int = 1
+    role: str = "agent"
+
+class RecoveryStatsResponse(BaseModel):
+    total_plans: int
+    hits: int
+    misses: int
+    tokens_saved: int
+
 class ApprovalCreateRequest(BaseModel):
     trajectory_id: str
     kind: str  # tool_approval | lease_request

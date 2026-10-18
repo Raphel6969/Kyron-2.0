@@ -273,3 +273,42 @@ def test_resource_binding_and_toctou_verification(client):
     assert res_fail["status"] == "violation"
     assert "TOCTOU race detected" in res_fail["violation"]
 
+def test_memoized_recovery_engine_endpoints(client):
+    # 1. Query recovery stats
+    r_stats = client.get("/v1/recovery/stats")
+    assert r_stats.status_code == 200
+    stats = r_stats.json()
+    assert stats["total_plans"] >= 4
+    assert stats["hits"] >= 0
+    assert stats["tokens_saved"] >= 0
+
+    # 2. Lookup precomputed recovery plan (cache hit)
+    r_hit = client.post("/v1/recovery/lookup", json={
+        "tool_id": "s1_poison",
+        "error_code": "KYRON_QUARANTINED_TOOL",
+        "rule_violated": "RULE_REGISTRY_TRUST",
+        "policy_version": 1,
+        "role": "agent",
+    })
+    assert r_hit.status_code == 200
+    plan = r_hit.json()
+    assert plan["tool_id"] == "s1_poison"
+    assert plan["strategy"] == "auto_substitute"
+    assert plan["tokens_consumed"] == 0
+    assert "get_time" in plan["alternative_tools"]
+    assert len(plan["step_by_step_guide"]) >= 1
+
+    # 3. Lookup unseeded error state (memoizes dynamic plan)
+    r_miss = client.post("/v1/recovery/lookup", json={
+        "tool_id": "unseeded_worker",
+        "error_code": "KYRON_CUSTOM_VIOLATION",
+        "rule_violated": "RULE_CUSTOM",
+        "policy_version": 1,
+        "role": "agent",
+    })
+    assert r_miss.status_code == 200
+    plan_dyn = r_miss.json()
+    assert plan_dyn["tool_id"] == "unseeded_worker"
+    assert plan_dyn["tokens_consumed"] == 0
+
+

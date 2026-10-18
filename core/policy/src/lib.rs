@@ -9,6 +9,11 @@ pub use bundle::{
     BudgetsConfig, EgressConfig, PolicyBundle, PolicyCompileError, PolicyMeta, ToolPolicyRule,
 };
 
+pub mod recovery;
+pub use recovery::{
+    CompositeFingerprint, MemoizedRecoveryCache, RecoveryCacheStats, RecoveryPlan,
+};
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CallContext {
     pub session_id: String,
