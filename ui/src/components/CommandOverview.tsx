@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
+import gsap from 'gsap';
 import {
-  ShieldCheck,
-  AlertOctagon,
-  Network,
-  Cpu,
-  FileCheck2,
-  Lock,
   ArrowRight,
-  ExternalLink,
-  Activity,
-  Server
+  Check,
+  ChevronRight,
+  FileCheck2,
+  Fingerprint,
+  LockKeyhole,
+  Network,
+  ScanSearch,
+  ShieldCheck,
+  Waypoints,
 } from 'lucide-react';
 
 interface CommandOverviewProps {
@@ -22,6 +23,16 @@ interface CommandOverviewProps {
   onExportEUAct: () => void;
 }
 
+const stages = [
+  ['01', 'Discover', 'Tool metadata enters the trust boundary.'],
+  ['02', 'Scan', 'Static rules inspect schemas and descriptions.'],
+  ['03', 'Pin', 'Known-good content receives a SHA-256 identity.'],
+  ['04', 'Authorize', 'A scoped lease decides who may call it.'],
+  ['05', 'Flow-check', 'Data movement is checked before dispatch.'],
+  ['06', 'Meter', 'Egress is attributed to its source.'],
+  ['07', 'Prove', 'The outcome is sealed in signed evidence.'],
+];
+
 export const CommandOverview: React.FC<CommandOverviewProps> = ({
   quarantinedCount,
   approvedCount,
@@ -31,180 +42,69 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
   onTriggerScan,
   onExportEUAct,
 }) => {
+  const overviewRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!overviewRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const context = gsap.context(() => {
+      gsap.fromTo('.overview-reveal', { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.65, stagger: 0.07, ease: 'power3.out' });
+      gsap.fromTo('.flow-line', { strokeDashoffset: 420 }, { strokeDashoffset: 0, duration: 1.5, delay: 0.25, ease: 'power2.inOut' });
+      gsap.fromTo('.flow-node', { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.45, delay: 0.3, stagger: 0.1, ease: 'power2.out' });
+    }, overviewRef);
+    return () => context.revert();
+  }, []);
+
   return (
-    <div className="space-y-6">
-      {/* Top Banner / System Posture */}
-      <div className="bg-surface-raised border border-neutral-border rounded-lg p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-status-success inline-block"></span>
-            <span className="font-mono text-xs text-gray-200 font-semibold uppercase tracking-wider">
-              Kyron 2.0 Data Plane Status: Operational (Enforce Mode)
-            </span>
+    <div ref={overviewRef} className="overview-page">
+      <section className="overview-hero overview-reveal" aria-labelledby="overview-hero-title">
+        <div className="overview-hero-copy">
+          <p className="eyebrow accent-text">Daily operating brief / 07:42 UTC</p>
+          <h2 id="overview-hero-title">Keep agent work moving.<br /><span>Make every tool call defensible.</span></h2>
+          <p className="overview-lede">Kyron sits between your agents and their tools, quietly checking what changed, what may run, and what left the boundary. Your team gets useful automation without trading away control.</p>
+          <div className="overview-actions">
+            <button type="button" className="button-primary" onClick={() => onNavigateTab('registry')}>
+              <ScanSearch aria-hidden="true" /> Review quarantined tools <ArrowRight aria-hidden="true" />
+            </button>
+            <button type="button" className="button-secondary" onClick={() => onNavigateTab('audit')}>
+              <Fingerprint aria-hidden="true" /> See signed evidence
+            </button>
           </div>
-          <p className="text-xs text-neutral-muted max-w-2xl">
-            In-line deterministic proxy active across stdio and HTTP/SSE transports. All tool definitions, in-flight
-            arguments, and outbound network packets are metered with zero model tokens on the security hot path.
-          </p>
+          <button type="button" className="overview-text-action" onClick={onTriggerScan}>Refresh the trust boundary <ChevronRight aria-hidden="true" /></button>
         </div>
-
-        <div className="flex items-center gap-2 self-stretch md:self-auto">
-          <button
-            onClick={onTriggerScan}
-            className="flex-1 md:flex-initial px-3 py-2 text-xs font-mono font-medium bg-surface-base hover:bg-neutral-border text-gray-200 border border-neutral-border rounded transition-colors"
-          >
-            Audit Tool Registry
-          </button>
-          <button
-            onClick={onExportEUAct}
-            className="flex-1 md:flex-initial px-3 py-2 text-xs font-mono font-medium bg-accent hover:bg-accent-hover text-white rounded transition-colors flex items-center justify-center gap-1.5"
-          >
-            <FileCheck2 className="w-3.5 h-3.5" />
-            Export EU AI Act Dossier
-          </button>
+        <div className="flow-visual" aria-label="Agent requests travel through Kyron before reaching tools">
+          <div className="flow-header"><span>Protection path</span><span className="flow-live"><i /> Enforce mode</span></div>
+          <svg className="flow-svg" viewBox="0 0 620 168" role="img" aria-label="Agent to Kyron to tools connection">
+            <path className="flow-line" d="M72 92 H548" pathLength="420" />
+            <path className="flow-line flow-line-muted" d="M174 92 H446" pathLength="420" />
+            <g className="flow-node" transform="translate(40 58)"><circle r="32" /><Waypoints /><text x="0" y="58">AGENT</text></g>
+            <g className="flow-node flow-node-kyron" transform="translate(310 58)"><circle r="42" /><ShieldCheck /><text x="0" y="68">KYRON</text></g>
+            <g className="flow-node" transform="translate(580 58)"><circle r="32" /><Network /><text x="0" y="58">TOOLS</text></g>
+          </svg>
+          <div className="flow-caption"><span>Request</span><span>deterministic verdict</span><span>sanitized result</span></div>
         </div>
-      </div>
+      </section>
 
-      {/* 7-Stage Gateway Data-Plane Architecture */}
-      <div className="bg-surface-raised border border-neutral-border rounded-lg p-5">
-        <div className="flex items-center justify-between pb-3 border-b border-neutral-border mb-4">
-          <div>
-            <h2 className="text-sm font-semibold text-gray-200 font-mono">
-              7-Stage Deterministic Security Pipeline
-            </h2>
-            <p className="text-xs text-neutral-muted">
-              Every tool call traverses all seven deterministic gates before reaching execution or model context.
-            </p>
-          </div>
-             <span className="font-mono text-[11px] text-neutral-muted bg-surface-base border border-neutral-border px-2 py-0.5 rounded">
-             Deterministic path
-          </span>
+      <section className="overview-section overview-reveal" aria-labelledby="stages-title">
+        <div className="section-intro"><p className="eyebrow accent-text">01 / Before execution</p><h2 id="stages-title">Protection that follows the call.</h2><p>Seven small decisions, made in sequence, keep untrusted behavior out of the model context and off your network.</p></div>
+        <div className="stage-list">{stages.map(([number, title, description]) => <div className="stage-row" key={number}><span className="stage-number">{number}</span><strong>{title}</strong><span className="stage-description">{description}</span><Check aria-hidden="true" /></div>)}</div>
+      </section>
+
+      <section className="overview-section loop-section overview-reveal" aria-labelledby="loop-title">
+        <div className="section-intro"><p className="eyebrow accent-text">02 / Your daily operating loop</p><h2 id="loop-title">From new tool to audit-ready proof.</h2><p>One console for the moments that matter when autonomous work touches production systems.</p></div>
+        <div className="loop-list">
+          <div className="loop-row"><span className="loop-index">01</span><h3>Connect</h3><p>Onboard a GitHub, AWS, or internal MCP server without changing the agent. Kyron normalizes its contract at the boundary.</p><span className="loop-use">Platform teams / new integrations</span></div>
+          <div className="loop-row"><span className="loop-index">02</span><h3>Observe</h3><p>See drift, active leases, and source-attributed egress as work happens. No waiting for a retrospective report.</p><span className="loop-use">SOC / live incident triage</span></div>
+          <div className="loop-row"><span className="loop-index">03</span><h3>Decide</h3><p>Approve a narrow capability or let policy quarantine it. Every decision has a clear reason and a safe next action.</p><span className="loop-use">Security / least-privilege review</span></div>
+          <div className="loop-row"><span className="loop-index">04</span><h3>Prove</h3><p>Export the signed trail when compliance, customers, or an incident review asks what happened.</p><span className="loop-use">Compliance / EU AI Act evidence</span></div>
         </div>
+      </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="bg-surface-base border border-neutral-border p-3.5 rounded">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-mono text-neutral-muted uppercase">Stage 1</span>
-              <span className="text-[10px] font-mono text-status-success bg-surface-raised border border-neutral-border px-1.5 py-0.5 rounded">
-                Active
-              </span>
-            </div>
-            <h3 className="text-xs font-semibold text-gray-200 font-mono mb-1">Registry Firewall</h3>
-            <p className="text-[11px] text-neutral-muted leading-relaxed">
-              SHA-256 manifest pinning and TRUSTDESC synthesis. Strips prompt injections before model sees metadata.
-            </p>
-          </div>
+      <section className="impact-strip overview-reveal" aria-labelledby="impact-title">
+        <div><p className="eyebrow accent-text">03 / Live control-plane impact</p><h2 id="impact-title">What Kyron is holding right now.</h2></div>
+        <div className="impact-values"><div><b>{approvedCount}</b><span>approved tools</span></div><div className="impact-danger"><b>{quarantinedCount}</b><span>quarantined tools</span></div><div><b>{activeLeasesCount}</b><span>active leases</span></div><div><b>{auditCount}</b><span>signed events</span></div></div>
+      </section>
 
-          <div className="bg-surface-base border border-neutral-border p-3.5 rounded">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-mono text-neutral-muted uppercase">Stage 2 & 3</span>
-              <span className="text-[10px] font-mono text-accent bg-surface-raised border border-neutral-border px-1.5 py-0.5 rounded">
-                Enforcing
-              </span>
-            </div>
-            <h3 className="text-xs font-semibold text-gray-200 font-mono mb-1">Capability Leases</h3>
-            <p className="text-[11px] text-neutral-muted leading-relaxed">
-              Single-use Ed25519-signed capability leases with TTL bounds and SHA-256 TOCTOU resource identity binding.
-            </p>
-          </div>
-
-          <div className="bg-surface-base border border-neutral-border p-3.5 rounded">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-mono text-neutral-muted uppercase">Stage 4 & 5</span>
-              <span className="text-[10px] font-mono text-status-success bg-surface-raised border border-neutral-border px-1.5 py-0.5 rounded">
-                In-Process
-              </span>
-            </div>
-            <h3 className="text-xs font-semibold text-gray-200 font-mono mb-1">OpenAPPA IFC & Sandbox</h3>
-            <p className="text-[11px] text-neutral-muted leading-relaxed">
-              Information-flow lattice check with RFC 6901 JSON-path provenance and Linux syscall attestation.
-            </p>
-          </div>
-
-          <div className="bg-surface-base border border-neutral-border p-3.5 rounded">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-mono text-neutral-muted uppercase">Stage 6 & 7</span>
-              <span className="text-[10px] font-mono text-status-success bg-surface-raised border border-neutral-border px-1.5 py-0.5 rounded">
-                Verified
-              </span>
-            </div>
-            <h3 className="text-xs font-semibold text-gray-200 font-mono mb-1">Egress & Signed Audit</h3>
-            <p className="text-[11px] text-neutral-muted leading-relaxed">
-              Source-attributed network byte meters halting sharded exfiltration; SHA-256 hash-chained audit emitter.
-            </p>
-          </div>
-        </div>
-      </div>
-
-       {/* Operator next steps */}
-       <div className="flex items-end justify-between gap-4">
-         <div>
-           <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-accent">Operator next steps</p>
-           <h2 className="text-base font-semibold text-gray-100">Move from posture to action</h2>
-         </div>
-         <p className="hidden sm:block text-xs text-neutral-muted">Prioritized views for the current workspace</p>
-       </div>
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-         <button
-           type="button"
-           onClick={() => onNavigateTab('registry')}
-           className="text-left bg-surface-raised border border-neutral-border p-4 rounded-lg hover:border-neutral-muted transition-colors flex flex-col justify-between"
-           aria-label="Open Tool Registry to inspect approved tools and quarantined threats"
-         >
-          <div className="space-y-1 mb-4">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs text-gray-200 font-semibold">Tool Registry</span>
-              <ArrowRight className="w-3.5 h-3.5 text-neutral-muted" />
-            </div>
-            <p className="text-xs text-neutral-muted">
-              Inspect {approvedCount} approved tools and {quarantinedCount} quarantined threats with side-by-side semantic diffs.
-            </p>
-          </div>
-          <div className="font-mono text-xs text-accent flex items-center gap-1">
-            <span>Manage Registry</span>
-          </div>
-         </button>
-
-         <button
-           type="button"
-           onClick={() => onNavigateTab('approvals')}
-           className="text-left bg-surface-raised border border-neutral-border p-4 rounded-lg hover:border-neutral-muted transition-colors flex flex-col justify-between"
-           aria-label="Open Authority Queue to review capability requests"
-        >
-          <div className="space-y-1 mb-4">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs text-gray-200 font-semibold">Authority Queue</span>
-              <ArrowRight className="w-3.5 h-3.5 text-neutral-muted" />
-            </div>
-            <p className="text-xs text-neutral-muted">
-              {activeLeasesCount} active single-use leases. Grant or deny tool execution authority requests in real time.
-            </p>
-          </div>
-          <div className="font-mono text-xs text-accent flex items-center gap-1">
-            <span>Review Requests</span>
-          </div>
-         </button>
-
-         <button
-           type="button"
-           onClick={() => onNavigateTab('audit')}
-           className="text-left bg-surface-raised border border-neutral-border p-4 rounded-lg hover:border-neutral-muted transition-colors flex flex-col justify-between"
-           aria-label="Open Cryptographic Trail to view signed audit events"
-          >
-           <div className="space-y-1 mb-4">
-             <div className="flex items-center justify-between">
-               <span className="font-mono text-xs text-gray-200 font-semibold">Cryptographic Trail</span>
-               <ArrowRight className="w-3.5 h-3.5 text-neutral-muted" />
-             </div>
-             <p className="text-xs text-neutral-muted">
-               {auditCount} hash-chained audit events with Ed25519 digital signatures complying with EU AI Act Article 50.
-             </p>
-           </div>
-           <div className="font-mono text-xs text-accent flex items-center gap-1">
-             <span>View Signatures</span>
-           </div>
-          </button>
-        </div>
-   </div>
+      <section className="limits-note overview-reveal"><LockKeyhole aria-hidden="true" /><div><p className="eyebrow">Honest limits</p><p>Kyron makes tool behavior observable and enforceable at the gateway. It cannot make a compromised upstream service truthful, replace your identity provider, or decide whether a business action is wise. Your policies and operators still own those calls.</p></div><button type="button" onClick={onExportEUAct}>Export dossier <FileCheck2 aria-hidden="true" /></button></section>
+    </div>
   );
 };
