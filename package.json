@@ -1,0 +1,12 @@
+{
+  "name": "kyron-2.0",
+  "version": "2.0.0",
+  "scripts": {
+    "build": "npm --prefix ui run build",
+    "test": "npm --prefix ui run test"
+  },
+  "dependencies": {
+    "@neon/config": "^1.10.0",
+    "@neon/env": "^1.6.8"
+  }
+}

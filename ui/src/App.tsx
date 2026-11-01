@@ -20,7 +20,8 @@ import {
   Building2,
   User,
   Activity,
-  ChevronRight
+  ChevronRight,
+  Database
 } from 'lucide-react';
 import { MetricsBar } from './components/MetricsBar';
 import { CommandOverview } from './components/CommandOverview';
@@ -499,6 +500,11 @@ export const App: React.FC = () => {
 
           {/* Top Actions & Global Telemetry */}
           <div className="flex items-center gap-3">
+            <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded bg-[#EFF6FF] border border-[#BFDBFE] text-[#1D4ED8] text-xs font-medium">
+              <Database className="w-3.5 h-3.5 text-[#1D4ED8]" />
+              <span>Neon Postgres: production</span>
+            </div>
+
             <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded bg-[#ECFDF5] border border-[#A7F3D0] text-[#059669] text-xs font-medium">
               <span className="w-2 h-2 rounded-full bg-[#059669] inline-block animate-pulse"></span>
               <span>In-Line Proxy: 3.8ms p95</span>

@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone, timedelta
 import hashlib
 import json
+import os
 import tomllib
 import uuid
 from typing import Dict, Any, List, Optional
@@ -14,7 +15,7 @@ from typing import Dict, Any, List, Optional
 from fastapi import FastAPI, HTTPException, Depends, status, Query
 from sqlalchemy.orm import Session
 
-from control.app.db import get_db, init_db
+from control.app.db import get_db, init_db, get_database_info
 from control.app.models import (
     ToolModel,
     PolicyModel,
@@ -105,6 +106,7 @@ def health_check(db: Session = Depends(get_db)):
     except Exception as e:
         db_ok = f"error: {str(e)}"
 
+    db_info = get_database_info()
     return {
         "status": "healthy" if db_ok == "ok" else "degraded",
         "version": "2.0.0",
@@ -113,6 +115,44 @@ def health_check(db: Session = Depends(get_db)):
             "database": db_ok,
             "policy_engine": "ok",
             "audit_emitter": "ok",
+        },
+        "neon": db_info,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+@app.get("/v1/neon/status", tags=["Infrastructure"])
+def neon_status(db: Session = Depends(get_db)):
+    """Neon Serverless Postgres & Neon Auth live verification endpoint"""
+    db_info = get_database_info()
+    tools_count = db.query(ToolModel).count()
+    policies_count = db.query(PolicyModel).count()
+    leases_count = db.query(LeaseModel).count()
+    approvals_count = db.query(ApprovalRequestModel).count()
+    audit_events_count = db.query(AuditEventModel).count()
+
+    neon_auth_base = os.getenv("NEON_AUTH_BASE_URL", "")
+    neon_auth_jwks = os.getenv("NEON_AUTH_JWKS_URL", "")
+    neon_branch = os.getenv("NEON_BRANCH", "production")
+
+    return {
+        "status": "operational",
+        "database": {
+            **db_info,
+            "connected": True,
+            "records": {
+                "tools": tools_count,
+                "policies": policies_count,
+                "leases": leases_count,
+                "approvals": approvals_count,
+                "audit_events": audit_events_count,
+            },
+        },
+        "auth": {
+            "provider": "Neon Managed Better Auth",
+            "base_url": neon_auth_base,
+            "jwks_url": neon_auth_jwks,
+            "branch": neon_branch,
+            "status": "active" if neon_auth_base else "not_configured",
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }

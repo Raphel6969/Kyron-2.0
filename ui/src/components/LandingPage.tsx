@@ -580,8 +580,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
               <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-xs text-[#475569] space-y-1">
                 <div className="flex justify-between">
-                  <span>Sign-In Protocol:</span>
-                  <span className="text-[#059669] font-semibold">Ed25519 Zero-Trust SSO</span>
+                  <span>Identity Provider:</span>
+                  <span className="text-[#059669] font-semibold">Neon Auth (Better Auth Managed)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Database State:</span>
+                  <span className="text-[#1D4ED8] font-semibold">Neon Postgres (production)</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Session Policy Mode:</span>

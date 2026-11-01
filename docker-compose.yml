@@ -26,10 +26,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-kyron}:${POSTGRES_PASSWORD:-kyron_secret}@postgres:5432/${POSTGRES_DB:-kyron_db}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://${POSTGRES_USER:-kyron}:${POSTGRES_PASSWORD:-kyron_secret}@postgres:5432/${POSTGRES_DB:-kyron_db}}
+      DATABASE_URL_UNPOOLED: ${DATABASE_URL_UNPOOLED:-}
+      NEON_BRANCH: ${NEON_BRANCH:-production}
+      NEON_AUTH_BASE_URL: ${NEON_AUTH_BASE_URL:-}
+      NEON_AUTH_JWKS_URL: ${NEON_AUTH_JWKS_URL:-}
       CONTROL_API_PORT: 8001
-
       CONTROL_API_HOST: "0.0.0.0"
       LOG_LEVEL: INFO
     ports:
