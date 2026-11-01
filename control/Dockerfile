@@ -33,6 +33,7 @@ ENV PYTHONPATH=/app
 
 COPY control/ /app/control/
 COPY eval/ /app/eval/
+COPY scripts/ /app/scripts/
 
 USER 10001:10001
 
