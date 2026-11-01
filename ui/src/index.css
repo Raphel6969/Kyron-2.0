@@ -3,22 +3,24 @@
 @tailwind utilities;
 
 :root {
-  --color-surface-base: #080B0E;
-  --color-surface-panel: #0E1318;
-  --color-surface-raised: #141B22;
-  --color-surface-overlay: #1A232C;
-  --color-neutral-muted: #8A99A8;
-  --color-neutral-border: #1E2630;
-  --color-neutral-border-active: #2D3A49;
-  --color-accent: #0EA5E9;
-  --color-accent-hover: #38BDF8;
-  --color-danger: #F43F5E;
-  --color-warning: #F59E0B;
-  --color-success: #10B981;
+  /* Fortune 500 Enterprise Light Theme System */
+  --color-surface-base: #F8FAFC;
+  --color-surface-panel: #FFFFFF;
+  --color-surface-raised: #FFFFFF;
+  --color-surface-subtle: #F1F5F9;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94A3B8;
+  --color-neutral-border: #E2E8F0;
+  --color-neutral-border-active: #CBD5E1;
+  --color-accent: #1D4ED8;
+  --color-accent-hover: #1E40AF;
+  --color-danger: #DC2626;
+  --color-warning: #D97706;
+  --color-success: #059669;
 
-  --font-display: clamp(2.4rem, 5vw, 4.2rem);
-  --font-heading: clamp(1.4rem, 2.5vw, 2.2rem);
-  --font-body: clamp(0.875rem, 1vw, 1rem);
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 * {
@@ -32,9 +34,11 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background-color: var(--color-surface-base);
-  color: #F0F4F8;
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #F8FAFC;
+  color: #0F172A;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
@@ -43,22 +47,22 @@ button, a, input, select {
 }
 
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, [tabindex='-1']:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid #1D4ED8;
   outline-offset: 2px;
 }
 
-/* Skeleton Loading (dod.md & ux-gate compliant) */
+/* Skeleton Loading */
 .skeleton-box {
-  background: #141B22;
+  background: #E2E8F0;
   animation: skeleton-pulse 1.8s ease-in-out infinite;
 }
 
 @keyframes skeleton-pulse {
   0%, 100% {
-    opacity: 0.45;
+    opacity: 0.5;
   }
   50% {
-    opacity: 0.85;
+    opacity: 0.9;
   }
 }
 

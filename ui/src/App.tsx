@@ -14,7 +14,13 @@ import {
   ArrowRight,
   ExternalLink,
   Menu,
-  X
+  X,
+  Search,
+  FileCheck2,
+  Building2,
+  User,
+  Activity,
+  ChevronRight
 } from 'lucide-react';
 import { MetricsBar } from './components/MetricsBar';
 import { CommandOverview } from './components/CommandOverview';
@@ -29,7 +35,6 @@ import { LandingPage } from './components/LandingPage';
 export type NavTab = 'overview' | 'registry' | 'approvals' | 'egress' | 'audit' | 'policies';
 
 export const App: React.FC = () => {
-  // View mode: 'landing' or 'console'
   const [viewMode, setViewMode] = useState<'landing' | 'console'>(() => {
     if (typeof window !== 'undefined' && window.location.pathname === '/console') {
       return 'console';
@@ -38,8 +43,8 @@ export const App: React.FC = () => {
   });
 
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
-  const [currentRole, setCurrentRole] = useState<string>('sec-admin');
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [currentRole, setCurrentRole] = useState<string>('Enterprise Security Lead');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Tools state
   const [tools, setTools] = useState<ToolItem[]>([]);
@@ -56,7 +61,7 @@ export const App: React.FC = () => {
   const [auditLoading, setAuditLoading] = useState<boolean>(true);
   const [auditError, setAuditError] = useState<string | null>(null);
 
-  // Impact report / blocked calls counter
+  // Blocked calls counter
   const [blockedCalls, setBlockedCalls] = useState<number>(33900);
   const [impactLoading, setImpactLoading] = useState<boolean>(false);
 
@@ -64,7 +69,7 @@ export const App: React.FC = () => {
   const [activeDiff, setActiveDiff] = useState<any | null>(null);
   const [isDiffModalOpen, setIsDiffModalOpen] = useState<boolean>(false);
 
-  // Notification message
+  // Toast notification
   const [notification, setNotification] = useState<string | null>(null);
 
   const showNotification = (msg: string) => {
@@ -128,7 +133,7 @@ export const App: React.FC = () => {
         }
       }
     } catch {
-      // Keep deterministic seeded baseline
+      // Retain deterministic baseline
     } finally {
       setImpactLoading(false);
     }
@@ -146,7 +151,7 @@ export const App: React.FC = () => {
       const res = await fetch(`/v1/tools/${encodeURIComponent(toolId)}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approver_id: currentRole, canonical_description: 'Approved by SOC operator' }),
+        body: JSON.stringify({ approver_id: 'sec-admin', canonical_description: 'Approved by SOC operator' }),
       });
       if (res.ok) {
         showNotification(`Tool '${toolId}' approved and pinned successfully.`);
@@ -191,7 +196,7 @@ export const App: React.FC = () => {
       const res = await fetch(`/v1/approvals/${requestId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decided_by: currentRole, reason: 'Granted capability lease' }),
+        body: JSON.stringify({ decided_by: 'sec-admin', reason: 'Granted capability lease' }),
       });
       if (res.ok) {
         showNotification(`Capability lease granted for request '${requestId}'.`);
@@ -208,7 +213,7 @@ export const App: React.FC = () => {
       const res = await fetch(`/v1/approvals/${requestId}/deny`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decided_by: currentRole, reason: 'Denied by policy' }),
+        body: JSON.stringify({ decided_by: 'sec-admin', reason: 'Denied by policy' }),
       });
       if (res.ok) {
         showNotification(`Request '${requestId}' denied.`);
@@ -238,8 +243,13 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleEnterConsole = (role: string = 'sec-admin') => {
-    setCurrentRole(role);
+  const handleEnterConsole = (roleId: string = 'sec-admin') => {
+    const roleLabels: Record<string, string> = {
+      'sec-admin': 'Enterprise Security Lead',
+      'compliance-auditor': 'EU AI Act Auditor',
+      'platform-architect': 'AI Platform Architect',
+    };
+    setCurrentRole(roleLabels[roleId] || 'Enterprise Security Lead');
     setViewMode('console');
     window.history.pushState({}, '', '/console');
   };
@@ -263,210 +273,326 @@ export const App: React.FC = () => {
     );
   }
 
+  const tabLabels: Record<NavTab, string> = {
+    overview: 'Command Center',
+    registry: 'Tool Registry & Drift',
+    approvals: 'Authority Queue',
+    egress: 'Network Egress',
+    audit: 'Cryptographic Trail',
+    policies: 'Policy Studio',
+  };
+
   return (
-    <div className="min-h-screen bg-[#080B0E] text-[#F0F4F8] flex flex-col font-sans selection:bg-[#0EA5E9] selection:text-white">
-      {/* Top Operations Header */}
-      <header className="border-b border-[#1E2630] bg-[#0E1318] sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded border border-[#2D3A49] bg-[#141B22] flex items-center justify-center text-[#0EA5E9]">
-              <Shield className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm tracking-wider font-mono text-[#F0F4F8]">KYRON 2.0</span>
-                <span className="bg-[#141B22] border border-[#1E2630] font-mono text-[10px] px-1.5 py-0.5 rounded text-[#8A99A8]">
-                  SOC CONSOLE
-                </span>
-                <span className="bg-[#141B22] border border-[#1E2630] text-[#10B981] font-mono text-[10px] px-1.5 py-0.5 rounded font-semibold">
-                  ENFORCE
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex font-sans">
+      {/* Fortune 500 Enterprise Sidebar */}
+      <aside className={`w-64 bg-[#0F172A] text-white flex-shrink-0 flex flex-col justify-between fixed inset-y-0 left-0 z-50 md:static transition-transform ${
+        mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      }`}>
+        <div>
+          {/* Organization & Product Brand Header */}
+          <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded bg-[#1D4ED8] flex items-center justify-center text-white">
+                <Shield className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm tracking-wider">KYRON</span>
+                  <span className="bg-slate-800 border border-slate-700 text-[#10B981] text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold">
+                    ENFORCE
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-400 block mt-0.5">
+                  Acme Financial AI Fleet
                 </span>
               </div>
-              <span className="text-[11px] text-[#8A99A8] block leading-none mt-0.5 font-mono">
-                Operator: <span className="text-[#F0F4F8] font-semibold">{currentRole}</span> · 0 Hot-Path Tokens
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(false)}
+              className="md:hidden text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Categorized Navigation */}
+          <nav className="p-4 space-y-6 text-sm">
+            <div>
+              <span className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider px-3 block mb-2">
+                Operations
               </span>
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('overview'); setMobileSidebarOpen(false); }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors font-medium ${
+                    activeTab === 'overview'
+                      ? 'bg-[#1D4ED8] text-white shadow-sm'
+                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <LayoutDashboard className="w-4 h-4" />
+                    <span>Command Center</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <span className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider px-3 block mb-2">
+                Security Controls
+              </span>
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('registry'); setMobileSidebarOpen(false); }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors font-medium ${
+                    activeTab === 'registry'
+                      ? 'bg-[#1D4ED8] text-white shadow-sm'
+                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <LayoutGrid className="w-4 h-4" />
+                    <span>Tool Registry</span>
+                  </div>
+                  {quarantinedCount > 0 && (
+                    <span className="bg-[#DC2626] text-white text-[11px] px-1.5 py-0.5 rounded-full font-bold">
+                      {quarantinedCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('approvals'); setMobileSidebarOpen(false); }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors font-medium ${
+                    activeTab === 'approvals'
+                      ? 'bg-[#1D4ED8] text-white shadow-sm'
+                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <KeyRound className="w-4 h-4" />
+                    <span>Authority Queue</span>
+                  </div>
+                  {approvals.length > 0 && (
+                    <span className="bg-[#D97706] text-white text-[11px] px-1.5 py-0.5 rounded-full font-bold">
+                      {approvals.length}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('egress'); setMobileSidebarOpen(false); }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors font-medium ${
+                    activeTab === 'egress'
+                      ? 'bg-[#1D4ED8] text-white shadow-sm'
+                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Network className="w-4 h-4" />
+                    <span>Network Egress</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <span className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider px-3 block mb-2">
+                Governance & Audit
+              </span>
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('audit'); setMobileSidebarOpen(false); }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors font-medium ${
+                    activeTab === 'audit'
+                      ? 'bg-[#1D4ED8] text-white shadow-sm'
+                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <History className="w-4 h-4" />
+                    <span>Cryptographic Trail</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('policies'); setMobileSidebarOpen(false); }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors font-medium ${
+                    activeTab === 'policies'
+                      ? 'bg-[#1D4ED8] text-white shadow-sm'
+                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Sliders className="w-4 h-4" />
+                    <span>Policy Studio</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </nav>
+        </div>
+
+        {/* Sidebar Footer User Info */}
+        <div className="p-4 border-t border-slate-800 space-y-3">
+          <div className="flex items-center gap-2.5 px-2">
+            <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[#1D4ED8]">
+              <User className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-semibold text-white block truncate">{currentRole}</span>
+              <span className="text-[11px] text-slate-400 block truncate">sec-admin · Active</span>
             </div>
           </div>
 
-          {/* Segmented Navigation Tabs */}
-          <nav className="hidden md:flex items-center gap-1 bg-[#080B0E] border border-[#1E2630] p-1 rounded font-mono text-xs">
-            <button
-              type="button"
-              onClick={() => setActiveTab('overview')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap font-medium ${
-                activeTab === 'overview' ? 'bg-[#1E2630] text-[#F0F4F8]' : 'text-[#8A99A8] hover:text-[#F0F4F8]'
-              }`}
-            >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              Overview
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('registry')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap font-medium ${
-                activeTab === 'registry' ? 'bg-[#1E2630] text-[#F0F4F8]' : 'text-[#8A99A8] hover:text-[#F0F4F8]'
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              Tool Registry
-              {quarantinedCount > 0 && (
-                <span className="w-1.5 h-1.5 rounded-full bg-[#F43F5E] inline-block ml-0.5"></span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('approvals')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap font-medium ${
-                activeTab === 'approvals' ? 'bg-[#1E2630] text-[#F0F4F8]' : 'text-[#8A99A8] hover:text-[#F0F4F8]'
-              }`}
-            >
-              <KeyRound className="w-3.5 h-3.5" />
-              Authority
-              {approvals.length > 0 && (
-                <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] inline-block ml-0.5"></span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('egress')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap font-medium ${
-                activeTab === 'egress' ? 'bg-[#1E2630] text-[#F0F4F8]' : 'text-[#8A99A8] hover:text-[#F0F4F8]'
-              }`}
-            >
-              <Network className="w-3.5 h-3.5" />
-              Egress
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('audit')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap font-medium ${
-                activeTab === 'audit' ? 'bg-[#1E2630] text-[#F0F4F8]' : 'text-[#8A99A8] hover:text-[#F0F4F8]'
-              }`}
-            >
-              <History className="w-3.5 h-3.5" />
-              Audit Trail
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('policies')}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap font-medium ${
-                activeTab === 'policies' ? 'bg-[#1E2630] text-[#F0F4F8]' : 'text-[#8A99A8] hover:text-[#F0F4F8]'
-              }`}
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              Policies
-            </button>
-          </nav>
-
-          {/* Right Action Cluster */}
-          <div className="flex items-center gap-2 font-mono">
+          <div className="flex items-center gap-2 pt-1 border-t border-slate-800/60">
             <button
               type="button"
               onClick={handleReturnToLanding}
-              className="px-2.5 py-1.5 text-xs text-[#8A99A8] hover:text-[#F0F4F8] border border-[#1E2630] rounded hover:border-[#2D3A49] transition-colors flex items-center gap-1"
-              title="View Public Architecture and Threat Matrix"
+              className="flex-1 py-1.5 px-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition-colors flex items-center justify-center gap-1.5"
             >
               <Layers className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Architecture</span>
+              <span>Landing Page</span>
             </button>
 
             <button
               type="button"
               onClick={handleReturnToLanding}
-              className="p-1.5 text-[#8A99A8] hover:text-[#F43F5E] border border-[#1E2630] rounded transition-colors"
+              className="p-1.5 text-slate-400 hover:text-status-danger rounded hover:bg-slate-800 transition-colors"
               title="Sign Out to Landing"
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
+      </aside>
 
-        {/* Mobile Navigation Dropdown */}
-        <div className="md:hidden border-t border-[#1E2630] bg-[#080B0E] px-4 py-2 flex items-center justify-between font-mono text-xs">
-          <div className="flex items-center gap-1 overflow-x-auto">
-            {(['overview', 'registry', 'approvals', 'egress', 'audit', 'policies'] as NavTab[]).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`px-2.5 py-1 rounded capitalize whitespace-nowrap ${
-                  activeTab === tab ? 'bg-[#1E2630] text-[#F0F4F8] font-bold' : 'text-[#8A99A8]'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
+      {/* Main Workspace Frame */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Executive Top Header */}
+        <header className="h-16 bg-white border-b border-[#E2E8F0] px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="md:hidden p-2 text-[#475569] hover:text-[#0F172A]"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            {/* Breadcrumb Path */}
+            <div className="flex items-center gap-2 text-xs text-[#475569]">
+              <span className="font-medium">Security Operations</span>
+              <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
+              <span className="font-semibold text-[#0F172A]">{tabLabels[activeTab]}</span>
+            </div>
           </div>
-        </div>
-      </header>
 
-      {/* Notification Toast */}
-      {notification && (
-        <div className="fixed bottom-5 right-5 z-50 bg-[#0E1318] border border-[#2D3A49] text-[#F0F4F8] px-4 py-3 rounded shadow-2xl text-xs font-mono flex items-center gap-2">
-          <Terminal className="w-4 h-4 text-[#0EA5E9]" />
-          <span>{notification}</span>
-        </div>
-      )}
+          {/* Top Actions & Global Telemetry */}
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded bg-[#ECFDF5] border border-[#A7F3D0] text-[#059669] text-xs font-medium">
+              <span className="w-2 h-2 rounded-full bg-[#059669] inline-block animate-pulse"></span>
+              <span>In-Line Proxy: 3.8ms p95</span>
+            </div>
 
-      {/* Main Console Workspace */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
-        <MetricsBar
-          quarantinedCount={quarantinedCount}
-          approvedCount={approvedCount}
-          activeLeasesCount={approvals.filter((a) => a.status === 'approved').length}
-          attacksBlockedCount={blockedCalls}
-          impactLoading={impactLoading}
-        />
+            <button
+              type="button"
+              onClick={handleExportEUAct}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[#1D4ED8] hover:bg-[#1E40AF] text-white rounded transition-colors shadow-sm"
+            >
+              <FileCheck2 className="w-3.5 h-3.5" />
+              <span>Export Article 50 Dossier</span>
+            </button>
 
-        {activeTab === 'overview' && (
-          <CommandOverview
+            <button
+              type="button"
+              onClick={() => { fetchTools(); fetchApprovals(); fetchAuditEvents(); }}
+              className="p-2 text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1] rounded hover:bg-[#F8FAFC] transition-colors"
+              title="Refresh Telemetry"
+              aria-label="Refresh Telemetry"
+            >
+              <RotateCw className="w-4 h-4" />
+            </button>
+          </div>
+        </header>
+
+        {/* Toast Notification */}
+        {notification && (
+          <div className="fixed bottom-5 right-5 z-50 bg-[#0F172A] text-white px-4 py-3 rounded shadow-xl text-xs font-medium flex items-center gap-2">
+            <Terminal className="w-4 h-4 text-[#1D4ED8]" />
+            <span>{notification}</span>
+          </div>
+        )}
+
+        {/* Main Content Viewport */}
+        <main className="p-4 sm:p-8 flex-1 max-w-7xl w-full mx-auto space-y-6">
+          <MetricsBar
             quarantinedCount={quarantinedCount}
             approvedCount={approvedCount}
             activeLeasesCount={approvals.filter((a) => a.status === 'approved').length}
-            auditCount={auditEvents.length}
-            onNavigateTab={(tab) => setActiveTab(tab)}
-            onTriggerScan={fetchTools}
-            onExportEUAct={handleExportEUAct}
+            attacksBlockedCount={blockedCalls}
+            impactLoading={impactLoading}
           />
-        )}
 
-        {activeTab === 'registry' && (
-          <ToolInventory
-            tools={tools}
-            loading={toolsLoading}
-            error={toolsError}
-            onRefresh={fetchTools}
-            onApprove={handleApproveTool}
-            onReject={handleRejectTool}
-            onInspectDiff={handleInspectDiff}
-          />
-        )}
+          {activeTab === 'overview' && (
+            <CommandOverview
+              quarantinedCount={quarantinedCount}
+              approvedCount={approvedCount}
+              activeLeasesCount={approvals.filter((a) => a.status === 'approved').length}
+              auditCount={auditEvents.length}
+              onNavigateTab={(tab) => setActiveTab(tab)}
+              onTriggerScan={fetchTools}
+              onExportEUAct={handleExportEUAct}
+            />
+          )}
 
-        {activeTab === 'approvals' && (
-          <ApprovalQueue
-            approvals={approvals}
-            loading={approvalsLoading}
-            error={approvalsError}
-            onRefresh={fetchApprovals}
-            onApprove={handleApproveRequest}
-            onDeny={handleDenyRequest}
-          />
-        )}
+          {activeTab === 'registry' && (
+            <ToolInventory
+              tools={tools}
+              loading={toolsLoading}
+              error={toolsError}
+              onRefresh={fetchTools}
+              onApprove={handleApproveTool}
+              onReject={handleRejectTool}
+              onInspectDiff={handleInspectDiff}
+            />
+          )}
 
-        {activeTab === 'egress' && <EgressMonitor />}
+          {activeTab === 'approvals' && (
+            <ApprovalQueue
+              approvals={approvals}
+              loading={approvalsLoading}
+              error={approvalsError}
+              onRefresh={fetchApprovals}
+              onApprove={handleApproveRequest}
+              onDeny={handleDenyRequest}
+            />
+          )}
 
-        {activeTab === 'audit' && (
-          <AuditDrawer
-            events={auditEvents}
-            loading={auditLoading}
-            error={auditError}
-            onRefresh={fetchAuditEvents}
-            onExportEUAct={handleExportEUAct}
-          />
-        )}
+          {activeTab === 'egress' && <EgressMonitor />}
 
-        {activeTab === 'policies' && <PolicyStudio />}
-      </main>
+          {activeTab === 'audit' && (
+            <AuditDrawer
+              events={auditEvents}
+              loading={auditLoading}
+              error={auditError}
+              onRefresh={fetchAuditEvents}
+              onExportEUAct={handleExportEUAct}
+            />
+          )}
+
+          {activeTab === 'policies' && <PolicyStudio />}
+        </main>
+      </div>
 
       {/* Semantic Drift Inspection Modal */}
       <SemanticDriftModal

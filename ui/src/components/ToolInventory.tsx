@@ -44,32 +44,32 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
   });
 
   return (
-    <div className="bg-surface-raised border border-neutral-border rounded-xl p-5 mb-8">
+    <div className="bg-white border border-[#E2E8F0] rounded p-6 shadow-sm mb-8 font-sans">
       {/* Control Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-5 border-b border-neutral-border">
-        <div className="flex items-center gap-2 flex-1 max-w-md bg-surface-base border border-neutral-border rounded-md px-3 py-2 text-sm">
-          <Search className="w-4 h-4 text-neutral-muted" />
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-5 border-b border-[#E2E8F0]">
+        <div className="flex items-center gap-2 flex-1 max-w-md bg-[#F8FAFC] border border-[#CBD5E1] rounded px-3 py-2 text-sm">
+          <Search className="w-4 h-4 text-[#64748B]" />
           <input
             type="text"
             placeholder="Search tools by identifier or MCP server..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent border-none text-gray-100 placeholder-neutral-muted focus:outline-none w-full text-xs font-mono"
+            className="bg-transparent border-none text-[#0F172A] placeholder-[#94A3B8] focus:outline-none w-full text-xs"
           />
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 bg-surface-base border border-neutral-border rounded-md p-1 text-xs" role="group" aria-label="Filter tools by state">
+          <div className="flex items-center gap-1 bg-[#F1F5F9] border border-[#E2E8F0] rounded p-1 text-xs" role="group" aria-label="Filter tools by state">
             {['all', 'approved', 'quarantined', 'blocked'].map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setStateFilter(tab)}
                 aria-pressed={stateFilter === tab}
-                className={`px-2.5 py-1 rounded capitalize font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded capitalize font-semibold transition-colors ${
                   stateFilter === tab
-                    ? 'bg-neutral-border text-gray-100'
-                    : 'text-neutral-muted hover:text-gray-300'
+                    ? 'bg-[#1D4ED8] text-white shadow-sm'
+                    : 'text-[#475569] hover:text-[#0F172A]'
                 }`}
               >
                 {tab}
@@ -79,7 +79,7 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
 
           <button
             onClick={onRefresh}
-            className="p-2 text-neutral-muted hover:text-gray-100 border border-neutral-border rounded-md bg-surface-base hover:bg-neutral-border/50 transition-colors"
+            className="p-2 text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1] rounded bg-white hover:bg-[#F8FAFC] transition-colors"
             title="Refresh Registry"
             aria-label="Refresh Registry"
           >
@@ -90,7 +90,7 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
 
       {/* State 1: Loading Skeleton */}
       {loading && (
-        <div className="divide-y divide-neutral-border py-4">
+        <div className="divide-y divide-[#E2E8F0] py-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="py-4 flex items-center justify-between gap-4">
               <div className="space-y-2 flex-1">
@@ -107,14 +107,14 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
       {/* State 2: Error State */}
       {!loading && error && (
         <div className="py-12 text-center">
-          <div className="inline-flex p-3 bg-surface-base border border-neutral-border rounded-lg text-status-danger mb-3">
+          <div className="inline-flex p-3 bg-[#FEF2F2] border border-[#FECACA] rounded text-[#DC2626] mb-3">
             <ShieldAlert className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-semibold text-gray-200 mb-1">Failed to Synchronize Registry</h3>
-          <p className="text-xs text-neutral-muted mb-4 max-w-sm mx-auto">{error}</p>
+          <h3 className="text-base font-bold text-[#0F172A] mb-1">Failed to Synchronize Registry</h3>
+          <p className="text-xs text-[#64748B] mb-4 max-w-sm mx-auto">{error}</p>
           <button
             onClick={onRefresh}
-            className="px-4 py-2 text-xs font-medium bg-neutral-border text-gray-200 rounded hover:bg-neutral-border/80 transition-colors"
+            className="px-4 py-2 text-xs font-semibold bg-[#0F172A] text-white rounded hover:bg-[#1E293B] transition-colors"
           >
             Retry Connection
           </button>
@@ -124,11 +124,11 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
       {/* State 3: Empty State */}
       {!loading && !error && filteredTools.length === 0 && (
         <div className="py-12 text-center">
-          <div className="inline-flex p-3 bg-surface-base border border-neutral-border rounded-lg text-neutral-muted mb-3">
+          <div className="inline-flex p-3 bg-[#F1F5F9] border border-[#E2E8F0] rounded text-[#64748B] mb-3">
             <Filter className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-semibold text-gray-200 mb-1">No Tools Found</h3>
-          <p className="text-xs text-neutral-muted max-w-sm mx-auto">
+          <h3 className="text-base font-bold text-[#0F172A] mb-1">No Tools Found</h3>
+          <p className="text-xs text-[#64748B] max-w-sm mx-auto">
             Zero registered MCP tools matched the active query filter. Adjust filters or connect an MCP server.
           </p>
         </div>
@@ -139,70 +139,70 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-neutral-border text-neutral-muted uppercase tracking-wider font-mono text-[10px]">
-                <th className="py-3 px-2">Tool Identifier</th>
-                <th className="py-3 px-2">Server</th>
-                <th className="py-3 px-2">State</th>
-                <th className="py-3 px-2">Risk Meter</th>
-                <th className="py-3 px-2">Actions</th>
+              <tr className="border-b border-[#E2E8F0] text-[#475569] bg-[#F8FAFC] uppercase tracking-wider font-semibold text-[11px]">
+                <th className="py-3 px-3">Tool Identifier</th>
+                <th className="py-3 px-3">Server</th>
+                <th className="py-3 px-3">State</th>
+                <th className="py-3 px-3">Risk Assessment</th>
+                <th className="py-3 px-3">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-border">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {filteredTools.map((tool) => {
                 const isQuarantined = tool.state === 'quarantined';
                 const isApproved = tool.state === 'approved' || tool.state === 'active';
                 const isBlocked = tool.state === 'blocked' || tool.state === 'revoked';
 
                 return (
-                  <tr key={tool.id} className="hover:bg-surface-base/50 transition-colors">
-                    <td className="py-3 px-2">
-                      <div className="font-mono font-semibold text-gray-200">{tool.name}</div>
-                      <div className="text-[11px] text-neutral-muted line-clamp-1 max-w-md font-sans">
+                  <tr key={tool.id} className="hover:bg-[#F8FAFC] transition-colors">
+                    <td className="py-3 px-3">
+                      <div className="font-semibold text-[#0F172A] text-sm font-mono">{tool.name}</div>
+                      <div className="text-xs text-[#475569] line-clamp-1 max-w-md mt-0.5">
                         {tool.model_facing || tool.original_text || 'No description provided'}
                       </div>
                       {tool.risk_reasons && tool.risk_reasons.length > 0 && (
-                        <div className="text-[10px] text-status-danger mt-1 font-mono">
-                           Risk reason: {tool.risk_reasons[0]}
+                        <div className="text-xs text-[#DC2626] font-medium mt-1">
+                          Risk reason: {tool.risk_reasons[0]}
                         </div>
                       )}
                     </td>
 
-                    <td className="py-3 px-2 font-mono text-neutral-muted">
-                      <span className="bg-surface-base border border-neutral-border px-2 py-0.5 rounded text-[11px]">
+                    <td className="py-3 px-3 text-[#475569]">
+                      <span className="bg-[#F1F5F9] border border-[#CBD5E1] px-2.5 py-1 rounded text-xs font-mono">
                         {tool.server_id}
                       </span>
                     </td>
 
-                    <td className="py-3 px-2">
+                    <td className="py-3 px-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-[11px] font-medium border ${
+                        className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold border ${
                           isApproved
-                            ? 'bg-surface-base text-status-success border-neutral-border'
+                            ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
                             : isQuarantined
-                            ? 'bg-surface-base text-status-warning border-neutral-border'
+                            ? 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]'
                             : isBlocked
-                            ? 'bg-surface-base text-status-danger border-neutral-border'
-                            : 'bg-surface-base text-neutral-muted border-neutral-border'
+                            ? 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]'
+                            : 'bg-[#F1F5F9] text-[#64748B] border-[#E2E8F0]'
                         }`}
                       >
                         {tool.state}
                       </span>
                     </td>
 
-                    <td className="py-3 px-2">
-                      <div className="w-24">
-                        <div className="flex justify-between text-[10px] font-mono text-neutral-muted mb-1">
+                    <td className="py-3 px-3">
+                      <div className="w-28">
+                        <div className="flex justify-between text-xs text-[#64748B] mb-1 font-mono">
                           <span>Risk</span>
-                          <span>{(tool.risk_score * 100).toFixed(0)}%</span>
+                          <span className="font-semibold">{(tool.risk_score * 100).toFixed(0)}%</span>
                         </div>
-                        <div className="h-1.5 w-full bg-surface-base border border-neutral-border rounded-full overflow-hidden">
+                        <div className="h-2 w-full bg-[#E2E8F0] rounded-full overflow-hidden">
                           <div
                             className={`h-full ${
                               tool.risk_score >= 0.6
-                                ? 'bg-status-danger'
+                                ? 'bg-[#DC2626]'
                                 : tool.risk_score >= 0.3
-                                ? 'bg-status-warning'
-                                : 'bg-status-success'
+                                ? 'bg-[#D97706]'
+                                : 'bg-[#059669]'
                             }`}
                             style={{ width: `${Math.min(tool.risk_score * 100, 100)}%` }}
                           />
@@ -210,35 +210,35 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                       </div>
                     </td>
 
-                    <td className="py-3 px-2">
-                      <div className="flex items-center gap-1.5">
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => onInspectDiff(tool.id)}
-                          className="p-1.5 text-neutral-muted hover:text-gray-100 border border-neutral-border hover:bg-surface-base rounded transition-colors"
+                          className="p-1.5 text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1] hover:bg-[#F8FAFC] rounded transition-colors"
                           title="Inspect Semantic Drift Diff"
                           aria-label="Inspect Semantic Drift Diff"
                         >
-                          <Eye className="w-3.5 h-3.5" />
+                          <Eye className="w-4 h-4" />
                         </button>
 
                         {isQuarantined && (
                           <button
                             onClick={() => onApprove(tool.id)}
-                            className="px-2.5 py-1 text-[11px] font-medium bg-accent hover:bg-accent-hover text-white rounded flex items-center gap-1 transition-colors"
+                            className="px-3 py-1.5 text-xs font-semibold bg-[#1D4ED8] hover:bg-[#1E40AF] text-white rounded flex items-center gap-1 transition-colors shadow-sm"
                           >
-                            <Check className="w-3 h-3" />
-                            Approve & Pin
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Approve & Pin</span>
                           </button>
                         )}
 
                         {!isBlocked && (
                           <button
                             onClick={() => onReject(tool.id)}
-                            className="p-1.5 text-neutral-muted hover:text-status-danger border border-neutral-border hover:bg-surface-base rounded transition-colors"
+                            className="p-1.5 text-[#64748B] hover:text-[#DC2626] border border-[#CBD5E1] hover:bg-[#FEF2F2] rounded transition-colors"
                             title="Quarantine & Block"
                             aria-label="Quarantine & Block"
                           >
-                            <Ban className="w-3.5 h-3.5" />
+                            <Ban className="w-4 h-4" />
                           </button>
                         )}
                       </div>
