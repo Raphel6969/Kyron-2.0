@@ -48,3 +48,5 @@ docs/reviews/screenshots/*.png
 Thumbs.db
 .vscode/
 .idea/
+
+.opencode/
