@@ -8,6 +8,7 @@ last_verified_commit: a7c6341
 blocked_on: —
 
 ## NEXT ACTION
-Overview landing-page experience verified with fast and slow quality gates. Ready for the next product decision or phase-close review.
+Landing access dialog role-card layout fixed and verified on landing_design.
 
 ## IN FLIGHT
+—
