@@ -1,20 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ShieldCheck,
-  AlertOctagon,
+  AlertTriangle,
   Network,
   Cpu,
   FileCheck2,
   Lock,
   ArrowRight,
-  ExternalLink,
+  ChevronRight,
   Activity,
   Server,
-  Terminal,
   ScanSearch,
-  CheckCircle2,
+  CheckCircle,
   Fingerprint,
-  HardDrive
+  Layers,
+  Check
 } from 'lucide-react';
 
 interface CommandOverviewProps {
@@ -27,6 +27,98 @@ interface CommandOverviewProps {
   onExportEUAct: () => void;
 }
 
+interface StageDetail {
+  number: string;
+  title: string;
+  short: string;
+  component: string;
+  latency: string;
+  mechanism: string;
+  threatStopped: string;
+  detail: string;
+  status: string;
+}
+
+const pipelineStages: StageDetail[] = [
+  {
+    number: '01',
+    title: 'Discover & Ingest',
+    short: 'Tool enters boundary',
+    component: 'Registry Firewall (Rust Engine)',
+    latency: '0.8ms',
+    mechanism: 'SHA-256 Manifest Pinning & Schema Normalization',
+    threatStopped: 'Prompt Injection & Description Poisoning',
+    detail: 'Kyron receives the MCP tool listing before the agent can read it, sanitizing Unicode homoglyphs and hidden instructions.',
+    status: 'ENFORCING',
+  },
+  {
+    number: '02',
+    title: 'Normalize & TRUSTDESC',
+    short: 'Synthesize clean contract',
+    component: 'Schema Normalizer (Rust Engine)',
+    latency: '0.4ms',
+    mechanism: 'Deterministic Schema Projection & Zero-Loss Normalization',
+    threatStopped: 'Model-Facing Rug Pulls & Adversarial System Prompts',
+    detail: 'Replaces raw developer markdown with high-assurance synthetic descriptions, ensuring the agent sees only verified contracts.',
+    status: 'ACTIVE',
+  },
+  {
+    number: '03',
+    title: 'Pin & Attest',
+    short: 'Cryptographic identity',
+    component: 'Tool Registry Store (PostgreSQL / Neon)',
+    latency: '0.6ms',
+    mechanism: 'SHA-256 Content Hashing & Ed25519 Signatures',
+    threatStopped: 'Silent Schema Drifts & Unauthorized Mutations',
+    detail: 'Approved tools receive a stable cryptographic identity. Any unauthorized change immediately quarantines the tool before execution.',
+    status: 'VERIFIED',
+  },
+  {
+    number: '04',
+    title: 'Authorize & Scope',
+    short: 'Expiring capability leases',
+    component: 'Authority Service (Go Engine)',
+    latency: '0.9ms',
+    mechanism: 'Single-Use Capability Leases & Dual-Key Approval Queue',
+    threatStopped: 'Privilege Escalation & High-Blast Radius Actions',
+    detail: 'Binds execution permissions to the exact resource snapshot. Destructive actions suspend until a human SOC operator rules on the request.',
+    status: 'GOVERNED',
+  },
+  {
+    number: '05',
+    title: 'Flow-Check (OpenAPPA)',
+    short: 'Data movement tracking',
+    component: 'Information Flow Control (In-Process Adapter)',
+    latency: '0.5ms',
+    mechanism: 'RFC 6901 JSON-Path Provenance & Label Combination Lattice',
+    threatStopped: 'Cross-Tenant Contamination & Silent Poisoning',
+    detail: 'Labels taint on tool inputs and outputs dynamically, halting calls if an unapproved sensitive source flows into an insecure sink.',
+    status: 'ATTESTED',
+  },
+  {
+    number: '06',
+    title: 'Meter Egress',
+    short: 'Source-attributed budgets',
+    component: 'Network Egress Broker (Go Data Plane)',
+    latency: '0.3ms',
+    mechanism: 'Token Bucket Rate Limiting & Domain Destination Allowlist',
+    threatStopped: 'Sharded Exfiltration & Covert Socket Channels',
+    detail: 'Meters outbound TCP socket bytes per data source. Halts execution when the cumulative source threshold is exceeded.',
+    status: 'METERED',
+  },
+  {
+    number: '07',
+    title: 'Prove & Seal',
+    short: 'Cryptographic audit trail',
+    component: 'Evidence Emitter (Ed25519 Cryptographic Signer)',
+    latency: '0.3ms',
+    mechanism: 'SHA-256 Hash Chaining & Ed25519 Signatures',
+    threatStopped: 'Audit Tampering & Compliance Blindspots',
+    detail: 'Emits a tamper-evident audit record chained to previous calls. 1-click generation of EU AI Act Article 50 compliance bundles.',
+    status: 'SEALED',
+  },
+];
+
 export const CommandOverview: React.FC<CommandOverviewProps> = ({
   quarantinedCount,
   approvedCount,
@@ -36,167 +128,252 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
   onTriggerScan,
   onExportEUAct,
 }) => {
+  const [selectedStage, setSelectedStage] = useState<number>(0);
+  const activeStage = pipelineStages[selectedStage];
+
   return (
     <div className="space-y-6">
-      {/* Top Banner / System Posture */}
-      <div className="bg-white border border-[#E2E8F0] rounded p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#059669] inline-block"></span>
-            <span className="text-sm text-[#0F172A] font-bold uppercase tracking-wider">
-              Kyron In-Line Security Proxy: Enforce Mode Active
-            </span>
+      {/* Top Banner / System Posture Hero — Resonating with Landing Hero */}
+      <div className="console-card overflow-hidden">
+        <div className="p-6 md:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 border-b border-[#E2E8F0] bg-[#F8FAFC]">
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex items-center gap-3">
+              <span className="landing-kicker text-[10px]">
+                <span className="landing-kicker-dot" /> LIVE PROTECTION PLANE
+              </span>
+              <span className="landing-live text-[10px]">
+                <i /> ENFORCE MODE
+              </span>
+              <span className="text-xs text-[#94A3B8]">|</span>
+              <span className="text-xs text-[#64748B] font-mono">Stock MCP Gateway :8080</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#0F172A] tracking-tight">
+              Let agents move fast. <span className="text-[#1D4ED8]">Keep authority yours.</span>
+            </h1>
+            <p className="text-sm text-[#475569] leading-relaxed">
+              Deterministic trust layer active between your AI agent fleet and reachable tools. Tool manifests,
+              in-flight parameters, and outbound socket packets are verified with zero security tokens on the hot path.
+            </p>
           </div>
-          <p className="text-sm text-[#475569] max-w-2xl leading-relaxed">
-            In-line deterministic data plane active across stdio and HTTP/SSE transports. All tool definitions,
-            in-flight parameters, and outbound network packets are metered with zero model tokens on the security hot path.
-          </p>
+
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 self-stretch lg:self-auto">
+            <button
+              type="button"
+              onClick={onTriggerScan}
+              className="landing-button landing-button-secondary text-xs h-10 px-4"
+            >
+              <ScanSearch className="w-4 h-4 text-[#1D4ED8]" />
+              <span>Scan Registry</span>
+            </button>
+            <button
+              type="button"
+              onClick={onExportEUAct}
+              className="landing-button landing-button-primary text-xs h-10 px-4"
+            >
+              <FileCheck2 className="w-4 h-4" />
+              <span>Export Article 50 Dossier</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2.5 self-stretch md:self-auto">
-          <button
-            type="button"
-            onClick={onTriggerScan}
-            className="flex-1 md:flex-initial px-4 py-2.5 text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#0F172A] border border-[#CBD5E1] rounded transition-colors flex items-center justify-center gap-1.5"
-          >
-            <ScanSearch className="w-4 h-4 text-[#1D4ED8]" />
-            <span>Audit Registry</span>
-          </button>
-          <button
-            type="button"
-            onClick={onExportEUAct}
-            className="flex-1 md:flex-initial px-4 py-2.5 text-xs font-semibold bg-[#1D4ED8] hover:bg-[#1E40AF] text-white rounded transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-          >
-            <FileCheck2 className="w-4 h-4" />
-            <span>Export EU AI Act Dossier</span>
-          </button>
+        {/* Visual Flow Strip */}
+        <div className="px-6 py-4 bg-white flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#475569] border-b border-[#E2E8F0]">
+          <div className="flex items-center gap-2">
+            <Network className="w-4 h-4 text-[#1D4ED8]" />
+            <span className="font-semibold text-[#0F172A]">Agent Request</span>
+            <span className="text-[#94A3B8]">→</span>
+            <span className="font-mono text-[#059669]">7 Deterministic Gates</span>
+            <span className="text-[#94A3B8]">→</span>
+            <Server className="w-4 h-4 text-[#1D4ED8]" />
+            <span className="font-semibold text-[#0F172A]">Governed Tool Dispatch</span>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] font-mono text-[#64748B]">
+            <span><b>7</b> decision gates</span>
+            <span><b>0</b> model tokens</span>
+            <span><b>1</b> signed trail</span>
+            <span className="text-[#059669] font-bold">Sub-4ms p95</span>
+          </div>
         </div>
       </div>
 
-      {/* 7-Stage Gateway Data-Plane Architecture */}
-      <div className="bg-white border border-[#E2E8F0] rounded p-6 shadow-sm">
-        <div className="flex items-center justify-between pb-4 border-b border-[#E2E8F0] mb-5">
+      {/* 7-Stage Pipeline Interactive Explorer — Resonating with Landing Stage Panel */}
+      <div className="console-card">
+        <div className="console-card-header flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-[#0F172A]">
+            <p className="landing-kicker text-[10px]">01 / The Protection Sequence</p>
+            <h2 className="text-base font-bold text-[#0F172A] tracking-tight">
               7-Stage Deterministic Security Pipeline
             </h2>
-            <p className="text-sm text-[#475569] mt-0.5">
-              Every tool call traverses all seven deterministic gates before reaching execution or model context.
-            </p>
           </div>
-          <span className="text-xs text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] px-3 py-1 rounded font-semibold font-mono">
+          <span className="text-xs text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] px-2.5 py-1 rounded font-semibold font-mono">
             Hot-Path p95: 3.8ms
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#475569] uppercase">Stage 1</span>
-              <span className="text-xs text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 rounded font-medium">
-                Active
-              </span>
-            </div>
-            <h3 className="text-sm font-bold text-[#0F172A] mb-1">Registry Firewall</h3>
-            <p className="text-xs text-[#475569] leading-relaxed">
-              SHA-256 manifest pinning and TRUSTDESC synthesis. Strips prompt injections before model sees metadata.
-            </p>
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* Left Column: 7 Stages List */}
+          <div className="lg:col-span-5 border border-[#E2E8F0] divide-y divide-[#E2E8F0] rounded overflow-hidden bg-white">
+            {pipelineStages.map((stage, idx) => (
+              <button
+                key={stage.number}
+                type="button"
+                onClick={() => setSelectedStage(idx)}
+                className={`w-full text-left p-3.5 flex items-center justify-between transition-all ${
+                  selectedStage === idx
+                    ? 'bg-[#EFF6FF] border-l-4 border-l-[#1D4ED8] text-[#0F172A]'
+                    : 'bg-white hover:bg-[#F8FAFC] text-[#475569]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className={`font-mono text-xs font-bold ${selectedStage === idx ? 'text-[#1D4ED8]' : 'text-[#94A3B8]'}`}>
+                    {stage.number}
+                  </span>
+                  <div>
+                    <strong className="block text-xs font-bold text-[#0F172A]">{stage.title}</strong>
+                    <small className="text-[11px] text-[#64748B]">{stage.short}</small>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white border border-[#CBD5E1] text-[#475569]">
+                    {stage.latency}
+                  </span>
+                  <ChevronRight className={`w-3.5 h-3.5 ${selectedStage === idx ? 'text-[#1D4ED8]' : 'text-[#CBD5E1]'}`} />
+                </div>
+              </button>
+            ))}
           </div>
 
-          <div className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#475569] uppercase">Stage 2 & 3</span>
-              <span className="text-xs text-[#1D4ED8] bg-[#EFF6FF] border border-[#BFDBFE] px-2 py-0.5 rounded font-medium">
-                Enforcing
-              </span>
-            </div>
-            <h3 className="text-sm font-bold text-[#0F172A] mb-1">Capability Leases</h3>
-            <p className="text-xs text-[#475569] leading-relaxed">
-              Single-use Ed25519-signed capability leases with TTL bounds and SHA-256 TOCTOU resource identity binding.
-            </p>
-          </div>
+          {/* Right Column: Active Stage Inspector */}
+          <div className="lg:col-span-7 border border-[#E2E8F0] rounded p-6 bg-[#F8FAFC] flex flex-col justify-between space-y-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+                <div>
+                  <span className="landing-kicker text-[10px]">Decision Gate {activeStage.number}</span>
+                  <h3 className="text-lg font-bold text-[#0F172A] tracking-tight">{activeStage.title}</h3>
+                </div>
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-[#ECFDF5] border border-[#A7F3D0] text-[#059669]">
+                  {activeStage.status}
+                </span>
+              </div>
 
-          <div className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#475569] uppercase">Stage 4 & 5</span>
-              <span className="text-xs text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 rounded font-medium">
-                Attested
-              </span>
-            </div>
-            <h3 className="text-sm font-bold text-[#0F172A] mb-1">OpenAPPA IFC & Sandbox</h3>
-            <p className="text-xs text-[#475569] leading-relaxed">
-              Information-flow lattice check with RFC 6901 JSON-path provenance and Linux syscall attestation.
-            </p>
-          </div>
+              <p className="text-sm text-[#475569] leading-relaxed">
+                {activeStage.detail}
+              </p>
 
-          <div className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#475569] uppercase">Stage 6 & 7</span>
-              <span className="text-xs text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 rounded font-medium">
-                Verified
-              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2">
+                <div className="p-3 bg-white border border-[#E2E8F0] rounded">
+                  <span className="text-[10px] uppercase font-bold text-[#64748B] block mb-1">Enforcement Component</span>
+                  <span className="font-semibold text-[#0F172A]">{activeStage.component}</span>
+                </div>
+                <div className="p-3 bg-white border border-[#E2E8F0] rounded">
+                  <span className="text-[10px] uppercase font-bold text-[#64748B] block mb-1">Defense Latency</span>
+                  <span className="font-mono font-bold text-[#059669]">{activeStage.latency} overhead</span>
+                </div>
+                <div className="p-3 bg-white border border-[#E2E8F0] rounded">
+                  <span className="text-[10px] uppercase font-bold text-[#64748B] block mb-1">Mechanism</span>
+                  <span className="text-[#475569]">{activeStage.mechanism}</span>
+                </div>
+                <div className="p-3 bg-white border border-[#E2E8F0] rounded">
+                  <span className="text-[10px] uppercase font-bold text-[#DC2626] block mb-1">Threat Stopped</span>
+                  <span className="text-[#DC2626] font-semibold">{activeStage.threatStopped}</span>
+                </div>
+              </div>
             </div>
-            <h3 className="text-sm font-bold text-[#0F172A] mb-1">Egress & Signed Audit</h3>
-            <p className="text-xs text-[#475569] leading-relaxed">
-              Source-attributed network byte meters halting sharded exfiltration; SHA-256 hash-chained audit emitter.
-            </p>
+
+            <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-[#059669]">
+              <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                <Check className="w-3.5 h-3.5 text-[#059669]" />
+                <span>Deterministic check · Sub-4ms p95 · Zero LLM token consumption</span>
+              </div>
+              <span className="text-[#1D4ED8] font-mono text-[10px]">VERIFIED GATE</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Operational Triage Quick-Nav Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {/* Operational Triage Quick-Nav Cards — Resonating with Landing Operator Rows */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Tool Registry */}
         <div
           onClick={() => onNavigateTab('registry')}
-          className="bg-white border border-[#E2E8F0] p-6 rounded shadow-sm cursor-pointer hover:border-[#1D4ED8] transition-colors flex flex-col justify-between group"
+          className="console-card p-5 cursor-pointer hover:border-[#1D4ED8] transition-all flex flex-col justify-between group"
         >
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#0F172A] font-bold">Tool Registry & Drift</span>
-              <ArrowRight className="w-4 h-4 text-[#475569] group-hover:text-[#1D4ED8] transition-colors" />
+              <span className="landing-kicker text-[10px]">01 / Tool Registry</span>
+              <ArrowRight className="w-4 h-4 text-[#94A3B8] group-hover:text-[#1D4ED8] transition-colors" />
             </div>
+            <h4 className="text-sm font-bold text-[#0F172A]">Registry & Drift</h4>
             <p className="text-xs text-[#475569] leading-relaxed">
-              Inspect {approvedCount} pinned enterprise tools and {quarantinedCount} quarantined threats with side-by-side semantic diffs.
+              {approvedCount} pinned tools, {quarantinedCount} quarantined threats. Side-by-side semantic diff review.
             </p>
           </div>
-          <div className="text-xs text-[#1D4ED8] flex items-center gap-1 font-semibold">
-            <span>Review Registry →</span>
+          <div className="pt-3 border-t border-[#F1F5F9] text-xs text-[#1D4ED8] font-bold flex items-center justify-between">
+            <span>Inspect Tools</span>
+            <span className="font-mono text-[11px]">→</span>
           </div>
         </div>
 
+        {/* Card 2: Authority & Leases */}
         <div
           onClick={() => onNavigateTab('approvals')}
-          className="bg-white border border-[#E2E8F0] p-6 rounded shadow-sm cursor-pointer hover:border-[#1D4ED8] transition-colors flex flex-col justify-between group"
+          className="console-card p-5 cursor-pointer hover:border-[#1D4ED8] transition-all flex flex-col justify-between group"
         >
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#0F172A] font-bold">Authority & Leases</span>
-              <ArrowRight className="w-4 h-4 text-[#475569] group-hover:text-[#1D4ED8] transition-colors" />
+              <span className="landing-kicker text-[10px]">02 / Authority Queue</span>
+              <ArrowRight className="w-4 h-4 text-[#94A3B8] group-hover:text-[#1D4ED8] transition-colors" />
             </div>
+            <h4 className="text-sm font-bold text-[#0F172A]">Capability Leases</h4>
             <p className="text-xs text-[#475569] leading-relaxed">
               {activeLeasesCount} active single-use leases. Grant or deny tool execution authority requests in real time.
             </p>
           </div>
-          <div className="text-xs text-[#1D4ED8] flex items-center gap-1 font-semibold">
-            <span>Manage Leases →</span>
+          <div className="pt-3 border-t border-[#F1F5F9] text-xs text-[#1D4ED8] font-bold flex items-center justify-between">
+            <span>Manage Leases</span>
+            <span className="font-mono text-[11px]">→</span>
           </div>
         </div>
 
+        {/* Card 3: Network Egress */}
         <div
-          onClick={() => onNavigateTab('audit')}
-          className="bg-white border border-[#E2E8F0] p-6 rounded shadow-sm cursor-pointer hover:border-[#1D4ED8] transition-colors flex flex-col justify-between group"
+          onClick={() => onNavigateTab('egress')}
+          className="console-card p-5 cursor-pointer hover:border-[#1D4ED8] transition-all flex flex-col justify-between group"
         >
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#0F172A] font-bold">Cryptographic Trail</span>
-              <ArrowRight className="w-4 h-4 text-[#475569] group-hover:text-[#1D4ED8] transition-colors" />
+              <span className="landing-kicker text-[10px]">03 / Boundary Guard</span>
+              <ArrowRight className="w-4 h-4 text-[#94A3B8] group-hover:text-[#1D4ED8] transition-colors" />
             </div>
+            <h4 className="text-sm font-bold text-[#0F172A]">Network Egress</h4>
             <p className="text-xs text-[#475569] leading-relaxed">
-              {auditCount} hash-chained audit events with Ed25519 digital signatures complying with EU AI Act Article 50.
+              Source-attributed outbound byte limits and domain destination allowlists to prevent data exfiltration.
             </p>
           </div>
-          <div className="text-xs text-[#1D4ED8] flex items-center gap-1 font-semibold">
-            <span>Inspect Hash Chain →</span>
+          <div className="pt-3 border-t border-[#F1F5F9] text-xs text-[#1D4ED8] font-bold flex items-center justify-between">
+            <span>View Limits</span>
+            <span className="font-mono text-[11px]">→</span>
+          </div>
+        </div>
+
+        {/* Card 4: Cryptographic Trail */}
+        <div
+          onClick={() => onNavigateTab('audit')}
+          className="console-card p-5 cursor-pointer hover:border-[#1D4ED8] transition-all flex flex-col justify-between group"
+        >
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="landing-kicker text-[10px]">04 / Compliance Trail</span>
+              <ArrowRight className="w-4 h-4 text-[#94A3B8] group-hover:text-[#1D4ED8] transition-colors" />
+            </div>
+            <h4 className="text-sm font-bold text-[#0F172A]">Evidence Store</h4>
+            <p className="text-xs text-[#475569] leading-relaxed">
+              {auditCount} hash-chained events with Ed25519 digital signatures complying with EU AI Act Article 50.
+            </p>
+          </div>
+          <div className="pt-3 border-t border-[#F1F5F9] text-xs text-[#1D4ED8] font-bold flex items-center justify-between">
+            <span>Verify Chain</span>
+            <span className="font-mono text-[11px]">→</span>
           </div>
         </div>
       </div>

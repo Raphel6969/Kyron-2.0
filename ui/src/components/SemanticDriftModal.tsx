@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CheckCircle, ShieldAlert, GitCommit } from 'lucide-react';
+import { X, CheckCircle, ShieldAlert, GitCommit, Check } from 'lucide-react';
 
 interface ToolDiffData {
   tool_id: string;
@@ -27,92 +27,106 @@ export const SemanticDriftModal: React.FC<SemanticDriftModalProps> = ({
   if (!isOpen || !diff) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm font-sans">
-      <div className="bg-white border border-[#E2E8F0] rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="p-5 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
+    <div
+      className="landing-modal-backdrop font-sans"
+      role="presentation"
+      onMouseDown={(e) => {
+        if (e.currentTarget === e.target) onClose();
+      }}
+    >
+      <div className="bg-white border border-[#CBD5E1] rounded w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+        {/* Modal Header */}
+        <div className="p-6 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#FFFBEB] border border-[#FDE68A] rounded text-[#D97706]">
-              <ShieldAlert className="w-5 h-5" />
+            <div className="w-8 h-8 rounded bg-[#FFFBEB] border border-[#FDE68A] flex items-center justify-center text-[#D97706]">
+              <ShieldAlert className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
-                Semantic Drift Inspection: <span className="font-mono text-[#1D4ED8]">{diff.tool_id}</span>
+              <p className="landing-kicker text-[10px]">Inspection / Semantic Drift</p>
+              <h2 className="text-base font-bold text-[#0F172A] tracking-tight">
+                Tool Manifest Mutation: <span className="font-mono text-[#1D4ED8]">{diff.tool_id}</span>
               </h2>
-              <p className="text-xs text-[#475569]">
-                Upstream manifest mutation altered tool contract. Review canonical diff prior to release.
-              </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-[#64748B] hover:text-[#0F172A] rounded hover:bg-[#F1F5F9] transition-colors"
+            className="landing-modal-close"
             aria-label="Dismiss view"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Hashes Row */}
-        <div className="px-5 py-3 bg-[#F1F5F9] border-b border-[#E2E8F0] grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+        <div className="px-6 py-3 bg-[#F1F5F9] border-b border-[#E2E8F0] grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
           <div className="flex items-center gap-2 text-[#475569]">
             <GitCommit className="w-4 h-4 text-[#DC2626]" />
-            <span className="font-semibold text-[#0F172A]">Upstream Hash:</span>
-            <span className="text-[#475569] truncate">{diff.old_hash.slice(0, 20)}...</span>
+            <span className="font-bold text-[#0F172A]">Upstream Hash:</span>
+            <span className="text-[#475569] truncate">{diff.old_hash.slice(0, 24)}...</span>
           </div>
           <div className="flex items-center gap-2 text-[#475569]">
             <GitCommit className="w-4 h-4 text-[#059669]" />
-            <span className="font-semibold text-[#0F172A]">Canonical Hash:</span>
-            <span className="text-[#475569] truncate">{diff.new_hash.slice(0, 20)}...</span>
+            <span className="font-bold text-[#0F172A]">Canonical Hash:</span>
+            <span className="text-[#475569] truncate">{diff.new_hash.slice(0, 24)}...</span>
           </div>
         </div>
 
-        {/* Side-by-Side Comparison */}
-        <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto flex-1 text-xs">
-          {/* Left: Original Description */}
-          <div className="bg-[#FEF2F2] border border-[#FECACA] rounded p-4 flex flex-col">
-            <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#FECACA]">
-              <span className="font-bold text-[#DC2626] uppercase text-[11px]">
-                Original Text (Upstream Payload)
-              </span>
-              <span className="text-xs text-[#DC2626] font-mono">SHA-256 Unpinned</span>
-            </div>
-            <div className="whitespace-pre-wrap leading-relaxed text-[#7F1D1D] flex-1 bg-white p-3.5 rounded border border-[#FECACA] font-mono">
-              {diff.original_description}
-            </div>
-          </div>
+        {/* Side-by-Side Comparison Container */}
+        <div className="p-6 overflow-y-auto flex-1 space-y-4">
+          <p className="text-xs text-[#475569] leading-relaxed">
+            The upstream tool definition changed after initial pinning. Kyron quarantined the mutation to prevent
+            model-facing prompt injection or hidden capability expansion.
+          </p>
 
-          {/* Right: Sanitized Model-Facing Description */}
-          <div className="bg-[#ECFDF5] border border-[#A7F3D0] rounded p-4 flex flex-col">
-            <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#A7F3D0]">
-              <span className="font-bold text-[#059669] uppercase text-[11px]">
-                TRUSTDESC Sanitized (Model-Facing)
-              </span>
-              <span className="text-xs text-[#059669] font-mono">Deterministic Floor</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Left: Upstream Mutated Description */}
+            <div className="border border-[#FECACA] bg-[#FEF2F2] rounded p-4 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-[#DC2626]">
+                <span className="font-mono uppercase text-[10px]">Unverified Upstream Payload</span>
+                <span className="bg-white border border-[#FECACA] px-2 py-0.5 rounded text-[10px] font-mono">
+                  QUARANTINED
+                </span>
+              </div>
+              <div className="text-xs font-mono text-[#0F172A] bg-white p-3 rounded border border-[#FECACA] whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
+                {diff.original_description || 'No raw text available'}
+              </div>
+              <p className="text-[11px] text-[#DC2626] leading-normal">
+                Flagged for prompt drift: instructions attempting to divert model behavior away from declared schemas.
+              </p>
             </div>
-            <div className="whitespace-pre-wrap leading-relaxed text-[#064E3B] flex-1 bg-white p-3.5 rounded border border-[#A7F3D0] font-mono">
-              {diff.model_facing_description}
+
+            {/* Right: Synthesized TRUSTDESC Canonical */}
+            <div className="border border-[#A7F3D0] bg-[#ECFDF5] rounded p-4 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-[#059669]">
+                <span className="font-mono uppercase text-[10px]">Synthesized TRUSTDESC Specification</span>
+                <span className="bg-white border border-[#A7F3D0] px-2 py-0.5 rounded text-[10px] font-mono">
+                  MODEL-FACING
+                </span>
+              </div>
+              <div className="text-xs font-mono text-[#0F172A] bg-white p-3 rounded border border-[#A7F3D0] whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
+                {diff.model_facing_description || 'Normalized schema specification'}
+              </div>
+              <p className="text-[11px] text-[#059669] leading-normal">
+                Deterministic schema projection. Safe for model presentation with zero prompt injection vectors.
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Action Footer */}
-        <div className="p-4 border-t border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between">
+        {/* Modal Footer Actions */}
+        <div className="p-4 px-6 border-t border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-[#475569] hover:text-[#0F172A] hover:bg-white border border-[#CBD5E1] rounded transition-colors"
+            className="landing-button landing-button-secondary text-xs h-9 px-4"
           >
-            Dismiss Diff
+            Cancel Inspection
           </button>
           <button
-            onClick={() => {
-              onApprove(diff.tool_id);
-              onClose();
-            }}
-            className="px-4 py-2 text-xs font-semibold bg-[#1D4ED8] hover:bg-[#1E40AF] text-white rounded flex items-center gap-2 transition-colors shadow-sm"
+            onClick={() => onApprove(diff.tool_id)}
+            className="landing-button landing-button-primary text-xs h-9 px-4"
           >
-            <CheckCircle className="w-4 h-4" />
-            <span>Approve & Pin Canonical</span>
+            <Check className="w-3.5 h-3.5" />
+            <span>Approve & Pin Canonical Manifest</span>
           </button>
         </div>
       </div>

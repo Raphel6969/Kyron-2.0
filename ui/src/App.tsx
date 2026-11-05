@@ -284,26 +284,24 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex font-sans">
-      {/* Fortune 500 Enterprise Sidebar */}
-      <aside className={`w-64 bg-[#0F172A] text-white flex-shrink-0 flex flex-col justify-between fixed inset-y-0 left-0 z-50 md:static transition-transform ${
+    <div className="console-workspace min-h-screen flex font-sans">
+      <div className="console-grid" aria-hidden="true" />
+
+      {/* Enterprise SOC Sidebar — In Resonance with Landing Page */}
+      <aside className={`w-64 bg-white border-r border-[#E2E8F0] text-[#0F172A] flex-shrink-0 flex flex-col justify-between fixed inset-y-0 left-0 z-50 md:static transition-transform shadow-sm ${
         mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}>
         <div>
           {/* Organization & Product Brand Header */}
-          <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+          <div className="p-5 border-b border-[#E2E8F0] flex items-center justify-between bg-white">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded bg-[#1D4ED8] flex items-center justify-center text-white">
-                <Shield className="w-4 h-4" />
-              </div>
+              <span className="landing-brand-mark"><Shield className="w-4 h-4 text-[#1D4ED8]" /></span>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm tracking-wider">KYRON</span>
-                  <span className="bg-slate-800 border border-slate-700 text-[#10B981] text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold">
-                    ENFORCE
-                  </span>
+                  <span className="font-bold text-sm tracking-wider font-mono text-[#0F172A]">KYRON <em className="text-[#1D4ED8] not-italic">2.0</em></span>
+                  <span className="landing-live text-[10px]"><i /> ENFORCE</span>
                 </div>
-                <span className="text-[11px] text-slate-400 block mt-0.5">
+                <span className="text-[11px] text-[#64748B] block mt-0.5 font-mono">
                   Acme Financial AI Fleet
                 </span>
               </div>
@@ -312,175 +310,157 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(false)}
-              className="md:hidden text-slate-400 hover:text-white"
+              className="md:hidden text-[#64748B] hover:text-[#0F172A]"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Categorized Navigation */}
-          <nav className="p-4 space-y-6 text-sm">
+          <nav className="p-3 space-y-5 text-sm">
             <div>
-              <span className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider px-3 block mb-2">
-                Operations
-              </span>
-              <div className="space-y-1">
+              <p className="landing-kicker text-[10px] px-2 mb-2">01 / Operations</p>
+              <div className="space-y-0.5">
                 <button
                   type="button"
                   onClick={() => { setActiveTab('overview'); setMobileSidebarOpen(false); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors font-medium ${
-                    activeTab === 'overview'
-                      ? 'bg-[#1D4ED8] text-white shadow-sm'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                  }`}
+                  className={`console-sidebar-tab ${activeTab === 'overview' ? 'is-active' : ''}`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <LayoutDashboard className="w-4 h-4" />
+                    <LayoutDashboard className="w-4 h-4 text-[#1D4ED8]" />
                     <span>Command Center</span>
                   </div>
+                  <span className="text-[10px] font-mono text-[#64748B]">01</span>
                 </button>
               </div>
             </div>
 
             <div>
-              <span className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider px-3 block mb-2">
-                Security Controls
-              </span>
-              <div className="space-y-1">
+              <p className="landing-kicker text-[10px] px-2 mb-2">02 / Security Controls</p>
+              <div className="space-y-0.5">
                 <button
                   type="button"
                   onClick={() => { setActiveTab('registry'); setMobileSidebarOpen(false); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors font-medium ${
-                    activeTab === 'registry'
-                      ? 'bg-[#1D4ED8] text-white shadow-sm'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                  }`}
+                  className={`console-sidebar-tab ${activeTab === 'registry' ? 'is-active' : ''}`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <LayoutGrid className="w-4 h-4" />
+                    <LayoutGrid className="w-4 h-4 text-[#1D4ED8]" />
                     <span>Tool Registry</span>
                   </div>
-                  {quarantinedCount > 0 && (
-                    <span className="bg-[#DC2626] text-white text-[11px] px-1.5 py-0.5 rounded-full font-bold">
+                  {quarantinedCount > 0 ? (
+                    <span className="bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] text-[10px] px-1.5 py-0.5 rounded font-mono font-bold">
                       {quarantinedCount}
                     </span>
+                  ) : (
+                    <span className="text-[10px] font-mono text-[#64748B]">02</span>
                   )}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => { setActiveTab('approvals'); setMobileSidebarOpen(false); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors font-medium ${
-                    activeTab === 'approvals'
-                      ? 'bg-[#1D4ED8] text-white shadow-sm'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                  }`}
+                  className={`console-sidebar-tab ${activeTab === 'approvals' ? 'is-active' : ''}`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <KeyRound className="w-4 h-4" />
+                    <KeyRound className="w-4 h-4 text-[#1D4ED8]" />
                     <span>Authority Queue</span>
                   </div>
-                  {approvals.length > 0 && (
-                    <span className="bg-[#D97706] text-white text-[11px] px-1.5 py-0.5 rounded-full font-bold">
+                  {approvals.length > 0 ? (
+                    <span className="bg-[#FFFBEB] border border-[#FDE68A] text-[#D97706] text-[10px] px-1.5 py-0.5 rounded font-mono font-bold">
                       {approvals.length}
                     </span>
+                  ) : (
+                    <span className="text-[10px] font-mono text-[#64748B]">03</span>
                   )}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => { setActiveTab('egress'); setMobileSidebarOpen(false); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors font-medium ${
-                    activeTab === 'egress'
-                      ? 'bg-[#1D4ED8] text-white shadow-sm'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                  }`}
+                  className={`console-sidebar-tab ${activeTab === 'egress' ? 'is-active' : ''}`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Network className="w-4 h-4" />
+                    <Network className="w-4 h-4 text-[#1D4ED8]" />
                     <span>Network Egress</span>
                   </div>
+                  <span className="text-[10px] font-mono text-[#64748B]">04</span>
                 </button>
               </div>
             </div>
 
             <div>
-              <span className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider px-3 block mb-2">
-                Governance & Audit
-              </span>
-              <div className="space-y-1">
+              <p className="landing-kicker text-[10px] px-2 mb-2">03 / Governance & Audit</p>
+              <div className="space-y-0.5">
                 <button
                   type="button"
                   onClick={() => { setActiveTab('audit'); setMobileSidebarOpen(false); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors font-medium ${
-                    activeTab === 'audit'
-                      ? 'bg-[#1D4ED8] text-white shadow-sm'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                  }`}
+                  className={`console-sidebar-tab ${activeTab === 'audit' ? 'is-active' : ''}`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <History className="w-4 h-4" />
+                    <History className="w-4 h-4 text-[#1D4ED8]" />
                     <span>Cryptographic Trail</span>
                   </div>
+                  <span className="text-[10px] font-mono text-[#64748B]">05</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => { setActiveTab('policies'); setMobileSidebarOpen(false); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors font-medium ${
-                    activeTab === 'policies'
-                      ? 'bg-[#1D4ED8] text-white shadow-sm'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                  }`}
+                  className={`console-sidebar-tab ${activeTab === 'policies' ? 'is-active' : ''}`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Sliders className="w-4 h-4" />
+                    <Sliders className="w-4 h-4 text-[#1D4ED8]" />
                     <span>Policy Studio</span>
                   </div>
+                  <span className="text-[10px] font-mono text-[#64748B]">06</span>
                 </button>
               </div>
             </div>
           </nav>
         </div>
 
-        {/* Sidebar Footer User Info */}
-        <div className="p-4 border-t border-slate-800 space-y-3">
-          <div className="flex items-center gap-2.5 px-2">
-            <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[#1D4ED8]">
-              <User className="w-4 h-4" />
+        {/* Sidebar Footer User Info & Status */}
+        <div className="p-4 border-t border-[#E2E8F0] space-y-3 bg-[#F8FAFC]">
+          <div className="p-2.5 bg-white border border-[#E2E8F0] rounded space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="landing-kicker text-[9px]">Operator Session</span>
+              <span className="w-2 h-2 rounded-full bg-[#059669]"></span>
             </div>
-            <div className="min-w-0 flex-1">
-              <span className="text-xs font-semibold text-white block truncate">{currentRole}</span>
-              <span className="text-[11px] text-slate-400 block truncate">sec-admin · Active</span>
-            </div>
+            <span className="text-xs font-bold text-[#0F172A] block truncate">{currentRole}</span>
+            <span className="text-[10px] text-[#64748B] font-mono block">Zero-Trust Verified</span>
           </div>
 
-          <div className="flex items-center gap-2 pt-1 border-t border-slate-800/60">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleReturnToLanding}
-              className="flex-1 py-1.5 px-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition-colors flex items-center justify-center gap-1.5"
+              className="landing-button landing-button-secondary flex-1 text-xs h-9 px-2"
             >
-              <Layers className="w-3.5 h-3.5" />
+              <Layers className="w-3.5 h-3.5 text-[#1D4ED8]" />
               <span>Landing Page</span>
             </button>
 
             <button
               type="button"
               onClick={handleReturnToLanding}
-              className="p-1.5 text-slate-400 hover:text-status-danger rounded hover:bg-slate-800 transition-colors"
+              className="landing-button landing-button-secondary h-9 w-9 p-0 text-[#64748B] hover:text-status-danger"
               title="Sign Out to Landing"
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
+
+          <div className="flex items-center justify-between text-[11px] text-[#64748B] font-mono pt-1 border-t border-[#E2E8F0]">
+            <span className="flex items-center gap-1.5"><Database className="w-3 h-3 text-[#1D4ED8]" /> Neon Postgres</span>
+            <span className="text-[#059669] font-bold">production</span>
+          </div>
         </div>
       </aside>
 
       {/* Main Workspace Frame */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Executive Top Header */}
-        <header className="h-16 bg-white border-b border-[#E2E8F0] px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30">
+      <div className="flex-1 flex flex-col min-w-0 relative z-10">
+        {/* Executive Top Header — Resonating with Landing Header */}
+        <header className="h-16 bg-white/90 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <button
               type="button"
@@ -491,42 +471,43 @@ export const App: React.FC = () => {
             </button>
 
             {/* Breadcrumb Path */}
-            <div className="flex items-center gap-2 text-xs text-[#475569]">
-              <span className="font-medium">Security Operations</span>
-              <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
-              <span className="font-semibold text-[#0F172A]">{tabLabels[activeTab]}</span>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="landing-kicker text-[10px]">Console</span>
+              <ChevronRight className="w-3 h-3 text-[#94A3B8]" />
+              <span className="font-bold text-[#0F172A]">{tabLabels[activeTab]}</span>
             </div>
           </div>
 
           {/* Top Actions & Global Telemetry */}
           <div className="flex items-center gap-3">
-            <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded bg-[#EFF6FF] border border-[#BFDBFE] text-[#1D4ED8] text-xs font-medium">
+            <div className="hidden xl:flex items-center gap-2 px-3 py-1 bg-white border border-[#CBD5E1] text-[#1D4ED8] text-xs font-mono">
               <Database className="w-3.5 h-3.5 text-[#1D4ED8]" />
-              <span>Neon Postgres: production</span>
+              <span>Neon: production</span>
             </div>
 
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded bg-[#ECFDF5] border border-[#A7F3D0] text-[#059669] text-xs font-medium">
-              <span className="w-2 h-2 rounded-full bg-[#059669] inline-block animate-pulse"></span>
-              <span>In-Line Proxy: 3.8ms p95</span>
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-white border border-[#CBD5E1] text-[#059669] text-xs font-mono">
+              <span className="landing-live"><i /> ENFORCE</span>
+              <span className="text-[#CBD5E1]">|</span>
+              <span className="text-[#475569]">3.8ms p95</span>
             </div>
 
             <button
               type="button"
               onClick={handleExportEUAct}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[#1D4ED8] hover:bg-[#1E40AF] text-white rounded transition-colors shadow-sm"
+              className="landing-button landing-button-primary text-xs h-9 px-3.5"
             >
               <FileCheck2 className="w-3.5 h-3.5" />
-              <span>Export Article 50 Dossier</span>
+              <span className="hidden sm:inline">Export Article 50 Dossier</span>
             </button>
 
             <button
               type="button"
               onClick={() => { fetchTools(); fetchApprovals(); fetchAuditEvents(); }}
-              className="p-2 text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1] rounded hover:bg-[#F8FAFC] transition-colors"
+              className="landing-button landing-button-secondary h-9 w-9 p-0"
               title="Refresh Telemetry"
               aria-label="Refresh Telemetry"
             >
-              <RotateCw className="w-4 h-4" />
+              <RotateCw className="w-3.5 h-3.5 text-[#475569]" />
             </button>
           </div>
         </header>

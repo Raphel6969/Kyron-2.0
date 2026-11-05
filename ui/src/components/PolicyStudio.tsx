@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sliders, RefreshCw, CheckCircle2, Shield, AlertTriangle } from 'lucide-react';
+import { Sliders, RefreshCw, CheckCircle2, Shield, AlertTriangle, Play, FileCode2 } from 'lucide-react';
 
 export const PolicyStudio: React.FC = () => {
   const [circuitBreakers, setCircuitBreakers] = useState<any>(null);
@@ -66,84 +66,95 @@ ttl_seconds = 600
   return (
     <div className="space-y-6 font-sans">
       {/* Policy Bundle Header */}
-      <div className="bg-white border border-[#E2E8F0] rounded p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0] mb-5">
-          <div>
-            <h2 className="text-base font-bold text-[#0F172A]">
-              Declarative Policy Studio & Hot-Reload
-            </h2>
-            <p className="text-xs text-[#475569] mt-0.5">
-              Compile, simulate, and atomically hot-reload declarative TOML policies across running gateway sessions with zero downtime.
-            </p>
+      <div className="console-card overflow-hidden">
+        <div className="console-card-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-[#1D4ED8]">
+              <Sliders className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="landing-kicker text-[10px]">05 / Declarative Policy</p>
+              <h2 className="text-base font-bold text-[#0F172A] tracking-tight">
+                Policy Studio & Hot-Reload Engine
+              </h2>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {hotReloadSuccess && (
+              <span className="text-xs text-[#059669] font-mono font-bold flex items-center gap-1 animate-fade-in">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Reloaded Across Fleet</span>
+              </span>
+            )}
             <button
               onClick={handleHotReload}
-              className="px-4 py-2 text-xs font-semibold bg-[#1D4ED8] hover:bg-[#1E40AF] text-white rounded flex items-center gap-1.5 transition-colors shadow-sm"
+              className="landing-button landing-button-primary text-xs h-8 px-3.5"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>Hot-Reload Active Policy</span>
+              <span>Hot-Reload TOML</span>
             </button>
           </div>
         </div>
 
-        {hotReloadSuccess && (
-          <div className="mb-4 bg-[#ECFDF5] border border-[#A7F3D0] p-3 rounded text-xs text-[#059669] flex items-center gap-2 font-medium">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Policy atomically hot-reloaded across active gateway sessions (0 downtime).</span>
+        <div className="p-6 space-y-4">
+          <div className="flex items-center justify-between text-xs pb-3 border-b border-[#E2E8F0]">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-[#0F172A]">Active Policy:</span>
+              <span className="font-mono text-[#1D4ED8] bg-[#EFF6FF] px-2 py-0.5 rounded border border-[#BFDBFE]">
+                {activePolicy}.toml
+              </span>
+            </div>
+            <span className="text-xs text-[#059669] font-mono font-semibold">Sub-1ms Evaluation</span>
           </div>
-        )}
 
-        {/* Policy Selector Tabs */}
-        <div className="flex items-center gap-2 mb-4 text-xs font-medium">
-          {['enterprise-strict', 'developer-sandbox', 'pci-compliance'].map((p) => (
-            <button
-              key={p}
-              onClick={() => setActivePolicy(p)}
-              className={`px-3 py-1.5 rounded border transition-colors ${
-                activePolicy === p
-                  ? 'bg-[#1D4ED8] text-white border-[#1D4ED8] shadow-sm'
-                  : 'bg-white text-[#475569] border-[#CBD5E1] hover:bg-[#F8FAFC]'
-              }`}
-            >
-              {p}
-            </button>
-          ))}
+          {/* TOML Code Display Container */}
+          <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded p-4 font-mono text-xs text-[#0F172A] overflow-x-auto leading-relaxed">
+            <pre className="margin-0">{sampleToml}</pre>
+          </div>
         </div>
-
-        {/* TOML Display */}
-        <pre className="bg-[#0F172A] border border-[#E2E8F0] p-5 rounded font-mono text-xs text-[#F8FAFC] overflow-x-auto leading-relaxed">
-          <code>{sampleToml}</code>
-        </pre>
       </div>
 
-      {/* Circuit Breakers & Resilience Status */}
-      <div className="bg-white border border-[#E2E8F0] rounded p-6 shadow-sm">
-        <h3 className="text-sm font-bold text-[#0F172A] mb-1">
-          Operational Circuit Breakers & Fault Tolerance
-        </h3>
-        <p className="text-xs text-[#475569] mb-4">
-          Automated circuit breakers return deterministic seeded fallbacks rather than throwing errors if external cloud dependencies fail during a presentation.
-        </p>
+      {/* Operational Circuit Breakers */}
+      <div className="console-card overflow-hidden">
+        <div className="console-card-header">
+          <p className="landing-kicker text-[10px]">Fault Tolerance</p>
+          <h3 className="text-base font-bold text-[#0F172A] tracking-tight">
+            Operational Circuit Breakers & Fallback Modes
+          </h3>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-          <div className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded flex items-center justify-between">
-            <span className="text-[#475569] font-medium font-mono">ENABLE_LLM_INFERENCE</span>
-            <span className="text-[#059669] font-bold font-mono">
-              {circuitBreakers?.ENABLE_LLM_INFERENCE ? 'ENABLED' : 'MOCK FALLBACK'}
+        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[#0F172A]">Remote MCP Fallback</span>
+              <span className="w-2 h-2 rounded-full bg-[#059669]"></span>
+            </div>
+            <p className="text-[#64748B]">Deterministic mock fixtures if upstream tool crashes.</p>
+            <span className="text-[10px] font-mono text-[#059669] font-bold block pt-1">
+              STATUS: READY
             </span>
           </div>
-          <div className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded flex items-center justify-between">
-            <span className="text-[#475569] font-medium font-mono">ENABLE_PAYMENT_GATEWAY</span>
-            <span className="text-[#059669] font-bold font-mono">
-              {circuitBreakers?.ENABLE_PAYMENT_GATEWAY ? 'ENABLED' : 'MOCK FALLBACK'}
+
+          <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[#0F172A]">Control Plane Disconnect</span>
+              <span className="w-2 h-2 rounded-full bg-[#059669]"></span>
+            </div>
+            <p className="text-[#64748B]">Gateway runs last signed policy bundle independently.</p>
+            <span className="text-[10px] font-mono text-[#059669] font-bold block pt-1">
+              STATUS: AUTONOMOUS
             </span>
           </div>
-          <div className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded flex items-center justify-between">
-            <span className="text-[#475569] font-medium font-mono">FALLBACK_MODE</span>
-            <span className="text-[#1D4ED8] font-bold font-mono">
-              {circuitBreakers?.fallback_mode || 'SEEDED_MOCKS'}
+
+          <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[#0F172A]">Deterministic Recovery</span>
+              <span className="w-2 h-2 rounded-full bg-[#059669]"></span>
+            </div>
+            <p className="text-[#64748B]">Cached recovery plans indexed by composite fingerprint.</p>
+            <span className="text-[10px] font-mono text-[#059669] font-bold block pt-1">
+              STATUS: CACHED
             </span>
           </div>
         </div>
