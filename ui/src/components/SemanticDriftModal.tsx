@@ -59,14 +59,14 @@ export const SemanticDriftModal: React.FC<SemanticDriftModalProps> = ({
 
         {/* Hashes Row */}
         <div className="px-6 py-3 bg-[#F1F5F9] border-b border-[#E2E8F0] grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
-          <div className="flex items-center gap-2 text-[#475569]">
-            <GitCommit className="w-4 h-4 text-[#DC2626]" />
-            <span className="font-bold text-[#0F172A]">Upstream Hash:</span>
+          <div className="flex items-center gap-2 text-[#475569] min-w-0">
+            <GitCommit className="w-4 h-4 text-[#DC2626] flex-shrink-0" />
+            <span className="font-bold text-[#0F172A] flex-shrink-0">Upstream Hash:</span>
             <span className="text-[#475569] truncate">{diff.old_hash.slice(0, 24)}...</span>
           </div>
-          <div className="flex items-center gap-2 text-[#475569]">
-            <GitCommit className="w-4 h-4 text-[#059669]" />
-            <span className="font-bold text-[#0F172A]">Canonical Hash:</span>
+          <div className="flex items-center gap-2 text-[#475569] min-w-0">
+            <GitCommit className="w-4 h-4 text-[#059669] flex-shrink-0" />
+            <span className="font-bold text-[#0F172A] flex-shrink-0">Canonical Hash:</span>
             <span className="text-[#475569] truncate">{diff.new_hash.slice(0, 24)}...</span>
           </div>
         </div>
@@ -80,14 +80,14 @@ export const SemanticDriftModal: React.FC<SemanticDriftModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Left: Upstream Mutated Description */}
-            <div className="border border-[#FECACA] bg-[#FEF2F2] rounded p-4 space-y-2">
+            <div className="border border-[#FECACA] bg-[#FEF2F2] rounded p-4 space-y-2 min-w-0">
               <div className="flex items-center justify-between text-xs font-bold text-[#DC2626]">
-                <span className="font-mono uppercase text-[10px]">Unverified Upstream Payload</span>
-                <span className="bg-white border border-[#FECACA] px-2 py-0.5 rounded text-[10px] font-mono">
+                <span className="font-mono uppercase text-[10px] truncate">Unverified Upstream Payload</span>
+                <span className="bg-white border border-[#FECACA] px-2 py-0.5 rounded text-[10px] font-mono flex-shrink-0">
                   QUARANTINED
                 </span>
               </div>
-              <div className="text-xs font-mono text-[#0F172A] bg-white p-3 rounded border border-[#FECACA] whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
+              <div className="text-xs font-mono text-[#0F172A] bg-white p-3 rounded border border-[#FECACA] whitespace-pre-wrap break-words leading-relaxed max-h-48 overflow-y-auto">
                 {diff.original_description || 'No raw text available'}
               </div>
               <p className="text-[11px] text-[#DC2626] leading-normal">
@@ -96,14 +96,14 @@ export const SemanticDriftModal: React.FC<SemanticDriftModalProps> = ({
             </div>
 
             {/* Right: Synthesized TRUSTDESC Canonical */}
-            <div className="border border-[#A7F3D0] bg-[#ECFDF5] rounded p-4 space-y-2">
+            <div className="border border-[#A7F3D0] bg-[#ECFDF5] rounded p-4 space-y-2 min-w-0">
               <div className="flex items-center justify-between text-xs font-bold text-[#059669]">
-                <span className="font-mono uppercase text-[10px]">Synthesized TRUSTDESC Specification</span>
-                <span className="bg-white border border-[#A7F3D0] px-2 py-0.5 rounded text-[10px] font-mono">
+                <span className="font-mono uppercase text-[10px] truncate">Synthesized TRUSTDESC Specification</span>
+                <span className="bg-white border border-[#A7F3D0] px-2 py-0.5 rounded text-[10px] font-mono flex-shrink-0">
                   MODEL-FACING
                 </span>
               </div>
-              <div className="text-xs font-mono text-[#0F172A] bg-white p-3 rounded border border-[#A7F3D0] whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
+              <div className="text-xs font-mono text-[#0F172A] bg-white p-3 rounded border border-[#A7F3D0] whitespace-pre-wrap break-words leading-relaxed max-h-48 overflow-y-auto">
                 {diff.model_facing_description || 'Normalized schema specification'}
               </div>
               <p className="text-[11px] text-[#059669] leading-normal">

@@ -287,6 +287,15 @@ export const App: React.FC = () => {
     <div className="console-workspace min-h-screen flex font-sans">
       <div className="console-grid" aria-hidden="true" />
 
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Enterprise SOC Sidebar — In Resonance with Landing Page */}
       <aside className={`w-64 bg-white border-r border-[#E2E8F0] text-[#0F172A] flex-shrink-0 flex flex-col justify-between fixed inset-y-0 left-0 z-50 md:static transition-transform shadow-sm ${
         mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
@@ -460,55 +469,58 @@ export const App: React.FC = () => {
       {/* Main Workspace Frame */}
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
         {/* Executive Top Header — Resonating with Landing Header */}
-        <header className="h-16 bg-white/90 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => setMobileSidebarOpen(true)}
-              className="md:hidden p-2 text-[#475569] hover:text-[#0F172A]"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
+        <header className="h-16 bg-white/90 backdrop-blur-md border-b border-[#E2E8F0] sticky top-0 z-30">
+          <div className="w-full max-w-[1440px] h-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(true)}
+                className="md:hidden p-2 text-[#475569] hover:text-[#0F172A]"
+                aria-label="Toggle navigation menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
 
-            {/* Breadcrumb Path */}
-            <div className="flex items-center gap-2 text-xs">
-              <span className="landing-kicker text-[10px]">Console</span>
-              <ChevronRight className="w-3 h-3 text-[#94A3B8]" />
-              <span className="font-bold text-[#0F172A]">{tabLabels[activeTab]}</span>
-            </div>
-          </div>
-
-          {/* Top Actions & Global Telemetry */}
-          <div className="flex items-center gap-3">
-            <div className="hidden xl:flex items-center gap-2 px-3 py-1 bg-white border border-[#CBD5E1] text-[#1D4ED8] text-xs font-mono">
-              <Database className="w-3.5 h-3.5 text-[#1D4ED8]" />
-              <span>Neon: production</span>
+              {/* Breadcrumb Path */}
+              <div className="flex items-center gap-2 text-xs">
+                <span className="landing-kicker text-[10px]">Console</span>
+                <ChevronRight className="w-3 h-3 text-[#94A3B8]" />
+                <span className="font-bold text-[#0F172A]">{tabLabels[activeTab]}</span>
+              </div>
             </div>
 
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-white border border-[#CBD5E1] text-[#059669] text-xs font-mono">
-              <span className="landing-live"><i /> ENFORCE</span>
-              <span className="text-[#CBD5E1]">|</span>
-              <span className="text-[#475569]">3.8ms p95</span>
+            {/* Top Actions & Global Telemetry */}
+            <div className="flex items-center gap-3">
+              <div className="hidden xl:flex items-center gap-2 px-3 py-1 bg-white border border-[#CBD5E1] text-[#1D4ED8] text-xs font-mono">
+                <Database className="w-3.5 h-3.5 text-[#1D4ED8]" />
+                <span>Neon: production</span>
+              </div>
+
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-white border border-[#CBD5E1] text-[#059669] text-xs font-mono">
+                <span className="landing-live"><i /> ENFORCE</span>
+                <span className="text-[#CBD5E1]">|</span>
+                <span className="text-[#475569]">3.8ms p95</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleExportEUAct}
+                className="landing-button landing-button-primary text-xs h-9 px-3.5"
+              >
+                <FileCheck2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Export Article 50 Dossier</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { fetchTools(); fetchApprovals(); fetchAuditEvents(); }}
+                className="landing-button landing-button-secondary h-9 w-9 p-0"
+                title="Refresh Telemetry"
+                aria-label="Refresh Telemetry"
+              >
+                <RotateCw className="w-3.5 h-3.5 text-[#475569]" />
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={handleExportEUAct}
-              className="landing-button landing-button-primary text-xs h-9 px-3.5"
-            >
-              <FileCheck2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Export Article 50 Dossier</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => { fetchTools(); fetchApprovals(); fetchAuditEvents(); }}
-              className="landing-button landing-button-secondary h-9 w-9 p-0"
-              title="Refresh Telemetry"
-              aria-label="Refresh Telemetry"
-            >
-              <RotateCw className="w-3.5 h-3.5 text-[#475569]" />
-            </button>
           </div>
         </header>
 
@@ -521,7 +533,7 @@ export const App: React.FC = () => {
         )}
 
         {/* Main Content Viewport */}
-        <main className="p-4 sm:p-8 flex-1 max-w-7xl w-full mx-auto space-y-6">
+        <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1">
           <MetricsBar
             quarantinedCount={quarantinedCount}
             approvedCount={approvedCount}

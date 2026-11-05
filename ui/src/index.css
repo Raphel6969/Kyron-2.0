@@ -306,6 +306,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .console-workspace {
   position: relative;
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--color-surface-base);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
@@ -357,26 +358,44 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .console-metric-panel {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1px;
   border: 1px solid var(--color-neutral-border);
   background: var(--color-neutral-border);
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .console-metric-panel {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .console-metric-panel {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }
 
 .console-metric-tile {
-  padding: 18px 20px;
+  padding: 16px 18px;
   background: #ffffff;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .console-metric-val {
   display: block;
   color: var(--color-text-primary);
-  font: 700 30px/1.1 var(--font-mono);
-  letter-spacing: -.07em;
+  font: 700 clamp(1.35rem, 1.8vw, 1.75rem)/1.1 var(--font-mono);
+  letter-spacing: -.05em;
   margin: 6px 0 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .console-card {

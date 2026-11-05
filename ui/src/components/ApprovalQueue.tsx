@@ -104,25 +104,25 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
                 key={req.id}
                 className="p-5 bg-[#F8FAFC] border border-[#E2E8F0] rounded flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
               >
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-[#0F172A] font-mono">
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-bold text-sm text-[#0F172A] font-mono truncate">
                       {req.tool_id || 'System Privilege'}
                     </span>
-                    <span className="bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A] text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase">
+                    <span className="bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A] text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase flex-shrink-0">
                       {req.kind}
                     </span>
                   </div>
-                  <div className="text-xs text-[#475569] leading-relaxed">
+                  <div className="text-xs text-[#475569] leading-relaxed break-words">
                     {req.details?.reason || 'Agent requested single-use capability escalation'}
                   </div>
-                  <div className="text-[11px] text-[#64748B] flex items-center gap-4 font-mono">
-                    <span>Req ID: {req.id.slice(0, 16)}</span>
-                    <span>Trajectory: {req.trajectory_id.slice(0, 16)}</span>
+                  <div className="text-[11px] text-[#64748B] flex flex-wrap items-center gap-x-4 gap-y-1 font-mono">
+                    <span className="truncate">Req ID: {req.id.slice(0, 16)}</span>
+                    <span className="truncate">Trajectory: {req.trajectory_id.slice(0, 16)}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-center">
+                <div className="flex flex-wrap items-center gap-2 self-end sm:self-center flex-shrink-0">
                   <button
                     onClick={() => onDeny(req.id)}
                     className="landing-button landing-button-secondary text-xs h-8 px-3 text-[#475569] hover:text-[#DC2626] hover:border-[#DC2626]"

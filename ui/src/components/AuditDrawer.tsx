@@ -109,14 +109,14 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
 
         {/* State 4: Populated Chain Timeline */}
         {!loading && !error && events.length > 0 && (
-          <div className="relative border-l-2 border-[#E2E8F0] ml-3 pl-6 space-y-5">
+          <div className="relative border-l-2 border-[#E2E8F0] ml-4 pl-6 space-y-5">
             {events.map((ev, idx) => {
               const isAdmitted = ev.verdict === 'admitted';
               return (
                 <div key={ev.id || idx} className="relative group">
                   {/* Timeline Node Point */}
                   <div
-                    className={`absolute -left-[31px] top-4 w-3.5 h-3.5 rounded-full border-2 bg-white transition-transform ${
+                    className={`absolute -left-[32px] top-4 w-3.5 h-3.5 rounded-full border-2 bg-white transition-transform ${
                       isAdmitted
                         ? 'border-[#059669] group-hover:bg-[#059669]'
                         : 'border-[#DC2626] group-hover:bg-[#DC2626]'
@@ -125,10 +125,10 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
 
                   <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded space-y-2 hover:border-[#1D4ED8] transition-colors">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-[#0F172A] font-mono">{ev.tool_id}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-bold text-sm text-[#0F172A] font-mono truncate">{ev.tool_id}</span>
                         <span
-                          className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                          className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border flex-shrink-0 ${
                             isAdmitted
                               ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
                               : 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]'
@@ -137,26 +137,26 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
                           {ev.verdict.toUpperCase()}
                         </span>
                       </div>
-                      <span className="text-[#64748B] text-[11px] font-mono">{ev.created_at}</span>
+                      <span className="text-[#64748B] text-[11px] font-mono flex-shrink-0">{ev.created_at}</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] font-mono text-[#64748B] bg-white p-2.5 rounded border border-[#E2E8F0]/80">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="text-[#94A3B8]">PREV:</span>
-                        <span className="text-[#475569]">{ev.prev_hash ? ev.prev_hash.slice(0, 24) : 'genesis_block'}...</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] font-mono text-[#64748B] bg-white p-2.5 rounded border border-[#E2E8F0]/80 min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-[#94A3B8] flex-shrink-0">PREV:</span>
+                        <span className="text-[#475569] truncate">{ev.prev_hash ? ev.prev_hash.slice(0, 24) : 'genesis_block'}...</span>
                       </div>
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="text-[#94A3B8]">CALL:</span>
-                        <span className="text-[#475569]">{ev.call_hash ? ev.call_hash.slice(0, 24) : '—'}...</span>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-[#94A3B8] flex-shrink-0">CALL:</span>
+                        <span className="text-[#475569] truncate">{ev.call_hash ? ev.call_hash.slice(0, 24) : '—'}...</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-1 border-t border-[#E2E8F0]/60 text-[11px]">
-                      <div className="flex items-center gap-1 text-[#059669] font-mono">
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        <span>Ed25519 Verified: {ev.signature ? ev.signature.slice(0, 16) : 'valid'}...</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-1 border-t border-[#E2E8F0]/60 text-[11px]">
+                      <div className="flex items-center gap-1 text-[#059669] font-mono min-w-0">
+                        <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="truncate">Ed25519 Verified: {ev.signature ? ev.signature.slice(0, 16) : 'valid'}...</span>
                       </div>
-                      <span className="text-[#64748B] font-mono">Trajectory: {ev.trajectory_id ? ev.trajectory_id.slice(0, 12) : '—'}</span>
+                      <span className="text-[#64748B] font-mono flex-shrink-0">Trajectory: {ev.trajectory_id ? ev.trajectory_id.slice(0, 12) : '—'}</span>
                     </div>
                   </div>
                 </div>

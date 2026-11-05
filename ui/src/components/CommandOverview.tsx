@@ -177,17 +177,17 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
         </div>
 
         {/* Visual Flow Strip */}
-        <div className="px-6 py-4 bg-white flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#475569] border-b border-[#E2E8F0]">
-          <div className="flex items-center gap-2">
-            <Network className="w-4 h-4 text-[#1D4ED8]" />
+        <div className="px-6 py-4 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-[#475569] border-b border-[#E2E8F0]">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <Network className="w-4 h-4 text-[#1D4ED8] flex-shrink-0" />
             <span className="font-semibold text-[#0F172A]">Agent Request</span>
             <span className="text-[#94A3B8]">→</span>
             <span className="font-mono text-[#059669]">7 Deterministic Gates</span>
             <span className="text-[#94A3B8]">→</span>
-            <Server className="w-4 h-4 text-[#1D4ED8]" />
+            <Server className="w-4 h-4 text-[#1D4ED8] flex-shrink-0" />
             <span className="font-semibold text-[#0F172A]">Governed Tool Dispatch</span>
           </div>
-          <div className="flex items-center gap-4 text-[11px] font-mono text-[#64748B]">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[11px] font-mono text-[#64748B] flex-shrink-0">
             <span><b>7</b> decision gates</span>
             <span><b>0</b> model tokens</span>
             <span><b>1</b> signed trail</span>
@@ -280,12 +280,12 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
               </div>
             </div>
 
-            <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-[#059669]">
-              <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                <Check className="w-3.5 h-3.5 text-[#059669]" />
-                <span>Deterministic check · Sub-4ms p95 · Zero LLM token consumption</span>
+            <div className="pt-3 border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2 text-xs text-[#059669]">
+              <div className="flex items-center gap-1.5 font-mono text-[11px] min-w-0">
+                <Check className="w-3.5 h-3.5 text-[#059669] flex-shrink-0" />
+                <span className="truncate">Deterministic check · Sub-4ms p95 · Zero LLM token consumption</span>
               </div>
-              <span className="text-[#1D4ED8] font-mono text-[10px]">VERIFIED GATE</span>
+              <span className="text-[#1D4ED8] font-mono text-[10px] flex-shrink-0">VERIFIED GATE</span>
             </div>
           </div>
         </div>
@@ -296,7 +296,7 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
         {/* Card 1: Tool Registry */}
         <div
           onClick={() => onNavigateTab('registry')}
-          className="console-card p-5 cursor-pointer hover:border-[#1D4ED8] transition-all flex flex-col justify-between group"
+          className="console-card p-5 cursor-pointer hover:border-[#1D4ED8] transition-all flex flex-col justify-between group h-full min-h-[170px]"
         >
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -317,7 +317,7 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
         {/* Card 2: Authority & Leases */}
         <div
           onClick={() => onNavigateTab('approvals')}
-          className="console-card p-5 cursor-pointer hover:border-[#1D4ED8] transition-all flex flex-col justify-between group"
+          className="console-card p-5 cursor-pointer hover:border-[#1D4ED8] transition-all flex flex-col justify-between group h-full min-h-[170px]"
         >
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -338,7 +338,7 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
         {/* Card 3: Network Egress */}
         <div
           onClick={() => onNavigateTab('egress')}
-          className="console-card p-5 cursor-pointer hover:border-[#1D4ED8] transition-all flex flex-col justify-between group"
+          className="console-card p-5 cursor-pointer hover:border-[#1D4ED8] transition-all flex flex-col justify-between group h-full min-h-[170px]"
         >
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -359,7 +359,7 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
         {/* Card 4: Cryptographic Trail */}
         <div
           onClick={() => onNavigateTab('audit')}
-          className="console-card p-5 cursor-pointer hover:border-[#1D4ED8] transition-all flex flex-col justify-between group"
+          className="console-card p-5 cursor-pointer hover:border-[#1D4ED8] transition-all flex flex-col justify-between group h-full min-h-[170px]"
         >
           <div className="space-y-2">
             <div className="flex items-center justify-between">

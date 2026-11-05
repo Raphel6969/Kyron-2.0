@@ -146,14 +146,14 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
       {/* State 4: Populated Success Table */}
       {!loading && !error && filteredTools.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs min-w-[720px]">
             <thead>
               <tr className="border-b border-[#E2E8F0] text-[#475569] bg-[#F8FAFC] font-mono text-[10px] uppercase tracking-wider font-semibold">
-                <th className="py-3 px-4">Tool Identifier</th>
-                <th className="py-3 px-4">Server</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Risk Assessment</th>
-                <th className="py-3 px-4">Actions</th>
+                <th className="py-3 px-4 w-[38%]">Tool Identifier</th>
+                <th className="py-3 px-4 w-[14%]">Server</th>
+                <th className="py-3 px-4 w-[14%]">Status</th>
+                <th className="py-3 px-4 w-[18%]">Risk Assessment</th>
+                <th className="py-3 px-4 w-[16%]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E8F0] bg-white">
@@ -164,13 +164,13 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
 
                 return (
                   <tr key={tool.id} className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-[#0F172A] text-xs font-mono">{tool.name}</div>
-                      <div className="text-xs text-[#475569] line-clamp-1 max-w-md mt-0.5">
+                    <td className="py-3.5 px-4 min-w-0">
+                      <div className="font-bold text-[#0F172A] text-xs font-mono truncate">{tool.name}</div>
+                      <div className="text-xs text-[#475569] line-clamp-1 max-w-md mt-0.5 truncate">
                         {tool.model_facing || tool.original_text || 'No description provided'}
                       </div>
                       {tool.risk_reasons && tool.risk_reasons.length > 0 && (
-                        <div className="text-[11px] text-[#DC2626] font-medium mt-1">
+                        <div className="text-[11px] text-[#DC2626] font-medium mt-1 truncate">
                           Risk reason: {tool.risk_reasons[0]}
                         </div>
                       )}

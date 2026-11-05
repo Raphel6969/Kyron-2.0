@@ -110,7 +110,7 @@ ttl_seconds = 600
 
           {/* TOML Code Display Container */}
           <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded p-4 font-mono text-xs text-[#0F172A] overflow-x-auto leading-relaxed">
-            <pre className="margin-0">{sampleToml}</pre>
+            <pre className="m-0 font-mono text-xs leading-relaxed">{sampleToml}</pre>
           </div>
         </div>
       </div>

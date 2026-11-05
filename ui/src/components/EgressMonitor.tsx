@@ -68,14 +68,14 @@ export const EgressMonitor: React.FC = () => {
               return (
                 <div key={src.source_id} className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded space-y-2.5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                    <div className="flex items-center gap-2">
-                      <HardDrive className="w-4 h-4 text-[#475569]" />
-                      <span className="font-bold text-sm text-[#0F172A]">{src.label}</span>
-                      <span className="text-xs text-[#64748B] font-mono">({src.source_id})</span>
+                    <div className="flex flex-wrap items-center gap-2 min-w-0">
+                      <HardDrive className="w-4 h-4 text-[#475569] flex-shrink-0" />
+                      <span className="font-bold text-sm text-[#0F172A] truncate">{src.label}</span>
+                      <span className="text-xs text-[#64748B] font-mono truncate">({src.source_id})</span>
                     </div>
                     <div>
                       <span
-                        className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                        className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border flex-shrink-0 ${
                           isHalted
                             ? 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]'
                             : 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
@@ -102,9 +102,9 @@ export const EgressMonitor: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-[#64748B] pt-1 border-t border-[#E2E8F0]/60">
-                    <span className="text-[#DC2626] font-medium">{src.reason}</span>
-                    <span className="font-mono">{src.call_count} governed calls</span>
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px] text-[#64748B] pt-1 border-t border-[#E2E8F0]/60">
+                    <span className="text-[#DC2626] font-medium truncate">{src.reason}</span>
+                    <span className="font-mono flex-shrink-0">{src.call_count} governed calls</span>
                   </div>
                 </div>
               );
@@ -128,12 +128,12 @@ export const EgressMonitor: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs min-w-[640px]">
             <thead>
               <tr className="border-b border-[#E2E8F0] text-[#475569] bg-[#F8FAFC] font-mono text-[10px] uppercase tracking-wider font-semibold">
-                <th className="py-3 px-4">Destination Host / CIDR</th>
-                <th className="py-3 px-4">Classification</th>
-                <th className="py-3 px-4">Firewall Action</th>
+                <th className="py-3 px-4 w-[45%]">Destination Host / CIDR</th>
+                <th className="py-3 px-4 w-[35%]">Classification</th>
+                <th className="py-3 px-4 w-[20%]">Firewall Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E8F0] bg-white">
