@@ -31,9 +31,10 @@ import { ApprovalQueue, ApprovalItem } from './components/ApprovalQueue';
 import { AuditDrawer, AuditEventItem } from './components/AuditDrawer';
 import { EgressMonitor } from './components/EgressMonitor';
 import { PolicyStudio } from './components/PolicyStudio';
+import { AgentConnect } from './components/AgentConnect';
 import { LandingPage } from './components/LandingPage';
 
-export type NavTab = 'overview' | 'registry' | 'approvals' | 'egress' | 'audit' | 'policies';
+export type NavTab = 'overview' | 'connect' | 'registry' | 'approvals' | 'egress' | 'audit' | 'policies';
 
 export const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'landing' | 'console'>(() => {
@@ -276,6 +277,7 @@ export const App: React.FC = () => {
 
   const tabLabels: Record<NavTab, string> = {
     overview: 'Command Center',
+    connect: 'Agent Connect & Codes',
     registry: 'Tool Registry & Drift',
     approvals: 'Authority Queue',
     egress: 'Network Egress',
@@ -340,6 +342,20 @@ export const App: React.FC = () => {
                     <span>Command Center</span>
                   </div>
                   <span className="text-[10px] font-mono text-[#64748B]">01</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('connect'); setMobileSidebarOpen(false); }}
+                  className={`console-sidebar-tab ${activeTab === 'connect' ? 'is-active' : ''}`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Terminal className="w-4 h-4 text-[#1D4ED8]" />
+                    <span>Agent Connect</span>
+                  </div>
+                  <span className="bg-[#ECFDF5] border border-[#A7F3D0] text-[#059669] text-[9px] px-1 py-0.5 rounded font-mono font-bold">
+                    READY
+                  </span>
                 </button>
               </div>
             </div>
@@ -553,6 +569,8 @@ export const App: React.FC = () => {
               onExportEUAct={handleExportEUAct}
             />
           )}
+
+          {activeTab === 'connect' && <AgentConnect />}
 
           {activeTab === 'registry' && (
             <ToolInventory

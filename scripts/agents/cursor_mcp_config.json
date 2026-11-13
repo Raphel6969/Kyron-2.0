@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "kyron-gateway": {
+      "command": "kyron",
+      "args": [
+        "gateway",
+        "--stdio",
+        "--",
+        "python",
+        "-m",
+        "lab.server",
+        "--all"
+      ]
+    },
+    "kyron-sse-remote": {
+      "url": "http://localhost:8080/sse"
+    }
+  }
+}

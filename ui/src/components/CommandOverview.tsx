@@ -14,7 +14,8 @@ import {
   CheckCircle,
   Fingerprint,
   Layers,
-  Check
+  Check,
+  Terminal
 } from 'lucide-react';
 
 interface CommandOverviewProps {
@@ -157,6 +158,14 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
           </div>
 
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 self-stretch lg:self-auto">
+            <button
+              type="button"
+              onClick={() => onNavigateTab('connect')}
+              className="landing-button landing-button-secondary text-xs h-10 px-4"
+            >
+              <Terminal className="w-4 h-4 text-[#1D4ED8]" />
+              <span>Connect Real Agents</span>
+            </button>
             <button
               type="button"
               onClick={onTriggerScan}

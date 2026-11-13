@@ -46,24 +46,24 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
   return (
     <div className="console-card overflow-hidden mb-8 font-sans">
       {/* Top Header & Search Control Bar */}
-      <div className="console-card-header flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div>
+      <div className="console-card-header flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="min-w-0">
           <p className="landing-kicker text-[10px]">01 / Pinned Manifests</p>
-          <h2 className="text-base font-bold text-[#0F172A] tracking-tight">
+          <h2 className="text-base font-bold text-[#0F172A] tracking-tight truncate">
             Tool Registry & Semantic Drift Firewall
           </h2>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Search Input */}
-          <div className="flex items-center gap-2 bg-white border border-[#CBD5E1] rounded px-3 py-1.5 text-xs w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 text-[#64748B]" />
+          <div className="flex items-center gap-2 bg-white border border-[#CBD5E1] rounded px-2.5 py-1.5 text-xs w-full sm:w-48 lg:w-56">
+            <Search className="w-3.5 h-3.5 text-[#64748B] flex-shrink-0" />
             <input
               type="text"
               placeholder="Search tools or server..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-transparent border-none text-[#0F172A] placeholder-[#94A3B8] focus:outline-none w-full text-xs font-mono"
+              className="bg-transparent border-none text-[#0F172A] placeholder-[#94A3B8] focus:outline-none w-full text-xs font-mono min-w-0"
             />
           </div>
 
@@ -75,7 +75,7 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                 type="button"
                 onClick={() => setStateFilter(tab)}
                 aria-pressed={stateFilter === tab}
-                className={`px-2.5 py-1 rounded capitalize font-medium text-xs transition-colors ${
+                className={`px-2 py-0.5 rounded capitalize font-medium text-xs transition-colors ${
                   stateFilter === tab
                     ? 'bg-white text-[#1D4ED8] font-bold shadow-sm border border-[#CBD5E1]'
                     : 'text-[#475569] hover:text-[#0F172A]'
@@ -88,7 +88,7 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
 
           <button
             onClick={onRefresh}
-            className="landing-button landing-button-secondary h-8 w-8 p-0"
+            className="landing-button landing-button-secondary h-8 w-8 p-0 flex-shrink-0"
             title="Refresh Registry"
             aria-label="Refresh Registry"
           >
@@ -143,17 +143,17 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
         </div>
       )}
 
-      {/* State 4: Populated Success Table */}
+      {/* State 4: Populated Success Table — Fit to Single Screen, Zero Overflow */}
       {!loading && !error && filteredTools.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[720px]">
+        <div className="w-full overflow-hidden">
+          <table className="w-full table-fixed text-left text-xs">
             <thead>
               <tr className="border-b border-[#E2E8F0] text-[#475569] bg-[#F8FAFC] font-mono text-[10px] uppercase tracking-wider font-semibold">
-                <th className="py-3 px-4 w-[38%]">Tool Identifier</th>
-                <th className="py-3 px-4 w-[14%]">Server</th>
-                <th className="py-3 px-4 w-[14%]">Status</th>
-                <th className="py-3 px-4 w-[18%]">Risk Assessment</th>
-                <th className="py-3 px-4 w-[16%]">Actions</th>
+                <th className="py-2.5 px-3 sm:px-4 w-[36%]">Tool Identifier</th>
+                <th className="py-2.5 px-3 w-[15%]">Server</th>
+                <th className="py-2.5 px-3 w-[13%]">Status</th>
+                <th className="py-2.5 px-3 w-[16%]">Risk</th>
+                <th className="py-2.5 px-3 sm:px-4 w-[20%] text-right sm:text-left">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E8F0] bg-white">
@@ -164,27 +164,30 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
 
                 return (
                   <tr key={tool.id} className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="py-3.5 px-4 min-w-0">
+                    {/* Column 1: Tool Identifier */}
+                    <td className="py-3 px-3 sm:px-4 min-w-0">
                       <div className="font-bold text-[#0F172A] text-xs font-mono truncate">{tool.name}</div>
-                      <div className="text-xs text-[#475569] line-clamp-1 max-w-md mt-0.5 truncate">
+                      <div className="text-[11px] text-[#475569] truncate mt-0.5" title={tool.model_facing || tool.original_text}>
                         {tool.model_facing || tool.original_text || 'No description provided'}
                       </div>
                       {tool.risk_reasons && tool.risk_reasons.length > 0 && (
-                        <div className="text-[11px] text-[#DC2626] font-medium mt-1 truncate">
-                          Risk reason: {tool.risk_reasons[0]}
+                        <div className="text-[10px] text-[#DC2626] font-medium mt-0.5 truncate" title={tool.risk_reasons[0]}>
+                          Flag: {tool.risk_reasons[0]}
                         </div>
                       )}
                     </td>
 
-                    <td className="py-3.5 px-4 text-[#475569]">
-                      <span className="bg-[#F8FAFC] border border-[#CBD5E1] px-2 py-0.5 rounded text-[11px] font-mono text-[#475569]">
+                    {/* Column 2: Server */}
+                    <td className="py-3 px-3 min-w-0">
+                      <span className="bg-[#F8FAFC] border border-[#CBD5E1] px-1.5 py-0.5 rounded text-[10px] font-mono text-[#475569] truncate block max-w-full" title={tool.server_id}>
                         {tool.server_id}
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4">
+                    {/* Column 3: Status */}
+                    <td className="py-3 px-3 min-w-0">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border truncate ${
                           isApproved
                             ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
                             : isQuarantined
@@ -198,10 +201,11 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4">
-                      <div className="w-28">
-                        <div className="flex justify-between text-[11px] text-[#64748B] mb-1 font-mono">
-                          <span>Risk Score</span>
+                    {/* Column 4: Risk */}
+                    <td className="py-3 px-3 min-w-0">
+                      <div className="w-full max-w-[90px]">
+                        <div className="flex justify-between text-[10px] text-[#64748B] mb-0.5 font-mono">
+                          <span>Risk</span>
                           <span className="font-bold">{(tool.risk_score * 100).toFixed(0)}%</span>
                         </div>
                         <div className="h-1.5 w-full bg-[#E2E8F0] rounded overflow-hidden">
@@ -219,36 +223,38 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-2">
+                    {/* Column 5: Actions */}
+                    <td className="py-3 px-3 sm:px-4 min-w-0">
+                      <div className="flex items-center justify-end sm:justify-start gap-1.5 flex-wrap sm:flex-nowrap">
                         <button
                           onClick={() => onInspectDiff(tool.id)}
-                          className="landing-button landing-button-secondary text-xs h-7 px-2.5"
+                          className="landing-button landing-button-secondary text-[11px] h-7 px-2"
                           title="Inspect Semantic Drift Diff"
                           aria-label="Inspect Semantic Drift Diff"
                         >
-                          <Eye className="w-3.5 h-3.5 text-[#1D4ED8]" />
-                          <span>Diff</span>
+                          <Eye className="w-3 h-3 text-[#1D4ED8]" />
+                          <span className="hidden sm:inline">Diff</span>
                         </button>
 
                         {isQuarantined && (
                           <button
                             onClick={() => onApprove(tool.id)}
-                            className="landing-button landing-button-primary text-xs h-7 px-2.5"
+                            className="landing-button landing-button-primary text-[11px] h-7 px-2"
+                            title="Approve & Pin Manifest"
                           >
-                            <Check className="w-3.5 h-3.5" />
-                            <span>Approve & Pin</span>
+                            <Check className="w-3 h-3" />
+                            <span className="hidden sm:inline">Pin</span>
                           </button>
                         )}
 
                         {!isBlocked && (
                           <button
                             onClick={() => onReject(tool.id)}
-                            className="landing-button landing-button-secondary text-xs h-7 px-2 text-[#64748B] hover:text-[#DC2626] hover:border-[#DC2626]"
+                            className="landing-button landing-button-secondary text-[11px] h-7 w-7 p-0 flex items-center justify-center text-[#64748B] hover:text-[#DC2626] hover:border-[#DC2626]"
                             title="Quarantine & Block"
                             aria-label="Quarantine & Block"
                           >
-                            <Ban className="w-3.5 h-3.5" />
+                            <Ban className="w-3 h-3" />
                           </button>
                         )}
                       </div>

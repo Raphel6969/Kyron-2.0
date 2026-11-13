@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "kyron-protected-tools": {
+      "command": "kyron",
+      "args": [
+        "gateway",
+        "--stdio",
+        "--",
+        "python",
+        "-m",
+        "lab.server",
+        "--all"
+      ],
+      "env": {
+        "KYRON_POLICY_MODE": "enforce",
+        "KYRON_GATEWAY_PORT": "8080"
+      }
+    },
+    "kyron-filesystem-guard": {
+      "command": "kyron",
+      "args": [
+        "gateway",
+        "--stdio",
+        "--",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "."
+      ]
+    }
+  }
+}
