@@ -114,19 +114,19 @@ export const SemanticDriftModal: React.FC<SemanticDriftModalProps> = ({
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="p-4 px-6 border-t border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-end gap-3">
+        <div className="p-4 px-6 border-t border-[#E2E8F0] bg-[#F8FAFC] flex flex-wrap items-center justify-end gap-3">
           <button
             onClick={onClose}
-            className="landing-button landing-button-secondary text-xs h-9 px-4"
+            className="landing-button landing-button-secondary text-xs min-h-[38px] px-4 whitespace-nowrap shrink-0"
           >
             Cancel Inspection
           </button>
           <button
             onClick={() => onApprove(diff.tool_id)}
-            className="landing-button landing-button-primary text-xs h-9 px-4"
+            className="landing-button landing-button-primary text-xs min-h-[38px] px-4 whitespace-nowrap shrink-0 inline-flex items-center gap-2"
           >
-            <Check className="w-3.5 h-3.5" />
-            <span>Approve & Pin Canonical Manifest</span>
+            <Check className="w-3.5 h-3.5 shrink-0" />
+            <span className="whitespace-nowrap">Approve & Pin Canonical Manifest</span>
           </button>
         </div>
       </div>

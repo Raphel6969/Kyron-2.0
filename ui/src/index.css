@@ -441,4 +441,54 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   min-height: unset !important;
 }
 
+.console-btn-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 26px;
+  min-height: 26px !important;
+  padding: 0 7px !important;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.console-btn-sm:hover {
+  transform: translateY(-1px);
+}
+
+.console-btn-sm svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.console-btn-sm-primary {
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent);
+  color: #ffffff;
+}
+
+.console-btn-sm-primary:hover {
+  border-color: var(--color-accent-hover);
+  background: var(--color-accent-hover);
+}
+
+.console-btn-sm-secondary {
+  border: 1px solid var(--color-neutral-border-active);
+  background: rgba(255, 255, 255, .8);
+  color: var(--color-text-primary);
+}
+
+.console-btn-sm-secondary:hover {
+  border-color: var(--color-accent);
+  background: #ffffff;
+}
+
+
 

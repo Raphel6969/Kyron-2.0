@@ -55,10 +55,10 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
           </button>
           <button
             onClick={onExportEUAct}
-            className="landing-button landing-button-primary text-xs h-8 px-3.5"
+            className="landing-button landing-button-primary text-xs min-h-[34px] px-3.5 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>Download Article 50 Dossier</span>
+            <Download className="w-3.5 h-3.5 shrink-0" />
+            <span className="whitespace-nowrap">Download Article 50 Dossier</span>
           </button>
         </div>
       </div>

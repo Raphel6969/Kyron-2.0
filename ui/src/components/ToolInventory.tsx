@@ -145,15 +145,15 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
 
       {/* State 4: Populated Success Table — Fit to Single Screen, Zero Overflow */}
       {!loading && !error && filteredTools.length > 0 && (
-        <div className="w-full overflow-hidden">
-          <table className="w-full table-fixed text-left text-xs">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full table-fixed min-w-[700px] text-left text-xs">
             <thead>
               <tr className="border-b border-[#E2E8F0] text-[#475569] bg-[#F8FAFC] font-mono text-[10px] uppercase tracking-wider font-semibold">
-                <th className="py-2.5 px-3 sm:px-4 w-[36%]">Tool Identifier</th>
-                <th className="py-2.5 px-3 w-[15%]">Server</th>
-                <th className="py-2.5 px-3 w-[13%]">Status</th>
-                <th className="py-2.5 px-3 w-[16%]">Risk</th>
-                <th className="py-2.5 px-3 sm:px-4 w-[20%] text-right sm:text-left">Actions</th>
+                <th className="py-2.5 px-3 sm:px-4 w-[32%]">Tool Identifier</th>
+                <th className="py-2.5 px-2 w-[11%]">Server</th>
+                <th className="py-2.5 px-2 w-[13%]">Status</th>
+                <th className="py-2.5 px-2 w-[14%]">Risk</th>
+                <th className="py-2.5 px-3 w-[30%] min-w-[170px] text-right sm:text-left">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E8F0] bg-white">
@@ -178,16 +178,16 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                     </td>
 
                     {/* Column 2: Server */}
-                    <td className="py-3 px-3 min-w-0">
-                      <span className="bg-[#F8FAFC] border border-[#CBD5E1] px-1.5 py-0.5 rounded text-[10px] font-mono text-[#475569] truncate block max-w-full" title={tool.server_id}>
+                    <td className="py-3 px-2 min-w-0">
+                      <span className="bg-[#F8FAFC] border border-[#CBD5E1] px-1.5 py-0.5 rounded text-[10px] font-mono text-[#475569] truncate inline-block max-w-full" title={tool.server_id}>
                         {tool.server_id}
                       </span>
                     </td>
 
                     {/* Column 3: Status */}
-                    <td className="py-3 px-3 min-w-0">
+                    <td className="py-3 px-2 min-w-0">
                       <span
-                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border truncate ${
+                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border whitespace-nowrap ${
                           isApproved
                             ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
                             : isQuarantined
@@ -202,9 +202,9 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                     </td>
 
                     {/* Column 4: Risk */}
-                    <td className="py-3 px-3 min-w-0">
-                      <div className="w-full max-w-[90px]">
-                        <div className="flex justify-between text-[10px] text-[#64748B] mb-0.5 font-mono">
+                    <td className="py-3 px-2 min-w-0">
+                      <div className="w-full max-w-[85px]">
+                        <div className="flex justify-between text-[10px] text-[#64748B] mb-0.5 font-mono whitespace-nowrap">
                           <span>Risk</span>
                           <span className="font-bold">{(tool.risk_score * 100).toFixed(0)}%</span>
                         </div>
@@ -224,26 +224,26 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                     </td>
 
                     {/* Column 5: Actions */}
-                    <td className="py-3 px-3 sm:px-4 min-w-0">
-                      <div className="flex items-center justify-end sm:justify-start gap-1.5 flex-wrap sm:flex-nowrap">
+                    <td className="py-3 px-3 min-w-[170px]">
+                      <div className="flex items-center justify-end sm:justify-start gap-1.5 whitespace-nowrap">
                         <button
                           onClick={() => onInspectDiff(tool.id)}
-                          className="landing-button landing-button-secondary text-[11px] h-7 px-2"
+                          className="console-btn-sm console-btn-sm-secondary"
                           title="Inspect Semantic Drift Diff"
                           aria-label="Inspect Semantic Drift Diff"
                         >
-                          <Eye className="w-3 h-3 text-[#1D4ED8]" />
-                          <span className="hidden sm:inline">Diff</span>
+                          <Eye className="w-3 h-3 text-[#1D4ED8] flex-shrink-0" />
+                          <span>Diff</span>
                         </button>
 
                         {isQuarantined && (
                           <button
                             onClick={() => onApprove(tool.id)}
-                            className="landing-button landing-button-primary text-[11px] h-7 px-2"
+                            className="console-btn-sm console-btn-sm-primary"
                             title="Approve & Pin Manifest"
                           >
-                            <Check className="w-3 h-3" />
-                            <span className="hidden sm:inline">Pin</span>
+                            <Check className="w-3 h-3 flex-shrink-0" />
+                            <span>Pin</span>
                           </button>
                         )}
 

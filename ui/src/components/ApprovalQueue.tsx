@@ -125,17 +125,17 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
                 <div className="flex flex-wrap items-center gap-2 self-end sm:self-center flex-shrink-0">
                   <button
                     onClick={() => onDeny(req.id)}
-                    className="landing-button landing-button-secondary text-xs h-8 px-3 text-[#475569] hover:text-[#DC2626] hover:border-[#DC2626]"
+                    className="landing-button landing-button-secondary text-xs min-h-[34px] px-3 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 text-[#475569] hover:text-[#DC2626] hover:border-[#DC2626]"
                   >
-                    <X className="w-3.5 h-3.5" />
-                    <span>Deny Request</span>
+                    <X className="w-3.5 h-3.5 shrink-0" />
+                    <span className="whitespace-nowrap">Deny Request</span>
                   </button>
                   <button
                     onClick={() => onApprove(req.id)}
-                    className="landing-button landing-button-primary text-xs h-8 px-3.5"
+                    className="landing-button landing-button-primary text-xs min-h-[34px] px-3.5 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5"
                   >
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Grant Capability Lease</span>
+                    <Check className="w-3.5 h-3.5 shrink-0" />
+                    <span className="whitespace-nowrap">Grant Capability Lease</span>
                   </button>
                 </div>
               </div>

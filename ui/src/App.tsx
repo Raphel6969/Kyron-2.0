@@ -522,10 +522,10 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={handleExportEUAct}
-                className="landing-button landing-button-primary text-xs h-9 px-3.5"
+                className="landing-button landing-button-primary text-xs min-h-[36px] px-3.5 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5"
               >
-                <FileCheck2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Export Article 50 Dossier</span>
+                <FileCheck2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden sm:inline whitespace-nowrap">Export Article 50 Dossier</span>
               </button>
 
               <button
