@@ -37,15 +37,50 @@ import { LandingPage } from './components/LandingPage';
 export type NavTab = 'overview' | 'connect' | 'registry' | 'approvals' | 'egress' | 'audit' | 'policies';
 
 export const App: React.FC = () => {
+  const [authSession, setAuthSession] = useState<{
+    token: string | null;
+    user: string | null;
+    email: string | null;
+    provider: string | null;
+  }>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token') || localStorage.getItem('kyron_token');
+      const user = params.get('user') || localStorage.getItem('kyron_user');
+      const email = params.get('email') || localStorage.getItem('kyron_email');
+      const provider = params.get('provider') || localStorage.getItem('kyron_provider');
+      if (token) {
+        localStorage.setItem('kyron_token', token);
+        if (user) localStorage.setItem('kyron_user', user);
+        if (email) localStorage.setItem('kyron_email', email);
+        if (provider) localStorage.setItem('kyron_provider', provider);
+        if (params.has('token')) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+      return { token, user, email, provider };
+    }
+    return { token: null, user: null, email: null, provider: null };
+  });
+
   const [viewMode, setViewMode] = useState<'landing' | 'console'>(() => {
-    if (typeof window !== 'undefined' && window.location.pathname === '/console') {
-      return 'console';
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('token') || window.location.pathname === '/console' || localStorage.getItem('kyron_token')) {
+        return 'console';
+      }
     }
     return 'landing';
   });
 
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
-  const [currentRole, setCurrentRole] = useState<string>('Enterprise Security Lead');
+  const [currentRole, setCurrentRole] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('kyron_user');
+      if (storedUser) return storedUser;
+    }
+    return 'Enterprise Security Lead';
+  });
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Tools state
@@ -257,6 +292,13 @@ export const App: React.FC = () => {
   };
 
   const handleReturnToLanding = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('kyron_token');
+      localStorage.removeItem('kyron_user');
+      localStorage.removeItem('kyron_email');
+      localStorage.removeItem('kyron_provider');
+    }
+    setAuthSession({ token: null, user: null, email: null, provider: null });
     setViewMode('landing');
     window.history.pushState({}, '', '/');
   };
@@ -448,11 +490,17 @@ export const App: React.FC = () => {
         <div className="p-4 border-t border-[#E2E8F0] space-y-3 bg-[#F8FAFC]">
           <div className="p-2.5 bg-white border border-[#E2E8F0] rounded space-y-1">
             <div className="flex items-center justify-between">
-              <span className="landing-kicker text-[9px]">Operator Session</span>
+              <span className="landing-kicker text-[9px]">
+                {authSession.provider ? `${authSession.provider.toUpperCase()} SESSION` : 'OPERATOR SESSION'}
+              </span>
               <span className="w-2 h-2 rounded-full bg-[#059669]"></span>
             </div>
-            <span className="text-xs font-bold text-[#0F172A] block truncate">{currentRole}</span>
-            <span className="text-[10px] text-[#64748B] font-mono block">Zero-Trust Verified</span>
+            <span className="text-xs font-bold text-[#0F172A] block truncate">
+              {authSession.user || currentRole}
+            </span>
+            <span className="text-[10px] text-[#64748B] font-mono block truncate">
+              {authSession.email || 'Zero-Trust Verified'}
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -477,7 +525,7 @@ export const App: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-between text-[11px] text-[#64748B] font-mono pt-1 border-t border-[#E2E8F0]">
-            <span className="flex items-center gap-1.5"><Database className="w-3 h-3 text-[#1D4ED8]" /> Neon Postgres</span>
+            <span className="flex items-center gap-1.5"><Database className="w-3 h-3 text-[#1D4ED8]" /> PostgreSQL</span>
             <span className="text-[#059669] font-bold">production</span>
           </div>
         </div>
@@ -510,7 +558,7 @@ export const App: React.FC = () => {
             <div className="flex items-center gap-3">
               <div className="hidden xl:flex items-center gap-2 px-3 py-1 bg-white border border-[#CBD5E1] text-[#1D4ED8] text-xs font-mono">
                 <Database className="w-3.5 h-3.5 text-[#1D4ED8]" />
-                <span>Neon: production</span>
+                <span>Postgres: production</span>
               </div>
 
               <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-white border border-[#CBD5E1] text-[#059669] text-xs font-mono">

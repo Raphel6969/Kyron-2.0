@@ -78,6 +78,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+from control.app.oauth import router as oauth_router
+app.include_router(oauth_router)
+
 # -------------------------------------------------------------------------
 # Health & Status
 # -------------------------------------------------------------------------
@@ -120,9 +123,10 @@ def health_check(db: Session = Depends(get_db)):
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
-@app.get("/v1/neon/status", tags=["Infrastructure"])
-def neon_status(db: Session = Depends(get_db)):
-    """Neon Serverless Postgres & Neon Auth live verification endpoint"""
+@app.get("/v1/database/status", tags=["Infrastructure"])
+@app.get("/v1/neon/status", tags=["Infrastructure"], include_in_schema=False)
+def database_status(db: Session = Depends(get_db)):
+    """Enterprise PostgreSQL & Identity Provider live verification endpoint"""
     db_info = get_database_info()
     tools_count = db.query(ToolModel).count()
     policies_count = db.query(PolicyModel).count()
@@ -130,9 +134,9 @@ def neon_status(db: Session = Depends(get_db)):
     approvals_count = db.query(ApprovalRequestModel).count()
     audit_events_count = db.query(AuditEventModel).count()
 
-    neon_auth_base = os.getenv("NEON_AUTH_BASE_URL", "")
-    neon_auth_jwks = os.getenv("NEON_AUTH_JWKS_URL", "")
-    neon_branch = os.getenv("NEON_BRANCH", "production")
+    auth_base = os.getenv("AUTH_BASE_URL", os.getenv("NEON_AUTH_BASE_URL", ""))
+    auth_jwks = os.getenv("AUTH_JWKS_URL", os.getenv("NEON_AUTH_JWKS_URL", ""))
+    branch = os.getenv("DB_BRANCH", os.getenv("NEON_BRANCH", "production"))
 
     return {
         "status": "operational",
@@ -148,11 +152,11 @@ def neon_status(db: Session = Depends(get_db)):
             },
         },
         "auth": {
-            "provider": "Neon Managed Better Auth",
-            "base_url": neon_auth_base,
-            "jwks_url": neon_auth_jwks,
-            "branch": neon_branch,
-            "status": "active" if neon_auth_base else "not_configured",
+            "provider": "Enterprise Managed OAuth (Google & GitHub)",
+            "base_url": auth_base,
+            "jwks_url": auth_jwks,
+            "branch": branch,
+            "status": "active" if (os.getenv("GOOGLE_CLIENT_ID") or os.getenv("GITHUB_CLIENT_ID")) else "configured",
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }

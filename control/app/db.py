@@ -37,11 +37,11 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 def get_database_info() -> dict:
-    neon_branch = os.getenv("NEON_BRANCH", "production")
-    is_neon = bool(DATABASE_URL and ("neon.tech" in DATABASE_URL or "ep-" in DATABASE_URL))
+    branch = os.getenv("DB_BRANCH", os.getenv("NEON_BRANCH", "production"))
+    is_cloud = bool(DATABASE_URL and ("neon.tech" in DATABASE_URL or "ep-" in DATABASE_URL or "aws" in DATABASE_URL))
     return {
-        "provider": "Neon Serverless Postgres" if is_neon else "Postgres (Local)",
-        "branch": neon_branch if is_neon else "local",
-        "is_neon": is_neon,
+        "provider": "PostgreSQL (Enterprise)" if is_cloud else "PostgreSQL (Local)",
+        "branch": branch,
+        "is_cloud": is_cloud,
         "engine_dialect": engine.dialect.name,
     }

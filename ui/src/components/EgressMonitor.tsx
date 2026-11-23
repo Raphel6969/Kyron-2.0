@@ -128,7 +128,7 @@ export const EgressMonitor: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[640px]">
+          <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-[#E2E8F0] text-[#475569] bg-[#F8FAFC] font-mono text-[10px] uppercase tracking-wider font-semibold">
                 <th className="py-3 px-4 w-[45%]">Destination Host / CIDR</th>

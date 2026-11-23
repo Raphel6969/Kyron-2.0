@@ -146,14 +146,14 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
       {/* State 4: Populated Success Table — Fit to Single Screen, Zero Overflow */}
       {!loading && !error && filteredTools.length > 0 && (
         <div className="w-full overflow-x-auto">
-          <table className="w-full table-fixed min-w-[700px] text-left text-xs">
+          <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-[#E2E8F0] text-[#475569] bg-[#F8FAFC] font-mono text-[10px] uppercase tracking-wider font-semibold">
-                <th className="py-2.5 px-3 sm:px-4 w-[32%]">Tool Identifier</th>
-                <th className="py-2.5 px-2 w-[11%]">Server</th>
-                <th className="py-2.5 px-2 w-[13%]">Status</th>
-                <th className="py-2.5 px-2 w-[14%]">Risk</th>
-                <th className="py-2.5 px-3 w-[30%] min-w-[170px] text-right sm:text-left">Actions</th>
+                <th className="py-2.5 px-3 sm:px-4">Tool Identifier</th>
+                <th className="py-2.5 px-2 w-16">Server</th>
+                <th className="py-2.5 px-2 w-28">Status</th>
+                <th className="py-2.5 px-2 w-24">Risk</th>
+                <th className="py-2.5 px-3 w-36 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E8F0] bg-white">
@@ -165,7 +165,7 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                 return (
                   <tr key={tool.id} className="hover:bg-[#F8FAFC] transition-colors">
                     {/* Column 1: Tool Identifier */}
-                    <td className="py-3 px-3 sm:px-4 min-w-0">
+                    <td className="py-3 px-3 sm:px-4 min-w-0 max-w-[200px] sm:max-w-none">
                       <div className="font-bold text-[#0F172A] text-xs font-mono truncate">{tool.name}</div>
                       <div className="text-[11px] text-[#475569] truncate mt-0.5" title={tool.model_facing || tool.original_text}>
                         {tool.model_facing || tool.original_text || 'No description provided'}
@@ -178,16 +178,16 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                     </td>
 
                     {/* Column 2: Server */}
-                    <td className="py-3 px-2 min-w-0">
-                      <span className="bg-[#F8FAFC] border border-[#CBD5E1] px-1.5 py-0.5 rounded text-[10px] font-mono text-[#475569] truncate inline-block max-w-full" title={tool.server_id}>
+                    <td className="py-3 px-2 whitespace-nowrap">
+                      <span className="bg-[#F8FAFC] border border-[#CBD5E1] px-1.5 py-0.5 rounded text-[10px] font-mono text-[#475569] inline-block" title={tool.server_id}>
                         {tool.server_id}
                       </span>
                     </td>
 
                     {/* Column 3: Status */}
-                    <td className="py-3 px-2 min-w-0">
+                    <td className="py-3 px-2 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border whitespace-nowrap ${
+                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border ${
                           isApproved
                             ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
                             : isQuarantined
@@ -202,9 +202,9 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                     </td>
 
                     {/* Column 4: Risk */}
-                    <td className="py-3 px-2 min-w-0">
-                      <div className="w-full max-w-[85px]">
-                        <div className="flex justify-between text-[10px] text-[#64748B] mb-0.5 font-mono whitespace-nowrap">
+                    <td className="py-3 px-2 whitespace-nowrap">
+                      <div className="w-20">
+                        <div className="flex justify-between text-[10px] text-[#64748B] mb-0.5 font-mono">
                           <span>Risk</span>
                           <span className="font-bold">{(tool.risk_score * 100).toFixed(0)}%</span>
                         </div>
@@ -224,8 +224,8 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                     </td>
 
                     {/* Column 5: Actions */}
-                    <td className="py-3 px-3 min-w-[170px]">
-                      <div className="flex items-center justify-end sm:justify-start gap-1.5 whitespace-nowrap">
+                    <td className="py-3 px-3 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => onInspectDiff(tool.id)}
                           className="console-btn-sm console-btn-sm-secondary"
@@ -250,7 +250,7 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                         {!isBlocked && (
                           <button
                             onClick={() => onReject(tool.id)}
-                            className="console-btn-icon h-7 w-7 text-[#64748B] hover:text-[#DC2626] hover:border-[#DC2626]"
+                            className="console-btn-icon h-7 w-7 text-[#64748B] hover:text-[#DC2626] hover:border-[#DC2626] hover:bg-[#FEF2F2]"
                             title="Quarantine & Block"
                             aria-label="Quarantine & Block"
                           >

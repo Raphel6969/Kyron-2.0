@@ -67,7 +67,7 @@ const pipelineStages: StageDetail[] = [
     number: '03',
     title: 'Pin & Attest',
     short: 'Cryptographic identity',
-    component: 'Tool Registry Store (PostgreSQL / Neon)',
+    component: 'Tool Registry Store (PostgreSQL Enterprise)',
     latency: '0.6ms',
     mechanism: 'SHA-256 Content Hashing & Ed25519 Signatures',
     threatStopped: 'Silent Schema Drifts & Unauthorized Mutations',
