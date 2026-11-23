@@ -45,11 +45,11 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
 
         <button
           onClick={onRefresh}
-          className="landing-button landing-button-secondary h-8 w-8 p-0"
+          className="console-btn-icon h-8 w-8 text-[#475569] hover:text-[#0F172A]"
           title="Refresh Queue"
           aria-label="Refresh Queue"
         >
-          <RotateCw className="w-3.5 h-3.5 text-[#475569]" />
+          <RotateCw className="w-3.5 h-3.5 flex-shrink-0" />
         </button>
       </div>
 

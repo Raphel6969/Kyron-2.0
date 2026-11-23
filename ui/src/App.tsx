@@ -468,10 +468,11 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={handleReturnToLanding}
-              className="landing-button landing-button-secondary h-9 w-9 p-0 text-[#64748B] hover:text-status-danger"
+              className="console-btn-icon h-9 w-9 text-[#64748B] hover:text-[#DC2626] hover:border-[#DC2626]"
               title="Sign Out to Landing"
+              aria-label="Sign Out to Landing"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 flex-shrink-0" />
             </button>
           </div>
 
@@ -530,11 +531,11 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => { fetchTools(); fetchApprovals(); fetchAuditEvents(); }}
-                className="landing-button landing-button-secondary h-9 w-9 p-0"
+                className="console-btn-icon h-9 w-9 text-[#475569] hover:text-[#0F172A]"
                 title="Refresh Telemetry"
                 aria-label="Refresh Telemetry"
               >
-                <RotateCw className="w-3.5 h-3.5 text-[#475569]" />
+                <RotateCw className="w-3.5 h-3.5 flex-shrink-0" />
               </button>
             </div>
           </div>

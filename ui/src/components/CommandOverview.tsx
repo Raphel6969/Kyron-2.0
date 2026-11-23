@@ -157,30 +157,30 @@ export const CommandOverview: React.FC<CommandOverviewProps> = ({
             </p>
           </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 self-stretch lg:self-auto">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 flex-shrink-0 self-stretch lg:self-auto">
             <button
               type="button"
               onClick={() => onNavigateTab('connect')}
-              className="landing-button landing-button-secondary text-xs h-10 px-4"
+              className="landing-button landing-button-secondary text-xs min-h-[40px] px-3.5 sm:px-4 py-2 whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2"
             >
-              <Terminal className="w-4 h-4 text-[#1D4ED8]" />
-              <span>Connect Real Agents</span>
+              <Terminal className="w-4 h-4 text-[#1D4ED8] flex-shrink-0" />
+              <span className="whitespace-nowrap font-semibold">Connect Real Agents</span>
             </button>
             <button
               type="button"
               onClick={onTriggerScan}
-              className="landing-button landing-button-secondary text-xs h-10 px-4"
+              className="landing-button landing-button-secondary text-xs min-h-[40px] px-3.5 sm:px-4 py-2 whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2"
             >
-              <ScanSearch className="w-4 h-4 text-[#1D4ED8]" />
-              <span>Scan Registry</span>
+              <ScanSearch className="w-4 h-4 text-[#1D4ED8] flex-shrink-0" />
+              <span className="whitespace-nowrap font-semibold">Scan Registry</span>
             </button>
             <button
               type="button"
               onClick={onExportEUAct}
-              className="landing-button landing-button-primary text-xs h-10 px-4"
+              className="landing-button landing-button-primary text-xs min-h-[40px] px-3.5 sm:px-4 py-2 whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2"
             >
-              <FileCheck2 className="w-4 h-4" />
-              <span>Export Article 50 Dossier</span>
+              <FileCheck2 className="w-4 h-4 flex-shrink-0" />
+              <span className="whitespace-nowrap font-semibold">Export Article 50 Dossier</span>
             </button>
           </div>
         </div>

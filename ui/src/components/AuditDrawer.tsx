@@ -47,11 +47,11 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={onRefresh}
-            className="landing-button landing-button-secondary h-8 w-8 p-0"
+            className="console-btn-icon h-8 w-8 text-[#475569] hover:text-[#0F172A]"
             title="Refresh Audit Events"
             aria-label="Refresh Audit Events"
           >
-            <RotateCw className="w-3.5 h-3.5 text-[#475569]" />
+            <RotateCw className="w-3.5 h-3.5 flex-shrink-0" />
           </button>
           <button
             onClick={onExportEUAct}

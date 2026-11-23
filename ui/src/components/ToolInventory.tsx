@@ -88,11 +88,11 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
 
           <button
             onClick={onRefresh}
-            className="landing-button landing-button-secondary h-8 w-8 p-0 flex-shrink-0"
+            className="console-btn-icon h-8 w-8 text-[#475569] hover:text-[#0F172A]"
             title="Refresh Registry"
             aria-label="Refresh Registry"
           >
-            <RotateCw className="w-3.5 h-3.5 text-[#475569]" />
+            <RotateCw className="w-3.5 h-3.5 flex-shrink-0" />
           </button>
         </div>
       </div>
@@ -250,11 +250,11 @@ export const ToolInventory: React.FC<ToolInventoryProps> = ({
                         {!isBlocked && (
                           <button
                             onClick={() => onReject(tool.id)}
-                            className="landing-button landing-button-secondary text-[11px] h-7 w-7 p-0 flex items-center justify-center text-[#64748B] hover:text-[#DC2626] hover:border-[#DC2626]"
+                            className="console-btn-icon h-7 w-7 text-[#64748B] hover:text-[#DC2626] hover:border-[#DC2626]"
                             title="Quarantine & Block"
                             aria-label="Quarantine & Block"
                           >
-                            <Ban className="w-3 h-3" />
+                            <Ban className="w-3.5 h-3.5 flex-shrink-0" />
                           </button>
                         )}
                       </div>
