@@ -1,8 +1,8 @@
 # Kyron 2.0 — 3:45 Video Demo & Technical Pitch Script
 
 **Target Duration:** 3 minutes 45 seconds (fits cleanly inside a 3–4 minute slot)
-**Screen Setup:** Left/Main 70% = Browser (`http://127.0.0.1:5173` or Render URL) · Right 30% or Alt-Tab = Terminal (`python demo/run_live_demo.py --interactive`)
-**Pre-Recording Step:** Run `.\scripts\reset-demo.ps1` and start on the **Landing Page** (`/`).
+**Screen Setup:** Left/Main 70% = Browser (`https://kyron-2-0.onrender.com/console` or local `http://127.0.0.1:5173`) · Right 30% or Alt-Tab = Terminal (`python demo/run_live_demo.py --base-url https://kyron-2-0.onrender.com --interactive`)
+**Pre-Recording Step:** Run `.\scripts\reset-demo.ps1` (if local) and start on the **Landing Page** (`https://kyron-2-0.onrender.com`).
 
 ---
 

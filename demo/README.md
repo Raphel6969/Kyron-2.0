@@ -47,9 +47,9 @@ demo/
    ```
 
 ### Option B: Live Cloud Recording (Render Web Service)
-Point the demo runner directly at your deployed Render URL (single public URL routes `/`, `/v1/*`, `/sse`, `/message`):
+Point the demo runner directly at your live Render deployment (`https://kyron-2-0.onrender.com`, which routes `/`, `/v1/*`, `/sse`, `/message` over HTTPS):
 ```bash
-python demo/run_live_demo.py --base-url https://<your-service>.onrender.com --interactive
+python demo/run_live_demo.py --base-url https://kyron-2-0.onrender.com --interactive
 ```
 
 ---

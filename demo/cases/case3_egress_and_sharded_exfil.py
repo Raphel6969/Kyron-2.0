@@ -23,15 +23,13 @@ def run(api_url: str, gateway_url: str) -> bool:
     api = api_url.rstrip("/")
     gw = gateway_url.rstrip("/")
 
-    # 1. Verify live Gateway health & active brokers
-    step(f"Checking live Go Protocol Gateway ({gw}/healthz)")
+    # 1. Verify live Gateway / Unified Plane health & active brokers
+    step(f"Checking live Gateway / Protection Plane health ({gw}/healthz)")
     status, gw_health, lat = http_json("GET", f"{gw}/healthz")
     if status == 200 and gw_health.get("status") == "healthy":
         checks = gw_health.get("checks", {})
-        ok(
-            f"Go Gateway healthy (egress_broker={checks.get('egress_broker')}, secrets_broker={checks.get('secrets_broker')})",
-            lat,
-        )
+        checks_str = ", ".join(f"{k}={v}" for k, v in checks.items())
+        ok(f"Protection Plane healthy ({checks_str})", lat)
     else:
         info(f"Gateway HTTP health check returned status={status}; continuing with Control Plane verification.")
 
