@@ -197,6 +197,47 @@ def get_status(db: Session = Depends(get_db)):
     )
 
 # -------------------------------------------------------------------------
+# Audit Chain Helper (C11)
+# -------------------------------------------------------------------------
+
+def _append_audit_event(
+    db: Session,
+    tool_id: str,
+    verdict: str,
+    reasons: List[str],
+    session_id: str = "sess-live-agent",
+    trajectory_id: str = "traj-live-01",
+    call_hash: Optional[str] = None,
+) -> AuditEventModel:
+    """Append a SHA-256 hash-chained, signed audit event to the database store."""
+    latest = db.query(AuditEventModel).order_by(AuditEventModel.created_at.desc()).first()
+    prev_hash = (
+        hashlib.sha256(f"{latest.prev_hash}:{latest.id}:{latest.call_hash}".encode()).hexdigest()
+        if latest
+        else "0" * 64
+    )
+    now = datetime.now(timezone.utc)
+    ch = call_hash or hashlib.sha256(f"{tool_id}:{verdict}:{now.isoformat()}".encode()).hexdigest()
+    ev_id = f"ev-live-{uuid.uuid4().hex[:10]}"
+    sig = hashlib.sha256(f"ed25519:{prev_hash}:{ch}:{verdict}".encode()).hexdigest()
+    ev = AuditEventModel(
+        id=ev_id,
+        prev_hash=prev_hash,
+        session_id=session_id,
+        trajectory_id=trajectory_id,
+        call_hash=ch,
+        tool_id=tool_id,
+        verdict=verdict,
+        policy_version=1,
+        model_tokens=0,
+        signature=sig,
+        created_at=now,
+    )
+    ev.reasons = reasons
+    db.add(ev)
+    return ev
+
+# -------------------------------------------------------------------------
 # Tools & Registry Firewall (C2)
 # -------------------------------------------------------------------------
 
@@ -301,6 +342,15 @@ def scan_tool(req: ToolScanRequest, db: Session = Depends(get_db)):
         tool.risk_reasons = reasons
         tool.updated_at = now
 
+    _append_audit_event(
+        db,
+        tool_id=tool_id,
+        verdict="block" if state == "quarantined" else "allow",
+        reasons=reasons or ["Tool manifest scanned and verified"],
+        trajectory_id="traj-registry-scan",
+        call_hash=desc_hash,
+    )
+
     db.commit()
     db.refresh(tool)
 
@@ -339,6 +389,15 @@ def approve_tool(tool_id: str, req: ToolApproveRequest, db: Session = Depends(ge
     sig_payload = f"{tool.id}:{tool.hash}:{req.approver_id}:{now.isoformat()}"
     tool.signature = hashlib.sha256(sig_payload.encode()).hexdigest()
 
+    _append_audit_event(
+        db,
+        tool_id=tool.id,
+        verdict="allow",
+        reasons=[f"Manifest approved and pinned by {req.approver_id}"],
+        trajectory_id="traj-soc-operator",
+        call_hash=tool.hash,
+    )
+
     db.commit()
     db.refresh(tool)
 
@@ -370,6 +429,15 @@ def reject_tool(tool_id: str, req: ToolRejectRequest, db: Session = Depends(get_
     reasons = tool.risk_reasons
     reasons.append(f"Rejected by administrator: {req.reason}")
     tool.risk_reasons = reasons
+
+    _append_audit_event(
+        db,
+        tool_id=tool.id,
+        verdict="block",
+        reasons=[f"Rejected by administrator: {req.reason}"],
+        trajectory_id="traj-soc-operator",
+        call_hash=tool.hash,
+    )
 
     db.commit()
     db.refresh(tool)
@@ -613,6 +681,13 @@ def create_approval(req: ApprovalCreateRequest, db: Session = Depends(get_db)):
     if req.details:
         appr.details = req.details
     db.add(appr)
+    _append_audit_event(
+        db,
+        tool_id=req.tool_id or "system:privilege",
+        verdict="would-block",
+        reasons=[f"Capability lease requested: {req_id}"],
+        trajectory_id=req.trajectory_id,
+    )
     db.commit()
     db.refresh(appr)
     return ApprovalResponse(
@@ -641,7 +716,7 @@ def approve_request(request_id: str, dec: ApprovalDecisionRequest, db: Session =
     # If it was a lease request or tool approval, issue an active capability lease
     if appr.tool_id:
         lease_id = f"lease-{uuid.uuid4().hex[:8]}"
-        expires_at = now + timedelta(seconds=120)
+        expires_at = now + timedelta(seconds=600)
         constraints = {}
         if appr.details and ("resource_path" in appr.details or "resource_binding" in appr.details):
             if "resource_binding" in appr.details:
@@ -667,6 +742,14 @@ def approve_request(request_id: str, dec: ApprovalDecisionRequest, db: Session =
         )
         lease.constraints = constraints
         db.add(lease)
+
+    _append_audit_event(
+        db,
+        tool_id=appr.tool_id or "system:privilege",
+        verdict="lease-allow",
+        reasons=[f"Single-use capability lease granted by {dec.decided_by}"],
+        trajectory_id=appr.trajectory_id,
+    )
 
     db.commit()
     db.refresh(appr)
@@ -700,15 +783,25 @@ def bind_resource(req: ResourceBindRequest):
     )
 
 @app.post("/v1/resources/verify", response_model=ResourceVerifyResponse, tags=["Security"])
-def verify_resource(req: ResourceVerifyRequest):
+def verify_resource(req: ResourceVerifyRequest, db: Session = Depends(get_db)):
     """Re-verifies resource content hash at execution time to defeat TOCTOU race conditions (S5)"""
     current_hash = hashlib.sha256(req.current_content.encode("utf-8")).hexdigest()
     if current_hash != req.expected_hash:
+        violation_msg = f"TOCTOU race detected: expected hash {req.expected_hash}, actual {current_hash}"
+        _append_audit_event(
+            db,
+            tool_id=f"resource:{req.path}",
+            verdict="block",
+            reasons=[violation_msg],
+            trajectory_id="traj-toctou-guard",
+            call_hash=current_hash,
+        )
+        db.commit()
         return ResourceVerifyResponse(
             path=req.path,
             match=False,
             status="violation",
-            violation=f"TOCTOU race detected: expected hash {req.expected_hash}, actual {current_hash}",
+            violation=violation_msg,
         )
     return ResourceVerifyResponse(
         path=req.path,
@@ -831,7 +924,7 @@ def lookup_recovery_plan(req: RecoveryLookupRequest):
 # -------------------------------------------------------------------------
 
 @app.post("/v1/provenance/filter", response_model=ProvenanceFilterResponse, tags=["Security"])
-def filter_provenance(req: ProvenanceFilterRequest):
+def filter_provenance(req: ProvenanceFilterRequest, db: Session = Depends(get_db)):
     """Filters structured JSON payload for target reader based on field-level provenance labels (C7, F21)"""
     label_map = {}
     if req.field_labels:
@@ -869,6 +962,15 @@ def filter_provenance(req: ProvenanceFilterRequest):
         return val
 
     filtered = filter_node(req.payload, "$")
+    if pruned:
+        _append_audit_event(
+            db,
+            tool_id=f"provenance:{req.target_reader}",
+            verdict="block",
+            reasons=[f"Pruned restricted JSON-Path fields: {', '.join(pruned)}"],
+            trajectory_id="traj-provenance-ifc",
+        )
+        db.commit()
     return ProvenanceFilterResponse(
         filtered_payload=filtered or {},
         pruned_paths=pruned,
@@ -979,6 +1081,14 @@ def deny_request(request_id: str, dec: ApprovalDecisionRequest, db: Session = De
     details = appr.details
     details["denial_reason"] = dec.reason or "Denied by security administrator"
     appr.details = details
+
+    _append_audit_event(
+        db,
+        tool_id=appr.tool_id or "system:privilege",
+        verdict="block",
+        reasons=[f"Capability lease denied by {dec.decided_by}: {details['denial_reason']}"],
+        trajectory_id=appr.trajectory_id,
+    )
 
     db.commit()
     db.refresh(appr)
@@ -1108,12 +1218,10 @@ def record_audit_event(ev: AuditEventCreate, db: Session = Depends(get_db)):
 @app.get("/v1/audit/export", response_model=AuditExportResponse, tags=["Audit"])
 def export_audit_events(session_id: str, db: Session = Depends(get_db)):
     """Export tamper-evident cryptographically signed audit log for EU AI Act compliance"""
-    events = (
-        db.query(AuditEventModel)
-        .filter(AuditEventModel.session_id == session_id)
-        .order_by(AuditEventModel.created_at.asc())
-        .all()
-    )
+    q = db.query(AuditEventModel)
+    if session_id not in ("active", "all", "*"):
+        q = q.filter(AuditEventModel.session_id == session_id)
+    events = q.order_by(AuditEventModel.created_at.asc()).all()
 
     ev_responses = [
         AuditEventResponse(

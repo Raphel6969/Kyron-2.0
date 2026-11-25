@@ -111,7 +111,9 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
         {!loading && !error && events.length > 0 && (
           <div className="relative border-l-2 border-[#E2E8F0] ml-4 pl-6 space-y-5">
             {events.map((ev, idx) => {
-              const isAdmitted = ev.verdict === 'admitted';
+              const v = (ev.verdict || '').toLowerCase();
+              const isAdmitted = v === 'admitted' || v === 'allow' || v === 'lease-allow';
+              const isPending = v === 'would-block' || v === 'escalated';
               return (
                 <div key={ev.id || idx} className="relative group">
                   {/* Timeline Node Point */}
@@ -119,6 +121,8 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
                     className={`absolute -left-[32px] top-4 w-3.5 h-3.5 rounded-full border-2 bg-white transition-transform ${
                       isAdmitted
                         ? 'border-[#059669] group-hover:bg-[#059669]'
+                        : isPending
+                        ? 'border-[#D97706] group-hover:bg-[#D97706]'
                         : 'border-[#DC2626] group-hover:bg-[#DC2626]'
                     }`}
                   />
@@ -131,6 +135,8 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
                           className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border flex-shrink-0 ${
                             isAdmitted
                               ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
+                              : isPending
+                              ? 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]'
                               : 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]'
                           }`}
                         >
@@ -139,6 +145,12 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
                       </div>
                       <span className="text-[#64748B] text-[11px] font-mono flex-shrink-0">{ev.created_at}</span>
                     </div>
+
+                    {ev.reasons && ev.reasons.length > 0 && (
+                      <div className="text-xs text-[#475569] leading-snug">
+                        {ev.reasons[0]}
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] font-mono text-[#64748B] bg-white p-2.5 rounded border border-[#E2E8F0]/80 min-w-0">
                       <div className="flex items-center gap-1.5 min-w-0">

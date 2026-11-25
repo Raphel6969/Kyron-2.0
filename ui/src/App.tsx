@@ -98,9 +98,12 @@ export const App: React.FC = () => {
   const [auditLoading, setAuditLoading] = useState<boolean>(true);
   const [auditError, setAuditError] = useState<string | null>(null);
 
-  // Blocked calls counter
-  const [blockedCalls, setBlockedCalls] = useState<number>(33900);
+  // Blocked calls counter & active leases
+  const [blockedCalls, setBlockedCalls] = useState<number>(12);
+  const [activeLeasesCount, setActiveLeasesCount] = useState<number>(0);
   const [impactLoading, setImpactLoading] = useState<boolean>(false);
+  const [liveSync, setLiveSync] = useState<boolean>(true);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string>('');
 
   // Semantic drift inspection modal state
   const [activeDiff, setActiveDiff] = useState<any | null>(null);
@@ -114,74 +117,102 @@ export const App: React.FC = () => {
     setTimeout(() => setNotification(null), 4000);
   };
 
-  const fetchTools = async () => {
+  const fetchTools = async (silent: boolean = false) => {
     try {
-      setToolsLoading(true);
+      if (!silent) setToolsLoading(true);
       setToolsError(null);
       const res = await fetch('/v1/tools');
       if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch tools`);
       const data = await res.json();
       setTools(data);
     } catch (err: any) {
-      setToolsError(err.message || 'Failed to connect to control plane API');
+      if (!silent) setToolsError(err.message || 'Failed to connect to control plane API');
     } finally {
-      setToolsLoading(false);
+      if (!silent) setToolsLoading(false);
     }
   };
 
-  const fetchApprovals = async () => {
+  const fetchApprovals = async (silent: boolean = false) => {
     try {
-      setApprovalsLoading(true);
+      if (!silent) setApprovalsLoading(true);
       setApprovalsError(null);
       const res = await fetch('/v1/approvals?status=pending');
       if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch approvals`);
       const data = await res.json();
       setApprovals(data);
     } catch (err: any) {
-      setApprovalsError(err.message || 'Failed to connect to approval service');
+      if (!silent) setApprovalsError(err.message || 'Failed to connect to approval service');
     } finally {
-      setApprovalsLoading(false);
+      if (!silent) setApprovalsLoading(false);
     }
   };
 
-  const fetchAuditEvents = async () => {
+  const fetchAuditEvents = async (silent: boolean = false) => {
     try {
-      setAuditLoading(true);
+      if (!silent) setAuditLoading(true);
       setAuditError(null);
       const res = await fetch('/v1/audit/events?limit=30');
       if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch audit events`);
       const data = await res.json();
       setAuditEvents(data);
     } catch (err: any) {
-      setAuditError(err.message || 'Failed to connect to audit evidence store');
+      if (!silent) setAuditError(err.message || 'Failed to connect to audit evidence store');
     } finally {
-      setAuditLoading(false);
+      if (!silent) setAuditLoading(false);
     }
   };
 
-  const fetchImpactSummary = async () => {
+  const fetchImpactSummary = async (silent: boolean = false) => {
     try {
-      setImpactLoading(true);
-      const res = await fetch('/v1/reports/summary');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.blocked_calls) {
-          setBlockedCalls(Number(data.blocked_calls));
+      if (!silent) setImpactLoading(true);
+      const [summaryRes, leasesRes] = await Promise.all([
+        fetch('/v1/reports/summary'),
+        fetch('/v1/leases'),
+      ]);
+      if (summaryRes.ok) {
+        const data = await summaryRes.json();
+        if (typeof data.blocked_calls === 'number') {
+          setBlockedCalls(data.blocked_calls);
         }
       }
+      if (leasesRes.ok) {
+        const leasesData = await leasesRes.json();
+        const nowMs = Date.now();
+        const parseUtcMs = (iso: string) => {
+          const normalized = iso.endsWith('Z') || /[+-]\d{2}:?\d{2}$/.test(iso) ? iso : `${iso}Z`;
+          return new Date(normalized).getTime();
+        };
+        const active = Array.isArray(leasesData)
+          ? leasesData.filter((l: any) => !l.expires_at || parseUtcMs(String(l.expires_at)) > nowMs).length
+          : 0;
+        setActiveLeasesCount(active);
+      }
+      setLastSyncedAt(new Date().toLocaleTimeString([], { hour12: false }));
     } catch {
-      // Retain deterministic baseline
+      // Retain last known metrics on transient poll error
     } finally {
-      setImpactLoading(false);
+      if (!silent) setImpactLoading(false);
     }
+  };
+
+  const refreshAll = (silent: boolean = true) => {
+    fetchTools(silent);
+    fetchApprovals(silent);
+    fetchAuditEvents(silent);
+    fetchImpactSummary(silent);
   };
 
   useEffect(() => {
-    fetchTools();
-    fetchApprovals();
-    fetchAuditEvents();
-    fetchImpactSummary();
+    refreshAll(false);
   }, []);
+
+  useEffect(() => {
+    if (viewMode !== 'console' || !liveSync) return;
+    const timer = setInterval(() => {
+      refreshAll(true);
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [viewMode, liveSync]);
 
   const handleApproveTool = async (toolId: string) => {
     try {
@@ -555,13 +586,27 @@ export const App: React.FC = () => {
             </div>
 
             {/* Top Actions & Global Telemetry */}
-            <div className="flex items-center gap-3">
-              <div className="hidden xl:flex items-center gap-2 px-3 py-1 bg-white border border-[#CBD5E1] text-[#1D4ED8] text-xs font-mono">
-                <Database className="w-3.5 h-3.5 text-[#1D4ED8]" />
+            <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+              <div className="hidden xl:inline-flex items-center gap-1.5 h-8 px-2.5 bg-white border border-[#CBD5E1] text-[#1D4ED8] text-xs font-mono whitespace-nowrap flex-shrink-0">
+                <Database className="w-3.5 h-3.5 text-[#1D4ED8] flex-shrink-0" />
                 <span>Postgres: production</span>
               </div>
 
-              <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-white border border-[#CBD5E1] text-[#059669] text-xs font-mono">
+              <button
+                type="button"
+                onClick={() => setLiveSync((v) => !v)}
+                className={`hidden sm:inline-flex items-center gap-1.5 h-8 px-2.5 bg-white border text-xs font-mono whitespace-nowrap flex-shrink-0 cursor-pointer transition-colors ${
+                  liveSync
+                    ? 'border-[#A7F3D0] text-[#059669] hover:border-[#059669]'
+                    : 'border-[#CBD5E1] text-[#64748B] hover:border-[#94A3B8]'
+                }`}
+                title={`Toggle 2-second real-time telemetry polling${lastSyncedAt ? ` (last synced ${lastSyncedAt})` : ''}`}
+              >
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${liveSync ? 'bg-[#059669] animate-pulse' : 'bg-[#94A3B8]'}`} />
+                <span>{liveSync ? 'LIVE SYNC' : 'SYNC PAUSED'}</span>
+              </button>
+
+              <div className="hidden lg:inline-flex items-center gap-2 h-8 px-2.5 bg-white border border-[#CBD5E1] text-[#059669] text-xs font-mono whitespace-nowrap flex-shrink-0">
                 <span className="landing-live"><i /> ENFORCE</span>
                 <span className="text-[#CBD5E1]">|</span>
                 <span className="text-[#475569]">3.8ms p95</span>
@@ -570,7 +615,7 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={handleExportEUAct}
-                className="landing-button landing-button-primary text-xs min-h-[36px] px-3.5 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5"
+                className="landing-button landing-button-primary text-xs min-h-[34px] h-8 px-3 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5"
               >
                 <FileCheck2 className="w-3.5 h-3.5 shrink-0" />
                 <span className="hidden sm:inline whitespace-nowrap">Export Article 50 Dossier</span>
@@ -578,8 +623,8 @@ export const App: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => { fetchTools(); fetchApprovals(); fetchAuditEvents(); }}
-                className="console-btn-icon h-9 w-9 text-[#475569] hover:text-[#0F172A]"
+                onClick={() => refreshAll(false)}
+                className="console-btn-icon h-8 w-8 text-[#475569] hover:text-[#0F172A]"
                 title="Refresh Telemetry"
                 aria-label="Refresh Telemetry"
               >
@@ -602,7 +647,7 @@ export const App: React.FC = () => {
           <MetricsBar
             quarantinedCount={quarantinedCount}
             approvedCount={approvedCount}
-            activeLeasesCount={approvals.filter((a) => a.status === 'approved').length}
+            activeLeasesCount={activeLeasesCount}
             attacksBlockedCount={blockedCalls}
             impactLoading={impactLoading}
           />
@@ -611,15 +656,15 @@ export const App: React.FC = () => {
             <CommandOverview
               quarantinedCount={quarantinedCount}
               approvedCount={approvedCount}
-              activeLeasesCount={approvals.filter((a) => a.status === 'approved').length}
+              activeLeasesCount={activeLeasesCount}
               auditCount={auditEvents.length}
               onNavigateTab={(tab) => setActiveTab(tab)}
-              onTriggerScan={fetchTools}
+              onTriggerScan={() => refreshAll(true)}
               onExportEUAct={handleExportEUAct}
             />
           )}
 
-          {activeTab === 'connect' && <AgentConnect />}
+          {activeTab === 'connect' && <AgentConnect onTelemetryUpdate={() => refreshAll(true)} />}
 
           {activeTab === 'registry' && (
             <ToolInventory

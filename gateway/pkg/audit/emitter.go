@@ -2,12 +2,14 @@ package audit
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -67,6 +69,50 @@ type Emitter struct {
 	privateKey ed25519.PrivateKey
 	publicKey  ed25519.PublicKey
 	events     []Event
+	sinkURL    string
+	httpClient *http.Client
+}
+
+// SetControlPlaneSink configures an optional Control Plane API URL to forward audit events asynchronously
+func (e *Emitter) SetControlPlaneSink(baseURL string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.sinkURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	if e.httpClient == nil {
+		e.httpClient = &http.Client{Timeout: 3 * time.Second}
+	}
+}
+
+func (e *Emitter) forwardToSink(sinkURL string, client *http.Client, ev Event) {
+	if sinkURL == "" || client == nil {
+		return
+	}
+	payload := map[string]interface{}{
+		"id":             ev.ID,
+		"prev_hash":      ev.PrevHash,
+		"session_id":     ev.SessionID,
+		"trajectory_id":  ev.TrajectoryID,
+		"call_hash":      ev.CallHash,
+		"tool_id":        ev.ToolID,
+		"verdict":        ev.Verdict,
+		"reasons":        ev.Reasons,
+		"policy_version": int(ev.PolicyVersion),
+		"model_tokens":   int(ev.ModelTokensSpent),
+		"signature":      ev.Signature,
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+	req, err := http.NewRequest(http.MethodPost, sinkURL+"/v1/audit/events", bytes.NewReader(data))
+	if err != nil {
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if err == nil && resp != nil {
+		_ = resp.Body.Close()
+	}
 }
 
 // NewEmitter creates an Emitter with an Ed25519 keypair
@@ -136,6 +182,11 @@ func (e *Emitter) Emit(sessionID, trajectoryID, callHash, toolID, verdict string
 	e.lastHash = h
 
 	e.events = append(e.events, event)
+	sinkURL := e.sinkURL
+	client := e.httpClient
+	if sinkURL != "" && client != nil {
+		go e.forwardToSink(sinkURL, client, event)
+	}
 	return &event, nil
 }
 
