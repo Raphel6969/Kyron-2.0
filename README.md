@@ -1,237 +1,174 @@
-# ⚡ Hack Engine OS
+# Kyron 2.0
 
-> **The Permanent, Repo-Resident Antigravity Operating System for Hackathons.**  
-> *Takes an ambiguous Problem Statement and autonomously produces a demoable, deployed, documented, production-quality build that survives context resets, free-tier models, and team collaboration.*
+**Deterministic Trust Layer for Tool-Using AI Agents**
 
----
+[![Live Console](https://img.shields.io/badge/Live%20Console-kyron--2--0.onrender.com-0f766e?style=flat-square)](https://kyron-2-0.onrender.com/console)
+[![Data Plane](https://img.shields.io/badge/Data%20Plane-Go%201.23%20%2B%20Rust%201.80-1e293b?style=flat-square)](#architecture)
+[![Control Plane](https://img.shields.io/badge/Control%20Plane-FastAPI%20%2B%20React%2018-1e293b?style=flat-square)](#architecture)
+[![Hot Path](https://img.shields.io/badge/Hot--Path%20Overhead-3.8ms%20p95%20%7C%200%20Tokens-0369a1?style=flat-square)](#empirical-benchmarks)
 
-## 🎯 What Is Hack Engine?
-
-Hack Engine is not a standard application—it is a **pre-built operating system and mechanical harness** designed for Google Antigravity. It replaces fragile "prompt engineering" (pasting giant prompts into chat and watching context decay) with **Loop Engineering** (a state-machine operating system backed by living repository contracts and deterministic gate scripts).
-
-### Why It Exists:
-1. **Survives Context Wipes & Free Models:** When context compresses or an agent session resets, cold agents resume by reading only 3 files (~2,000 tokens): `STATE.md`, `PLAN.md`, and `ARCHITECTURE.md`.
-2. **The Exit Code Is the Referee:** An agent cannot declare success from "reading code." A sub-task is complete **only when `make verify` exits 0**.
-3. **Banishes Hackathon Clichés:** Mechanical gates auto-revert purple gradients, generic 3-up card grids, emoji icons, SQLite in production, deferred auth, and fake marketing numbers.
+Kyron 2.0 is an inline deterministic security gateway and policy engine for Model Context Protocol (MCP) agents. It verifies tool metadata before an LLM ever sees it, enforces information-flow and network egress budgets on every call, prevents runtime credential leakage and filesystem TOCTOU swaps, and emits cryptographically signed, EU AI Act–ready audit trails—requiring **zero modifications** to agent prompts or model loops and **zero LLM tokens on the hot path**.
 
 ---
 
-## 🚀 Quickstart: Bootstrapping a New Hackathon
+## Why Kyron 2.0 Exists
 
-Follow these steps to initialize a fresh hackathon project from Hack Engine:
+AI agents act through external tools whose metadata, runtime behavior, and outputs are untrusted. Prompt-level guardrails and LLM-as-a-judge wrappers fail against adaptive attackers (and burn latency and tokens on every hop). Stateless scanners miss runtime drift, sharded exfiltration, and check-then-use swaps.
 
-### 1. Clone & Sever Engine History
-Clone this repository into your new hackathon directory, **delete the `.git` folder**, and initialize a clean repository:
+Kyron 2.0 places seven deterministic verification gates directly on the MCP wire between stock agents (`Claude Desktop`, `Cursor`, `LangChain`, `CrewAI`, or custom SSE/stdio clients) and upstream MCP servers:
 
-```bash
-# Clone Hack Engine into your project directory
-git clone https://github.com/Raphel6969/HackEngine.git my-hackathon-app
-cd my-hackathon-app
-
-# IMPORTANT: Remove the engine's git history to start fresh
-# On Linux / macOS / WSL:
-rm -rf .git
-
-# On Windows PowerShell:
-Remove-Item -Recurse -Force .git
-
-# Initialize your new hackathon git repository
-git init
-git branch -M main
-git add .
-git commit -m "chore: bootstrap workspace from HackEngine OS"
-```
-
----
-
-## 🛠️ How to Use with Antigravity
-
-### Step 1: Ingest the Problem Statement (`/ps`)
-Open your fresh repository in Antigravity and trigger the `/ps` workflow:
-
-```text
-Load AGENTS.md. Run workflow: .agents/workflows/ps.md with the following:
-
-Problem Statement: <Paste verbatim hackathon challenge text>
-Constraints:
-- Time Budget: 24h / 36h / 48h
-- Team Size: 1-4
-- Required Stacks/Sponsors: <e.g. Neon, Groq, Supabase, Render>
-- Judging Rubric: <Paste evaluation criteria if published>
-```
-
-### Step 2: The Mandatory Human Checkpoint (Pause Once)
-The engine executes `ps-decode`, `user-journey`, `impact-model`, and `solution-design`.  
-It will **pause once** and present `docs/02-solution.md`:
-- Review the proposed **technical moat / core differentiator**.
-- Review the 90-second judge demonstration hook.
-- Reply **"Approved"** (or adjust direction).
-
-Once approved, the engine automatically locks `ARCHITECTURE.md`, generates `PLAN.md` with explicit phase budgets, divides team lanes in `HUMANS.md`, and scaffolds Phase 0.
-
-### Step 3: Run the Autonomous Loop (`/next`)
-Run `/next` in Antigravity:
-```text
-/next
-```
-**This is 90% of your interaction.** The agent executes the cycle unattended:
-1. **Orients:** Reads `STATE.md`, `PLAN.md`, `ARCHITECTURE.md`.
-2. **Recovers:** Finishes any half-done work in `## IN FLIGHT`.
-3. **Picks Sub-Task:** Claims one sub-task from `PLAN.md`.
-4. **Builds:** Implements feature against `.agents/checklists/dod.md`.
-5. **Verifies:** Runs `make verify`. If tests fail, it fixes or triages.
-6. **Commits:** Atomically commits `phase<N>.<M>: <what changed>`.
-7. **Updates Memory:** Updates `STATE.md`, clears `IN FLIGHT`, and repeats.
-
----
-
-## 📋 Operational Workflow Reference
-
-| Workflow Command | File Path | When to Use & What It Does |
-|---|---|---|
-| **`/ps`** | `.agents/workflows/ps.md` | **Kickoff:** Decodes PS $\rightarrow$ differentiator $\rightarrow$ human pause $\rightarrow$ architecture $\rightarrow$ plan $\rightarrow$ team split. |
-| **`/next`** | `.agents/workflows/next.md` | **Execution Loop:** Unattended atomic execution of sub-tasks. Run, walk away, and return. |
-| **`/close-phase`** | `.agents/workflows/close-phase.md` | **Phase Boundary:** Runs `make verify-full`, critic audits, squash-merges, and tags `demo-ready-p<N>`. |
-| **`/harden`** | `.agents/workflows/harden.md` | **Score Optimization:** Run around the 70% mark. Dispatches all 4 critics, ranks fixes by Score/Hour. |
-| **`/ui-review`** | `.agents/workflows/ui-review.md` | **Visual Audit:** Takes headless PNG screenshots across 375/768/1440 viewports and scores craft $\ge 7/10$. |
-| **`/unblock`** | `.agents/workflows/unblock.md` | **Human Resumption:** Run immediately after you provide a requested API key or decision in `NEEDS_YOU.md`. |
-| **`/sitrep`** | `.agents/workflows/sitrep.md` | **Teammate Status:** Instant 10-line text snapshot: phase, clock, demo status, blockers, and next action. |
-| **`/demo-prep`** | `.agents/workflows/demo-prep.md` | **Final 15% Lockdown:** Verifies public deployment, demo accounts, `make reset-demo`, and offline backup videos. |
-
----
-
-## ⌨️ Makefile Commands & Specifications
-
-Hack Engine ships with a master `Makefile` where the exit code is the sole referee:
-
-```bash
-# 1. Fast-Tier Verification (< 30s) — Runs on EVERY commit
-make verify
-
-# 2. Slow-Tier Verification — Runs at phase close and /harden
-make verify-full
-
-# 3. Pristine Demo Reset (< 5s) — Restores clean state & 30+ seeds
-make reset-demo
-
-# 4. Idempotent Database Seed — Loads 30+ realistic domain records
-make seed
-
-# 5. Local Development — Boots complete application stack
-make dev
-
-# 6. Deployment Verification — Audits production environment
-make deploy
-```
-
-### Fast Tier vs. Slow Tier Breakdown
-
-| Tier | Script | Included Gate Checks | Duration Target |
+| Stage | Component | Language | What It Stops |
 |---|---|---|---|
-| **Fast Tier** | `scripts/verify.sh` | `state-lint`, `typecheck`, `lint`, `test-unit`, `ui-audit`, `ux-gate`, `hardening-gate`, `test-e2e` (smoke) | `< 30 seconds` |
-| **Slow Tier** | `scripts/verify-full.sh` | Fast Tier + `ui-review-gate` ($\ge 7/10$), `impact-gate` ($\ge 6/10$ & `/impact`), `a11y` (axe-core), `perf` (Lighthouse) | `< 2 minutes` |
+| **1. Registry Firewall & TRUSTDESC** | `C2` (`core/scanner`, `core/pinning`) | Rust | **S1 Poisoned Descriptions & S2 Silent Rug Pulls:** Strips hidden prompt injections, synthesizes safe canonical tool specs (`TRUSTDESC`), and SHA-256 hash-pins every approved tool. Mutated tools quarantine automatically with side-by-side semantic diffs. |
+| **2. Single-Use Capability Leases** | `C6` (`gateway/pkg/authority`, `control/`) | Go + Python | **Unauthorized High-Impact Actions:** Elevates destructive or sensitive calls (e.g. `issue_refund`, privileged deletes) into a live human-in-the-loop queue that mints single-use, TTL-bound Ed25519 capability leases. |
+| **3. TOCTOU Resource Binding** | `C3` (`/v1/resources/*`) | Rust + Python | **S5 Check-then-Use Swaps:** Cryptographically binds approved file/resource paths to SHA-256 content digests and re-verifies integrity at execution instant. |
+| **4. OpenAPPA IFC & Field Provenance** | `C4`, `C7` (`core/openappa-adapter`) | Rust | **Policy Violations & Over-Tainting:** Runs prospective dispatch and return-admission lattice checks in-process (`archestra-ai/OpenAPPA`) with RFC 6901 JSON-path field-level redaction (`/v1/provenance/filter`). |
+| **5. Source-Attributed Egress Broker** | `C8` (`gateway/pkg/egress`) | Go | **S3 Lying Tools & S4 Sharded Exfiltration:** Blocks undeclared destinations, SSRF metadata endpoints, and cumulative cross-call micro-chunking per data source. |
+| **6. In-Memory Secrets Broker** | `C9` (`gateway/pkg/secrets`) | Go | **S6 Credential Theft:** Resolves scoped JIT credentials at tool dispatch and scrubs sensitive tokens (including `ghp_*` PATs, bearer tokens, env secrets) from model-visible responses. |
+| **7. Hash-Chained Audit & Recovery** | `C5`, `C11` | Go + Rust + Python | **Non-Repudiation & Zero-Token Self-Healing:** Links every `ALLOW`, `LEASE-ALLOW`, and `BLOCK` event in a SHA-256 hash chain with Ed25519 signatures (EU AI Act Articles 12, 14, 15, 50) and caches precomputed recovery plans by state fingerprint. |
 
 ---
 
-## 🛡️ The Four Quality Systems
+## Empirical Benchmarks
 
-Detailed thoroughly in [QUALITY.md](QUALITY.md):
+Measured across the **MCPTox (AAAI 2026)** benchmark suite, **S1–S6** vulnerability lab (`eval/GATE0_BENCHMARK.md`), and **RQ6** scanner-aware adaptive evasion tests (`eval/ADAPTIVE_REDTEAM.md`):
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        THE FOUR QUALITY SYSTEMS                        │
-├───────────────────────┬────────────────────────────────────────────────┤
-│ 1. Product/Usability  │ docs/UX.md + docs/COPY.md + ux-gate.sh         │
-│                       │ Enforces 4 states per view, Journey 2 <= 2 cls │
-├───────────────────────┼────────────────────────────────────────────────┤
-│ 2. UI & Visual Craft  │ design/DIRECTION.md + TOKENS.css + ui-audit.sh │
-│                       │ 5 color tokens, clamp typography, GSAP motion  │
-├───────────────────────┼────────────────────────────────────────────────┤
-│ 3. Impact/Defensibility│ docs/IMPACT.md + RUBRIC.md + impact-gate.sh   │
-│                       │ Live /impact route, sourced arithmetic, limits │
-├───────────────────────┼────────────────────────────────────────────────┤
-│ 4. Hardening/Security │ docs/SECURITY.md + docs/OPS.md + hardening-gate│
-│                       │ Postgres mandatory, authz test, reset-demo <5s │
-└───────────────────────┴────────────────────────────────────────────────┘
-```
+| Metric | Unshielded | MCP-Scan | OpenAPPA Alone | **Kyron 2.0 (7-Stage)** |
+|---|---:|---:|---:|---:|
+| **MCPTox Attack Exposure** | `72.8%` | `18.4%` (`-74.7%`) | `68.2%` (`-6.3%`) | **`4.1%` (`-94.4%`)** |
+| **Vulnerability Lab (S1–S6)** | `0/6` blocked | `1/6` (`16.7%`) | `0/6` (`0.0%`) | **`6/6` (`100.0%`)** |
+| **RQ6 Adaptive Evasion (AA-1..AA-6)** | — | `0/6` blocked (`100%` bypassed) | — | **`6/6` blocked (`0.0%` bypassed)** |
+| **Hot-Path Decision Latency (p95)** | `0 ms` | `~15.0 ms` | `~8.0 ms` | **`3.8 ms`** (`0` model tokens) |
 
 ---
 
-## 🚫 Ten Strict Guardrails (Mined from Real Project Failures)
-
-Hack Engine codifies hard lessons extracted from real past hackathon repositories:
-
-| Past Mistake | Evidence Project | Mechanical Gate Enforced |
-|---|---|---|
-| **1. SQLite in Production** | Sentinel, Dossier, Aloorithm | `hardening-gate.sh` fails if any `.db` file exists outside `tests/` or if `sqlite:///` is in `.env.example`. |
-| **2. Auth Deferred Indefinitely** | Nexus, Aloorithm | `security-baseline` requires a passing server-side tenant isolation test before Phase 1 can close. |
-| **3. Mid-Hackathon Backend Rework** | Aloorithm, Distro | `architecture` requires `SCHEMA.md` and migrations to be green before endpoints are written. |
-| **4. Multi-Stakeholder Scope Creep**| Aloorithm (8 roles), AEGIX | `solution-design` caps scope to **max 2 user personas**. Others are sent to `PLAN.md` Cut List. |
-| **5. Live Third-Party API Outages** | Aloorithm HuggingFace outage | `demo-resilience` mandates boolean `ENABLE_<SERVICE>` flags and deterministic offline mock fallbacks. |
-| **6. Stale Docs & Reactive Patching**| Sentinel, Aloorithm | `state-lint.sh` fails if docs are older than newest source files. Prohibits `*_REWORK_*` patch files. |
-| **7. Impact Claims on Slides Only** | Sentinel, AEGIX | `impact-gate.sh` requires live `/impact` route computing numbers dynamically from database records. |
-| **8. Soft Service Boundaries** | Nexus PII leaks, Orcheon | `architecture` requires an explicit Service Trust Matrix defining who reads which tables and keys. |
-| **9. Exploding Governance Docs** | Sentinel (7 docs), Aloorithm (9)| `scaffold` consolidates state strictly into `STATE.md`, `PLAN.md`, and `ARCHITECTURE.md`. |
-| **10. Demo on Localhost / Postman** | Distro, Sentinel | `hardening-gate.sh` fails if `localhost` appears in `DEMO.md`. 90s path must be public and click-only. |
-
----
-
-## 📦 Pre-Debugged Stack Templates
-
-Hack Engine includes three verified, production-ready stack scaffolds in `templates/`:
-
-1. **`templates/stack-fastapi-react/` (Recommended Default)**
-   - **Backend:** Python FastAPI, Pydantic v2, SQLAlchemy async, asyncpg, Uvicorn, Pytest.
-   - **Frontend:** React 18, Vite 5, Tailwind CSS, Lucide Icons, GSAP, Lenis.
-   - **Infra:** PostgreSQL 16, Docker Compose, `render.yaml` one-click deploy blueprint.
-2. **`templates/stack-polyglot/` (High-Throughput / Complex Engines)**
-   - **Topology:** FastAPI Gateway + Go/Chi Tool Gateway + Rust Axum Solver + Next.js 14.
-3. **`templates/stack-node-react/` (Rapid Prototyping)**
-   - **Topology:** Node.js ESM Express + React 18/Vite + Neon PostgreSQL.
-
----
-
-## 👥 Human-Agent Collaboration Protocol
-
-### The Non-Blocking Escalation Queue (`NEEDS_YOU.md`)
-If the agent needs an API key, OAuth account, cloud credential, or product decision:
-1. It **never stops** and **never asks questions in chat**.
-2. It logs a numbered entry in `NEEDS_YOU.md` with:
-   - What is needed.
-   - Exact steps/URL to get it.
-   - What will unblock once provided.
-   - What the agent is working on in parallel meanwhile.
-3. It marks the task `BLOCKED` in `STATE.md` and continues executing unblocked tasks.
-4. When you provide the key, type `/unblock` to resume.
-
-### Human Lane Reservations (`HUMANS.md`)
-`HUMANS.md` divides file paths across teammates and autonomous agents:
-- Paths claimed by a human collaborator are **strictly read-only** to the agent.
-- Prevents catastrophic merge collisions on `main` during late-stage crunch.
-
----
-
-## 📜 The Loop Contract (`AGENTS.md`)
+## Architecture
 
 ```text
-1. ORIENT. At session start read STATE.md, PLAN.md, ARCHITECTURE.md, and current PHASE-N.md.
-2. RESUME SAFELY. If STATE.md is IN_PROGRESS, finish or abandon IN FLIGHT work first.
-3. ONE UNIT. Work on exactly one sub-task from PLAN.md. Write IN FLIGHT before editing.
-4. VERIFY OR IT DIDN'T HAPPEN. Sub-task complete only when `make verify` exits 0.
-5. COMMIT. On verify-pass: git commit -m "phase<N>.<M>: <what changed>". Tag releases.
-6. WRITE STATE. Update STATE.md, clear IN FLIGHT, refresh living contracts.
-7. NEVER BLOCK ON ME. Append dependencies to NEEDS_YOU.md, mark BLOCKED, move to next task.
-8. ANTI-THRASH. Same error 2x: write hypothesis in docs/debug/<slug>.md. 4x: escalate & move on.
-9. CLOCK OVER SCOPE. Phase over budget by 50%: ship PLAN.md demo fallback, run budget-pivot.
-10. MAIN IS ALWAYS DEMOABLE. Never merge a state that cannot be shown to a judge.
-11. NO PLACEHOLDERS. No lorem ipsum, no TODO stubs in merged code, no mock database calls.
-12. STAY OUT OF HUMAN LANES. Check HUMANS.md before editing. Claimed lanes are read-only.
-13. QUALITY IS NOT OPTIONAL. Fast gates run every commit. Slow gates run at phase close.
-14. HALT. Stop only when all phases DONE, clock exhausted, or all tasks blocked in NEEDS_YOU.
+  MCP Client (Claude / Cursor / LangChain / Custom Agent)
+       │   Standard MCP over stdio or HTTP/SSE
+       ▼
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  KYRON DATA PLANE (Zero-Model Hot Path · Go 1.23 + Rust 1.80)       │
+  │                                                                      │
+  │  [Protocol Gateway (C1)] ─► [Registry Firewall (C2)] ─► [Policy (C3)]│
+  │           │                         │                        │       │
+  │           ▼                         ▼                        ▼       │
+  │  [Egress Broker (C8)]      [Secrets Broker (C9)]    [Audit (C11)]    │
+  └───────────┬──────────────────────────────────────────────────┬───────┘
+              │ (enforces last signed policy bundle offline)     │ Telemetry
+              ▼                                                  ▼
+  Upstream MCP Servers                        ┌──────────────────────────┐
+                                              │  KYRON CONTROL PLANE     │
+                                              │  FastAPI (:8001)         │
+                                              │  React 18 SOC (:5173)    │
+                                              │  PostgreSQL 16+ / SQLite │
+                                              └──────────────────────────┘
+```
+
+### Repository Layout
+
+| Directory | Purpose | Stack |
+|---|---|---|
+| [`gateway/`](gateway/) | Custom MCP proxy (`stdio` + HTTP/SSE), Egress Broker, Secrets Broker, `kyron` CLI | Go 1.23 |
+| [`core/`](core/) | Registry Firewall, TRUSTDESC normalizer, Ed25519 pinning, OpenAPPA IFC, attestations | Rust 1.80+ |
+| [`control/`](control/) | REST API (`/v1/*`, `/impact`, `/healthz`), SQLite/PostgreSQL persistence, OAuth 2.0 | Python 3.12 / FastAPI |
+| [`ui/`](ui/) | Real-time SOC Console (`LIVE SYNC` 2s telemetry), drift diffing, policy studio, audit drawer | React 18 / TS / Vite |
+| [`demo/`](demo/) | 5-case live demo suite, real interactive MCP SSE agent, Acme FinOps showcase, pitch script | Python / Shell |
+| [`configs/`](configs/) & [`scripts/agents/`](scripts/agents/) | Drop-in configs for Claude Desktop, Cursor, LangChain, CrewAI | JSON / Python |
+| [`lab/`](lab/) & [`eval/`](eval/) | S1–S6 intentionally vulnerable MCP servers + RQ6 & Gate 0 empirical benchmarks | Python / Go / Rust |
+| [`deploy/`](deploy/) | Unified Render Nginx/Docker setup and Helm charts | Docker / Helm |
+
+---
+
+## Quick Start
+
+### 1. Live Hosted SOC Console
+
+Open the live Render deployment directly—pre-seeded with 35 tools, policies, and hash-chained audit evidence:
+- **SOC Console:** [https://kyron-2-0.onrender.com/console](https://kyron-2-0.onrender.com/console)
+- **Live Impact Telemetry:** [https://kyron-2-0.onrender.com/impact](https://kyron-2-0.onrender.com/impact)
+- **Health Check:** [https://kyron-2-0.onrender.com/healthz](https://kyron-2-0.onrender.com/healthz)
+
+### 2. Local Development Stack
+
+Run the three services locally (or via `docker compose up`):
+
+```bash
+# Terminal 1 — Control Plane API (:8001)
+python -m uvicorn control.app.main:app --host 127.0.0.1 --port 8001
+
+# Terminal 2 — Go MCP Protocol Gateway (:8080)
+cd gateway && go run ./cmd/gateway
+
+# Terminal 3 — React 18 SOC Console (:5173)
+npm --prefix ui install && npm --prefix ui run dev -- --host 127.0.0.1 --port 5173
+```
+
+Restore deterministic demo data (35 tools, 3 TOML policies, leases, approvals, and 40 signed audit events) at any time:
+
+```bash
+bash scripts/reset-demo.sh       # Linux / macOS
+# or
+.\scripts\reset-demo.ps1         # Windows PowerShell
+```
+
+### 3. Wrap Any Real Agent via MCP Gateway (`stdio` or SSE)
+
+Intercept any existing Python or Node MCP server over `stdio` without touching agent code:
+
+```bash
+cd gateway
+go build -o kyron-gateway ./cmd/gateway
+./kyron-gateway --stdio --control-url http://127.0.0.1:8001 -- python path/to/mcp_server.py
+```
+
+Or connect any SSE/HTTP MCP client to `http://127.0.0.1:8080/sse` (or deploy-side `/sse`). See [`configs/README.md`](configs/README.md) and [`scripts/agents/README.md`](scripts/agents/README.md) for Claude Desktop, Cursor, LangChain, and CrewAI recipes.
+
+### 4. Run the Live Interactive Demo & Showcase Suites
+
+```bash
+# Real interactive MCP SSE agent (pauses for live approval click in the SOC Console)
+python demo/run_real_agent.py
+
+# Target the live Render deployment instead
+python demo/run_real_agent.py --base-url https://kyron-2-0.onrender.com
+
+# Full 5-case verification runner
+python demo/run_live_demo.py --auto
+
+# Standalone Acme FinOps MCP stdio interception demo
+python demo/acme_ops_project/agent_app.py --mode kyron
 ```
 
 ---
 
-## 📄 License
+## Verification & Quality Gates
 
-MIT © Raphel. Built for elite hackathon performance.
+Every commit passes the fast-tier verification harness (`make verify` / `bash scripts/verify.sh`):
+- Rust Cargo workspace tests & Clippy (`cargo test`, `cargo clippy -- -D warnings`)
+- Go gateway unit suite & `gofmt` (`go test ./pkg/...`)
+- Python FastAPI integration & isolation tests (`pytest control/tests -v`, `ruff check`)
+- Frontend TypeScript build & static craft/hardening audits (`npm --prefix ui run build`, `ui-audit.sh`, `ux-gate.sh`, `hardening-gate.sh`, `state-lint.sh`)
+
+```bash
+bash scripts/verify.sh
+```
+
+---
+
+## Documentation Index
+
+| Document | Contents |
+|---|---|
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | System topology, 15 components (`C1`–`C15`), 9-step call lifecycle, threat model |
+| [`DEMO.md`](DEMO.md) | 90-second live judge click-path walkthrough |
+| [`docs/WHITEPAPER.md`](docs/WHITEPAPER.md) | Formal threat formulation & 7-stage defense paper |
+| [`docs/API.md`](docs/API.md) | Control Plane REST API (`/v1/*`), MCP Gateway framing, and `kyron` CLI reference |
+| [`docs/SCHEMA.md`](docs/SCHEMA.md) | Rust core types (`PinnedTool`, `Contract`, `Lease`), SQL tables, TOML bundle spec |
+| [`docs/IMPACT.md`](docs/IMPACT.md) | Mathematical value model, MCPTox/arXiv baselines, and Honest Limits |
+| [`docs/EU_AI_ACT_DOSSIER.md`](docs/EU_AI_ACT_DOSSIER.md) | EU AI Act (Regulation 2024/1689) Articles 12, 14, 15, and 50 technical mapping |
+| [`docs/DEPLOY_RENDER.md`](docs/DEPLOY_RENDER.md) | Unified Render Docker + PostgreSQL deployment guide |
+| [`eval/GATE0_BENCHMARK.md`](eval/GATE0_BENCHMARK.md) & [`eval/ADAPTIVE_REDTEAM.md`](eval/ADAPTIVE_REDTEAM.md) | Head-to-head S1–S6, MCPTox, and RQ6 adaptive red-team results |
+| [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) | Phased engineering plan (`P0`–`P3`), rubric targets, and phase summaries ([`docs/phases/`](docs/phases/)) |
+| [`demo/README.md`](demo/README.md) & [`demo/PITCH_SCRIPT.md`](demo/PITCH_SCRIPT.md) | 3:45 video recording runbook and judge Q&A defense sheet |
