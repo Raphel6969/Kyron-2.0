@@ -1,0 +1,28 @@
+[meta]
+version = 4
+name = "Demo Strict Zero-Trust Boundary"
+mode = "enforce"
+description = "Strict policy compiled live during Kyron 2.0 product demonstration"
+signed_by = "sec-lead-demo"
+
+[budgets]
+egress_bytes_per_trajectory = 512000
+max_calls_per_trajectory = 40
+max_distinct_destinations = 3
+
+[egress]
+default_action = "deny"
+allowed_destinations = ["api.github.com", "api.internal.corp.net"]
+blocked_destinations = ["169.254.169.254", "evil.com", "127.0.0.1"]
+
+[[tools]]
+pattern = "system:raw_exec"
+action = "block"
+reason = "Direct OS shell execution permanently banned"
+
+[[tools]]
+pattern = "k8s:restart_deployment"
+action = "require_lease"
+max_calls = 1
+ttl_seconds = 120
+reason = "Production pod restart requires single-use operator lease"
