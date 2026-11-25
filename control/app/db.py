@@ -38,7 +38,13 @@ def init_db():
 
 def get_database_info() -> dict:
     branch = os.getenv("DB_BRANCH", os.getenv("NEON_BRANCH", "production"))
-    is_cloud = bool(DATABASE_URL and ("neon.tech" in DATABASE_URL or "ep-" in DATABASE_URL or "aws" in DATABASE_URL))
+    is_cloud = bool(
+        DATABASE_URL
+        and any(
+            hint in DATABASE_URL
+            for hint in ["neon.tech", "ep-", "aws", "render.com", "dpg-", "ondigitalocean", "supabase"]
+        )
+    )
     return {
         "provider": "PostgreSQL (Enterprise)" if is_cloud else "PostgreSQL (Local)",
         "branch": branch,

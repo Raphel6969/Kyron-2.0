@@ -119,7 +119,8 @@ def health_check(db: Session = Depends(get_db)):
             "policy_engine": "ok",
             "audit_emitter": "ok",
         },
-        "neon": db_info,
+        "database": db_info,
+        "database_info": db_info,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 

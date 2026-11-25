@@ -1,59 +1,36 @@
-# Render Infrastructure as Code Blueprint for Kyron 2.0 Production Stack
+# Render Blueprint Specification for Kyron 2.0 Web Service
+# https://render.com/docs/blueprint-spec
 services:
-  # 1. PostgreSQL Database
-  - type: postgres
-    name: kyron-production-db
-    plan: starter
-    region: oregon
-    ipAllowList: [] # internal access only
-    databaseName: kyron_db
-    user: kyron
-
-  # 2. Control Plane API
   - type: web
-    name: kyron-control-api
+    name: kyron-web
     runtime: docker
-    dockerfilePath: control/Dockerfile
+    dockerfilePath: Dockerfile
     dockerContext: .
+    plan: free
     region: oregon
-    plan: starter
     healthCheckPath: /healthz
     envVars:
+      - key: PORT
+        value: 10000
       - key: DATABASE_URL
         fromDatabase:
-          name: kyron-production-db
+          name: kyron-db
           property: connectionString
-      - key: CONTROL_API_PORT
-        value: 8001
-      - key: LOG_LEVEL
-        value: INFO
+      - key: DB_BRANCH
+        value: production
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
 
-  # 3. Protocol Gateway
-  - type: web
-    name: kyron-gateway
-    runtime: docker
-    dockerfilePath: gateway/Dockerfile
-    dockerContext: .
-    region: oregon
-    plan: starter
-    healthCheckPath: /healthz
-    envVars:
-      - key: GATEWAY_PORT
-        value: 8080
-      - key: GATEWAY_MODE
-        value: enforce
-      - key: CONTROL_PLANE_URL
-        fromService:
-          type: web
-          name: kyron-control-api
-          property: host
-
-  # 4. Modern SOC Web Console
-  - type: web
-    name: kyron-soc-ui
-    runtime: docker
-    dockerfilePath: ui/Dockerfile
-    dockerContext: .
-    region: oregon
-    plan: starter
-    healthCheckPath: /healthz
+databases:
+  - name: kyron-db
+    plan: free
+    databaseName: kyron_db
+    user: kyron
