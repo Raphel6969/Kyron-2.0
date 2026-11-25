@@ -21,7 +21,7 @@ const RedactedPlaceholder = "[KYRON_REDACTED_SECRET]"
 // Regular expressions detecting common credential shapes even if not pre-registered in the vault
 var genericCredentialPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`AKIA[0-9A-Z]{16}`),                                                                                // AWS Access Key ID
-	regexp.MustCompile(`ghp_[a-zA-Z0-9]{36,}`),                                                                            // GitHub Personal Access Token
+	regexp.MustCompile(`ghp_[a-zA-Z0-9]{32,}`),                                                                            // GitHub Personal Access Token
 	regexp.MustCompile(`xoxb-[0-9]{11,13}-[0-9]{11,13}-[a-zA-Z0-9]{24}`),                                                  // Slack Bot Token
 	regexp.MustCompile(`-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----[a-zA-Z0-9+/=\r\n]+-----END (?:[A-Z]+ )?PRIVATE KEY-----`), // PEM Private Keys
 }

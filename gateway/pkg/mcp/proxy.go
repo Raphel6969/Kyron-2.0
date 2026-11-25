@@ -220,6 +220,9 @@ func (p *Proxy) syncDiscoveredTools(sess *Session, rawTools []Tool) {
 			defer wg.Done()
 			// Sync with Control Plane if configured (populates live registry & audit trail)
 			if cpURL != "" && client != nil {
+				if p.Authority != nil && isHighImpactTool(rt.Name) {
+					p.Authority.RequireLease(rt.Name)
+				}
 				reqBody, _ := json.Marshal(map[string]interface{}{
 					"server_id":   serverID,
 					"name":        rt.Name,
@@ -282,6 +285,93 @@ func (p *Proxy) syncDiscoveredTools(sess *Session, rawTools []Tool) {
 		}()
 	}
 	wg.Wait()
+}
+
+func isHighImpactTool(name string) bool {
+	lower := strings.ToLower(name)
+	return strings.Contains(lower, "refund") || strings.Contains(lower, "restart_deployment") || strings.Contains(lower, "drop_database")
+}
+
+func (p *Proxy) checkControlPlaneLease(toolName, leaseID string) bool {
+	p.mu.RLock()
+	cpURL := p.ControlPlaneURL
+	client := p.httpClient
+	p.mu.RUnlock()
+	if cpURL == "" || client == nil {
+		return false
+	}
+	resp, err := client.Get(cpURL + "/v1/leases")
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return false
+	}
+	var leases []struct {
+		ID         string `json:"id"`
+		ActionSpec string `json:"action_spec"`
+		ExpiresAt  string `json:"expires_at"`
+		CallsUsed  int    `json:"calls_used"`
+		MaxCalls   int    `json:"max_calls"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&leases); err != nil {
+		return false
+	}
+	now := time.Now().UTC()
+	for _, l := range leases {
+		if l.ActionSpec != toolName && l.ActionSpec != "*" {
+			continue
+		}
+		if leaseID != "" && l.ID != leaseID {
+			continue
+		}
+		if l.CallsUsed >= l.MaxCalls {
+			continue
+		}
+		expStr := l.ExpiresAt
+		if !strings.HasSuffix(expStr, "Z") && !strings.Contains(expStr, "+") {
+			expStr += "Z"
+		}
+		if exp, err := time.Parse(time.RFC3339Nano, expStr); err == nil && now.Before(exp) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Proxy) submitControlPlaneApproval(sess *Session, toolName, reason string) string {
+	p.mu.RLock()
+	cpURL := p.ControlPlaneURL
+	client := p.httpClient
+	p.mu.RUnlock()
+	if cpURL == "" || client == nil {
+		return ""
+	}
+	trajID := "traj-live-mcp"
+	if sess != nil && sess.TrajectoryID != "" {
+		trajID = sess.TrajectoryID
+	}
+	body, _ := json.Marshal(map[string]interface{}{
+		"trajectory_id": trajID,
+		"kind":          "lease_request",
+		"tool_id":       toolName,
+		"details": map[string]string{
+			"reason": reason,
+		},
+	})
+	resp, err := client.Post(cpURL+"/v1/approvals", "application/json", bytes.NewReader(body))
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	var created struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&created); err == nil {
+		return created.ID
+	}
+	return ""
 }
 
 func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMessage, error) {
@@ -363,59 +453,65 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 
 	// Stage 4a: Authority Service Ruling & Lease Verification (C6, F18)
 	if auth != nil && auth.IsLeaseRequired(toolName) {
-		ruling, _ := auth.EvaluateCall(sess.ID, sess.TrajectoryID, toolName, callHash, leaseID)
-		if ruling != nil && ruling.Decision != authority.RulingAllow {
-			mode := p.GetMode()
-			if mode == ModeMonitor {
-				if p.AuditEmitter != nil {
-					_, _ = p.AuditEmitter.Emit(
-						sess.ID,
-						sess.TrajectoryID,
-						callHash,
-						toolName,
-						"would-block",
-						[]string{ruling.Reason},
-						1,
-					)
-				}
-				log.Printf("[KYRON MONITOR MODE] Tool '%s' restricted (%s). Permitting in monitor mode.", toolName, ruling.Reason)
-			} else {
-				var remediation *StructuredRemediation
-				if p.Remediation != nil {
-					if leaseID == "" {
-						remediation = p.Remediation.BuildLeaseRequiredRemediation(sess.ID, sess.TrajectoryID, toolName, ruling.Reason)
-					} else {
-						remediation = p.Remediation.BuildLeaseFailureRemediation(sess.ID, sess.TrajectoryID, toolName, ruling.Reason)
+		if !p.checkControlPlaneLease(toolName, leaseID) {
+			ruling, _ := auth.EvaluateCall(sess.ID, sess.TrajectoryID, toolName, callHash, leaseID)
+			if ruling != nil && ruling.Decision != authority.RulingAllow {
+				mode := p.GetMode()
+				if mode == ModeMonitor {
+					if p.AuditEmitter != nil {
+						_, _ = p.AuditEmitter.Emit(
+							sess.ID,
+							sess.TrajectoryID,
+							callHash,
+							toolName,
+							"would-block",
+							[]string{ruling.Reason},
+							1,
+						)
 					}
+					log.Printf("[KYRON MONITOR MODE] Tool '%s' restricted (%s). Permitting in monitor mode.", toolName, ruling.Reason)
 				} else {
-					remediation = &StructuredRemediation{
-						Tool:          toolName,
-						State:         "restricted",
-						RiskScore:     0.7,
-						RiskReasons:   []string{ruling.Reason},
-						Remediation:   "Obtain a signed capability lease from the Kyron Authority Service.",
-						EscalationURL: ruling.EscalationURL,
+					apprID := p.submitControlPlaneApproval(sess, toolName, fmt.Sprintf("High-impact call to '%s' requires human operator capability lease.", toolName))
+					var remediation *StructuredRemediation
+					if p.Remediation != nil {
+						if leaseID == "" {
+							remediation = p.Remediation.BuildLeaseRequiredRemediation(sess.ID, sess.TrajectoryID, toolName, ruling.Reason)
+						} else {
+							remediation = p.Remediation.BuildLeaseFailureRemediation(sess.ID, sess.TrajectoryID, toolName, ruling.Reason)
+						}
+					} else {
+						remediation = &StructuredRemediation{
+							Tool:          toolName,
+							State:         "restricted",
+							RiskScore:     0.7,
+							RiskReasons:   []string{ruling.Reason},
+							Remediation:   "Obtain a signed capability lease from the Kyron Authority Service.",
+							EscalationURL: ruling.EscalationURL,
+						}
 					}
-				}
+					if apprID != "" {
+						remediation.RecoveryPlan = fmt.Sprintf("Approval request '%s' submitted to Kyron Authority Queue. Approve in SOC Console to execute.", apprID)
+					}
 
-				if p.AuditEmitter != nil {
-					_, _ = p.AuditEmitter.Emit(
-						sess.ID,
-						sess.TrajectoryID,
-						callHash,
-						toolName,
-						"block",
-						[]string{ruling.Reason},
-						1,
-					)
-				}
+					if p.AuditEmitter != nil {
+						_, _ = p.AuditEmitter.Emit(
+							sess.ID,
+							sess.TrajectoryID,
+							callHash,
+							toolName,
+							"block",
+							[]string{ruling.Reason},
+							1,
+						)
+					}
 
-				return NewErrorResponse(
-					msg.ID,
-					ErrCodePolicyBlocked,
-					fmt.Sprintf("Authority restriction: Tool '%s' requires a valid capability lease: %s", toolName, ruling.Reason),
-					remediation,
-				), nil
+					return NewErrorResponse(
+						msg.ID,
+						ErrCodePolicyBlocked,
+						fmt.Sprintf("Authority restriction: Tool '%s' requires a valid capability lease (%s)", toolName, apprID),
+						remediation,
+					), nil
+				}
 			}
 		}
 	}
