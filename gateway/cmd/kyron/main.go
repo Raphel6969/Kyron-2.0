@@ -117,7 +117,17 @@ func runGateway(args []string) {
 		log.Fatalf("failed to initialize audit emitter: %v", err)
 	}
 
+	cpURL := os.Getenv("CONTROL_PLANE_URL")
+	if cpURL == "" {
+		cpURL = "http://127.0.0.1:8001"
+	}
+	if !strings.HasPrefix(cpURL, "http://") && !strings.HasPrefix(cpURL, "https://") {
+		cpURL = "http://" + cpURL
+	}
+	auditEmitter.SetControlPlaneSink(cpURL)
+
 	if isStdio && len(subprocessCmd) > 0 {
+		log.SetOutput(os.Stderr)
 		cmdName := subprocessCmd[0]
 		cmdArgs := subprocessCmd[1:]
 
@@ -128,7 +138,8 @@ func runGateway(args []string) {
 		defer backend.Close()
 
 		proxy := mcp.NewProxy(toolRegistry, secretsBroker, auditEmitter, backend)
-		sess := sessionManager.CreateSession("stdio-client", "1.0")
+		proxy.SetControlPlaneURL(cpURL)
+		sess := sessionManager.CreateSession("acme-mcp-stdio", "1.0")
 		stdioProxy := mcp.NewStdioProxy(proxy, os.Stdin, os.Stdout)
 
 		if err := stdioProxy.Run(sess); err != nil {

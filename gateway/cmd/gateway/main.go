@@ -194,10 +194,20 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	args := os.Args[1:]
+	cpURL := os.Getenv("CONTROL_PLANE_URL")
+	if cpURL == "" {
+		cpURL = "http://127.0.0.1:8001"
+	}
+	if !strings.HasPrefix(cpURL, "http://") && !strings.HasPrefix(cpURL, "https://") {
+		cpURL = "http://" + cpURL
+	}
 
 	// Mode 1: Transparent stdio subprocess proxy
 	// Usage: kyron-gateway stdio -- <command> [args...]
 	if len(args) >= 2 && args[0] == "stdio" && args[1] == "--" {
+		// Keep stdout strictly reserved for JSON-RPC MCP frames
+		log.SetOutput(os.Stderr)
+
 		cmdName := args[2]
 		cmdArgs := args[3:]
 
@@ -209,7 +219,8 @@ func main() {
 		defer backend.Close()
 
 		proxy := mcp.NewProxy(toolRegistry, secretsBroker, auditEmitter, backend)
-		sess := sessionManager.CreateSession("stdio-client", "1.0")
+		proxy.SetControlPlaneURL(cpURL)
+		sess := sessionManager.CreateSession("acme-mcp-stdio", "1.0")
 		stdioProxy := mcp.NewStdioProxy(proxy, os.Stdin, os.Stdout)
 
 		if err := stdioProxy.Run(sess); err != nil {
@@ -225,6 +236,7 @@ func main() {
 	}
 
 	proxy := mcp.NewProxy(toolRegistry, secretsBroker, auditEmitter, &enterpriseBackend{})
+	proxy.SetControlPlaneURL(cpURL)
 	sseServer := mcp.NewSSEServer(proxy, sessionManager)
 
 	http.HandleFunc("/healthz", healthHandler)

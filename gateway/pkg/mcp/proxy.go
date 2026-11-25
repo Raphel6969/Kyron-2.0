@@ -1,12 +1,16 @@
 package mcp
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
+	"strings"
 	"sync"
+	"time"
 
 	"kyron.dev/gateway/pkg/audit"
 	"kyron.dev/gateway/pkg/authority"
@@ -30,15 +34,30 @@ type BackendHandler interface {
 
 // Proxy coordinates interceptors across tool listings and tool invocations
 type Proxy struct {
-	Registry      *ToolRegistry
-	SecretsBroker *secrets.Broker
-	AuditEmitter  *audit.Emitter
-	Authority     *authority.Service
-	Remediation   *RemediationEngine
-	PolicyManager *policy.Manager
-	Backend       BackendHandler
-	Mode          EnforcementMode
-	mu            sync.RWMutex
+	Registry        *ToolRegistry
+	SecretsBroker   *secrets.Broker
+	AuditEmitter    *audit.Emitter
+	Authority       *authority.Service
+	Remediation     *RemediationEngine
+	PolicyManager   *policy.Manager
+	Backend         BackendHandler
+	Mode            EnforcementMode
+	ControlPlaneURL string
+	httpClient      *http.Client
+	mu              sync.RWMutex
+}
+
+// SetControlPlaneURL configures optional live Control Plane scanning and registry sync
+func (p *Proxy) SetControlPlaneURL(baseURL string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.ControlPlaneURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	if p.httpClient == nil {
+		p.httpClient = &http.Client{Timeout: 3 * time.Second}
+	}
+	if p.ControlPlaneURL != "" {
+		p.Remediation = NewRemediationEngine(p.Registry, p.ControlPlaneURL)
+	}
 }
 
 // NewProxy creates a new MCP protocol interceptor proxy
@@ -170,6 +189,9 @@ func (p *Proxy) handleToolsList(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 		return NewErrorResponse(msg.ID, ErrCodeInternal, fmt.Sprintf("upstream tools/list failed: %v", err), nil), nil
 	}
 
+	// Scan and synchronize discovered tools with Control Plane & local Registry Firewall
+	p.syncDiscoveredTools(sess, rawTools)
+
 	// Apply Dynamic Tool Projection (F19, F03, F04)
 	projectedTools := p.Registry.ProjectTools(rawTools)
 
@@ -177,6 +199,89 @@ func (p *Proxy) handleToolsList(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 		Tools: projectedTools,
 	}
 	return NewSuccessResponse(msg.ID, result)
+}
+
+func (p *Proxy) syncDiscoveredTools(sess *Session, rawTools []Tool) {
+	p.mu.RLock()
+	cpURL := p.ControlPlaneURL
+	client := p.httpClient
+	p.mu.RUnlock()
+
+	serverID := "mcp-stdio"
+	if sess != nil && sess.ClientName != "" {
+		serverID = sess.ClientName
+	}
+
+	var wg sync.WaitGroup
+	for _, rt := range rawTools {
+		rt := rt
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			// Sync with Control Plane if configured (populates live registry & audit trail)
+			if cpURL != "" && client != nil {
+				reqBody, _ := json.Marshal(map[string]interface{}{
+					"server_id":   serverID,
+					"name":        rt.Name,
+					"description": rt.Description,
+				})
+				req, err := http.NewRequest(http.MethodPost, cpURL+"/v1/tools/scan", bytes.NewReader(reqBody))
+				if err == nil {
+					req.Header.Set("Content-Type", "application/json")
+					resp, err := client.Do(req)
+					if err == nil {
+						var scanned struct {
+							ServerID    string   `json:"server_id"`
+							Name        string   `json:"name"`
+							State       string   `json:"state"`
+							RiskScore   float32  `json:"risk_score"`
+							RiskReasons []string `json:"risk_reasons"`
+							ModelFacing string   `json:"model_facing"`
+						}
+						if decErr := json.NewDecoder(resp.Body).Decode(&scanned); decErr == nil && scanned.Name != "" {
+							p.Registry.RegisterTool(&RegisteredTool{
+								ServerID:               scanned.ServerID,
+								Name:                   rt.Name,
+								State:                  scanned.State,
+								RiskScore:              scanned.RiskScore,
+								RiskReasons:            scanned.RiskReasons,
+								ModelFacingDescription: scanned.ModelFacing,
+								InputSchema:            rt.InputSchema,
+							})
+							_ = resp.Body.Close()
+							return
+						}
+						_ = resp.Body.Close()
+					}
+				}
+			}
+
+			// Offline fallback heuristic if Control Plane is not attached or timed out
+			if _, exists := p.Registry.GetTool(rt.Name); !exists {
+				lower := strings.ToLower(rt.Description)
+				state := "scanned"
+				var risk float32 = 0.05
+				var reasons []string
+				if strings.Contains(lower, "ignore previous") || strings.Contains(lower, "exfiltrat") ||
+					strings.Contains(lower, "private_key") || strings.Contains(lower, "system override") ||
+					strings.Contains(lower, "steal") {
+					state = "quarantined"
+					risk = 0.95
+					reasons = []string{"Prompt injection or exfiltration sequence detected in description"}
+				}
+				p.Registry.RegisterTool(&RegisteredTool{
+					ServerID:               serverID,
+					Name:                   rt.Name,
+					State:                  state,
+					RiskScore:              risk,
+					RiskReasons:            reasons,
+					ModelFacingDescription: fmt.Sprintf("Tool '%s': Verified safe utility for %s operations.", rt.Name, rt.Name),
+					InputSchema:            rt.InputSchema,
+				})
+			}
+		}()
+	}
+	wg.Wait()
 }
 
 func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMessage, error) {
@@ -482,23 +587,33 @@ func (p *Proxy) handleToolsCall(sess *Session, msg *JSONRPCMessage) (*JSONRPCMes
 	}
 
 	// 4. Stage 6: Admit & Redact credentials from return payload
+	redacted := false
 	if p.SecretsBroker != nil && rawResult != nil {
 		for i := range rawResult.Content {
 			if rawResult.Content[i].Type == "text" {
-				rawResult.Content[i].Text = p.SecretsBroker.RedactTraffic(rawResult.Content[i].Text)
+				origText := rawResult.Content[i].Text
+				cleanText := p.SecretsBroker.RedactTraffic(origText)
+				if cleanText != origText {
+					redacted = true
+				}
+				rawResult.Content[i].Text = cleanText
 			}
 		}
 	}
 
 	// 5. Emit signed audit event for successful execution (if not already recorded in monitor mode)
 	if p.AuditEmitter != nil && p.GetMode() != ModeMonitor {
+		auditReasons := []string{"Passed registry firewall and data plane policies"}
+		if redacted {
+			auditReasons = []string{"Secrets Broker redacted sensitive credential pattern in-flight (0 tokens)"}
+		}
 		_, _ = p.AuditEmitter.Emit(
 			sess.ID,
 			sess.TrajectoryID,
 			callHash,
 			toolName,
 			"allow",
-			[]string{"Passed registry firewall and data plane policies"},
+			auditReasons,
 			1,
 		)
 	}

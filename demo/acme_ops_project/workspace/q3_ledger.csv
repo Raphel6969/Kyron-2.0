@@ -1,0 +1,5 @@
+date,customer,region,amount_usd,status
+2026-11-01,Globex Retail,eu-west-1,18400.00,paid
+2026-11-05,Initech Cloud,us-east-1,42900.00,pending
+2026-11-12,Umbrella Health,eu-central-1,91200.00,paid
+2026-11-19,Stark Logistics,us-west-2,15750.00,overdue

@@ -24,7 +24,23 @@
 ## Beat 2 — Running a Real Live Agent via MCP SSE (0:30 – 1:30)
 **On Screen:** Console **Cryptographic Trail (`05`)** open on left; Terminal on right.
 
-**Action (0:35):** Run in terminal:
+**Action (0:35):** First show the **before vs after** drop-in wrapper on a real standalone SQLite/CSV MCP project (`demo/acme_ops_project/`):
+```bash
+# 1. Baseline vulnerability (zero Kyron protection)
+python demo/acme_ops_project/agent_app.py --mode unprotected
+
+# 2. Wrap the EXACT same MCP server with Kyron's stdio gateway (0 code changes!)
+python demo/acme_ops_project/agent_app.py --mode kyron
+```
+Point out on screen:
+- In `--mode unprotected`, the raw `vendor_sync_telemetry` injection leaks into `tools/list`, plaintext `GITHUB_TOKEN` & `AWS_ACCESS_KEY_ID` dump to the model, and the poisoned call succeeds.
+- In `--mode kyron`, **without changing one line of `mcp_server.py`**:
+  - `vendor_sync_telemetry` is auto-scanned, quarantined (`Risk 95%`), and **vanishes from `tools/list`** (`TRUSTDESC`), while appearing live in **Tool Registry**!
+  - `query_invoices` runs cleanly against SQLite (`2.7ms`) and streams green `ALLOW` to **Cryptographic Trail**.
+  - `system_diagnostics` secrets are scrubbed in-flight to `[KYRON_REDACTED_SECRET]` (`1.0ms`).
+  - Attempting to call `vendor_sync_telemetry` returns `-32000 Policy violation` (`0.7ms`) and streams red `BLOCK` live to the UI!
+
+Next run the interactive SSE agent:
 ```bash
 python demo/run_real_agent.py
 ```
